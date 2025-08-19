@@ -1,0 +1,86 @@
+<?php
+namespace TutoriasBooking\Google;
+
+class CalendarService {
+    public static function get_calendar_service($tutor_id) {
+        $client = GoogleClient::get_client();
+        $tokens = GoogleClient::get_tokens($tutor_id);
+        if (!$tokens) { return null; }
+        $client->setAccessToken($tokens);
+        if ($client->isAccessTokenExpired()) {
+            if (isset($tokens['refresh_token']) && !empty($tokens['refresh_token'])) {
+                $new = GoogleClient::refresh_access_token($client, $tutor_id, $tokens['refresh_token']);
+                if (!$new) { return null; }
+            } else {
+                return null;
+            }
+        }
+        return new \Google_Service_Calendar($client);
+    }
+
+    public static function get_calendar_events($tutor_id, $start_date, $end_date) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) { return []; }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) { return []; }
+        $calendarId = $tutor->calendar_id;
+        $opt = [
+            'timeMin' => date('c', strtotime($start_date.' 00:00:00')),
+            'timeMax' => date('c', strtotime($end_date.' 23:59:59')),
+            'singleEvents' => true,
+            'orderBy' => 'startTime'
+        ];
+        try {
+            $events = $service->events->listEvents($calendarId, $opt);
+            return $events->getItems();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    public static function get_available_calendar_events($tutor_id, $start_date, $end_date) {
+        $events = self::get_calendar_events($tutor_id, $start_date, $end_date);
+        $available = [];
+        foreach ($events as $event) {
+            if (isset($event->summary) && trim(strtoupper($event->summary)) === 'DISPONIBLE') {
+                $available[] = $event;
+            }
+        }
+        return $available;
+    }
+
+    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date) {
+        $events = self::get_calendar_events($tutor_id, $start_date, $end_date);
+        $busy = [];
+        foreach ($events as $event) {
+            if (!isset($event->summary) || trim(strtoupper($event->summary)) !== 'DISPONIBLE') {
+                $busy[] = $event;
+            }
+        }
+        return $busy;
+    }
+
+    public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[]) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) { return null; }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) { return null; }
+        $calendarId = $tutor->calendar_id;
+        $event = new \Google_Service_Calendar_Event([
+            'summary' => $summary,
+            'description' => $description,
+            'start' => ['dateTime'=>$start_datetime,'timeZone'=>'Europe/Madrid'],
+            'end'   => ['dateTime'=>$end_datetime,'timeZone'=>'Europe/Madrid'],
+            'attendees' => array_map(fn($e)=>['email'=>$e], $attendees),
+            'reminders' => ['useDefault'=>false,'overrides'=>[['method'=>'email','minutes'=>60],['method'=>'popup','minutes'=>10]]],
+            'conferenceData' => ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]]
+        ]);
+        try {
+            return $service->events->insert($calendarId, $event, ['conferenceDataVersion'=>1]);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+}
