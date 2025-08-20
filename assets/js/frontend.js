@@ -4,59 +4,6 @@ jQuery(document).ready(function($) {
   var allSortedDates = [];        // Todas las fechas ordenadas
   var calendarStartDate, calendarEndDate, currentMonthDate, selectedDate;
 
-  // Paso 1: Verificación de DNI
-  $('#tb_dni_form').on('submit', function(e) {
-    e.preventDefault();
-    var dni = $('#tb_dni').val();
-    var email = $('#tb_email').val();
-    $('#tb_dni_response').html('');
-
-    $.ajax({
-      url: ajaxurl,
-      type: 'POST',
-      data: {
-        action: 'tb_verify_dni',
-        dni: dni,
-        email: email
-      },
-      success: function(response) {
-        if (response.success) {
-          $('#tb_summary_dni').text(dni);
-          $('#tb_summary_email').text(email);
-          $('#tb_dni_final').val(dni);
-          $('#tb_email_final').val(email);
-          $('#tb_step_dni').hide();
-          $('#tb_step_exam').show();
-          $('html, body').animate({ scrollTop: $('#tb_step_exam').offset().top }, 300);
-        } else {
-          $('#tb_dni_response').html('<p class="tb-message tb-message-error">' + response.data + '</p>');
-        }
-      },
-      error: function() {
-        $('#tb_dni_response').html('<p class="tb-message tb-message-error">Error en la verificación.</p>');
-      }
-    });
-  });
-
-  // Paso 2: Selección de fecha de examen
-  $('#tb_exam_date_form').on('submit', function(e) {
-    e.preventDefault();
-    var examDate = $('#tb_exam_date').val();
-    var minDate = $('#tb_exam_date').attr('min');
-    $('#tb_exam_response').html('');
-
-    if (!examDate || examDate < minDate) {
-      $('#tb_exam_response').html('<p class="tb-message tb-message-error">La fecha del examen no puede ser anterior a hoy.</p>');
-      return;
-    }
-
-    $('#tb_summary_exam_date').text(examDate);
-    $('#tb_exam_date_final').val(examDate);
-    $('#tb_step_exam').hide();
-    $('#tb_step_tutor').show();
-    $('html, body').animate({ scrollTop: $('#tb_step_tutor').offset().top }, 300);
-  });
-
   // Formatea fecha a YYYY-MM-DD
   function formatDate(date) {
     var d = new Date(date),

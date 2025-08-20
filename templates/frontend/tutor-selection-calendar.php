@@ -1,15 +1,16 @@
-<div id="tb_step_tutor" class="tb-step" style="display:none;">
+<div class="tb-container" <?php echo $container_style; ?>>
     <h3>Reservar Tutoría</h3>
     <p class="tb-summary">
-        <strong>DNI:</strong> <span id="tb_summary_dni"></span> |
-        <strong>Email:</strong> <span id="tb_summary_email"></span> |
-        <strong>Fecha de Examen:</strong> <span id="tb_summary_exam_date"></span>
+        <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
+        <strong>Email:</strong> <?php echo esc_html($email_verified); ?> |
+        <strong>Fecha de Examen:</strong> <?php echo esc_html($exam_date_selected); ?>
     </p>
 
     <form id="tb_booking_form">
-        <input type="hidden" id="tb_dni_final" name="dni">
-        <input type="hidden" id="tb_email_final" name="email">
-        <input type="hidden" id="tb_exam_date_final" name="exam_date">
+        <input type="hidden" id="tb_dni_final" name="dni" value="<?php echo esc_attr($dni_verified); ?>">
+        <input type="hidden" id="tb_email_final" name="email" value="<?php echo esc_attr($email_verified); ?>">
+        <input type="hidden" id="tb_exam_date_final" name="exam_date"
+            value="<?php echo esc_attr($exam_date_selected); ?>">
         <?php wp_nonce_field('tb_booking_nonce', 'tb_booking_nonce_field'); ?>
         <div class="tb-tutor-selection-row">
             <div class="tb-tutor-select-wrapper">
