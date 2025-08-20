@@ -40,9 +40,7 @@ function render_form_shortcode($atts = [])
     $tutores = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores ORDER BY nombre ASC");
 
     ob_start();
-    include TB_PLUGIN_DIR . 'templates/frontend/dni-form.php';
-    include TB_PLUGIN_DIR . 'templates/frontend/exam-date-form.php';
-    include TB_PLUGIN_DIR . 'templates/frontend/tutor-selection-calendar.php';
+    include TB_PLUGIN_DIR . 'templates/frontend/booking-form.php';
 
     return ob_get_clean();
 }
