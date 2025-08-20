@@ -23,7 +23,7 @@ if ( ! defined( 'TB_PLUGIN_FILE' ) ) {
     define( 'TB_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'TB_PLUGIN_URL' ) ) {
-    define( 'TB_PLUGIN_URL', set_url_scheme( plugin_dir_url( TB_PLUGIN_FILE ), 'https' ) );
+    define( 'TB_PLUGIN_URL', plugin_dir_url( TB_PLUGIN_FILE ) );
 }
 if ( ! defined( 'TB_PLUGIN_DIR' ) ) {
     define( 'TB_PLUGIN_DIR', plugin_dir_path( TB_PLUGIN_FILE ) );

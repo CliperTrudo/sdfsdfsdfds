@@ -1,5 +1,7 @@
 jQuery(document).ready(function($) {
-  var ajaxurl = (tbBooking && tbBooking.ajaxUrl) ? tbBooking.ajaxUrl : tbBooking.siteUrl + 'wp-admin/admin-ajax.php';
+  var ajaxurl = (typeof tbBooking !== 'undefined' && tbBooking.ajaxUrl)
+    ? tbBooking.ajaxUrl
+    : window.location.origin + '/wp-admin/admin-ajax.php';
   var slotsByDate = {};           // Franjas horarias agrupadas por fecha
   var allSortedDates = [];        // Todas las fechas ordenadas
   var calendarStartDate, calendarEndDate, currentMonthDate, selectedDate;
@@ -341,4 +343,3 @@ jQuery(document).ready(function($) {
     });
   });
 });
-

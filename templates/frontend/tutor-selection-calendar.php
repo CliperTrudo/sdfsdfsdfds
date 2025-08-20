@@ -34,4 +34,3 @@
     </form>
     <div id="tb_booking_details_container"></div>
 </div>
-
