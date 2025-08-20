@@ -1,6 +1,6 @@
-<div class="tb-container" <?php echo $container_style; ?>>
+<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
     <h3>Reservar Tutoría</h3>
-    <p class="tb-summary">
+    <p id="tb_summary" class="tb-summary">
         <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
         <strong>Email:</strong> <?php echo esc_html($email_verified); ?> |
         <strong>Fecha de Examen:</strong> <?php echo esc_html($exam_date_selected); ?>

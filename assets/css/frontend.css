@@ -8,6 +8,10 @@
   --tb-container-max-width: 450px;
 }
 
+.tb-hidden {
+  display: none;
+}
+
 /* Contenedor base del plugin */
 .tb-container {
   width: 100%;
