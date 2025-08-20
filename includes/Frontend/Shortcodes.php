@@ -10,6 +10,7 @@ function enqueue_assets()
 
     wp_enqueue_style('tb-frontend', TB_PLUGIN_URL . 'assets/css/frontend.css', $deps);
     wp_enqueue_script('tb-frontend', TB_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], false, true);
+
     wp_localize_script('tb-frontend', 'tbBooking', [
         'ajaxUrl' => admin_url('admin-ajax.php')
     ]);
