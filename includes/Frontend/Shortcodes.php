@@ -12,7 +12,8 @@ function enqueue_assets()
     wp_enqueue_script('tb-frontend', TB_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], false, true);
 
     wp_localize_script('tb-frontend', 'tbBooking', [
-        'ajaxUrl' => admin_url('admin-ajax.php')
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'siteUrl' => trailingslashit(site_url())
     ]);
 }
 add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets', 20);
