@@ -8,8 +8,9 @@ function enqueue_assets()
         $deps[] = 'elementor-frontend';
     }
 
-    wp_enqueue_style('tb-frontend', plugins_url('../../assets/css/frontend.css', __FILE__), $deps);
-    wp_enqueue_script('tb-frontend', plugins_url('../../assets/js/frontend.js', __FILE__), ['jquery'], false, true);
+    wp_enqueue_style('tb-frontend', TB_PLUGIN_URL . 'assets/css/frontend.css', $deps);
+    wp_enqueue_script('tb-frontend', TB_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], false, true);
+
     wp_localize_script('tb-frontend', 'tbBooking', [
         'ajaxUrl' => admin_url('admin-ajax.php')
     ]);
@@ -25,8 +26,11 @@ function render_form_shortcode($atts = [])
     ], $atts, 'formulario_dni');
 
     $container_style = '';
+    $hidden_style = 'style="display:none;"';
     if (!empty($atts['width'])) {
-        $container_style = 'style="max-width:' . esc_attr($atts['width']) . ';"';
+        $max_width = esc_attr($atts['width']);
+        $container_style = 'style="max-width:' . $max_width . ';"';
+        $hidden_style = 'style="max-width:' . $max_width . ';display:none;"';
     }
 
     $current_date = date('Y-m-d');

@@ -1,4 +1,4 @@
-<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
+<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $hidden_style; ?>>
     <h3>Reservar Tutoría</h3>
     <p id="tb_summary" class="tb-summary">
         <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
@@ -34,3 +34,4 @@
     </form>
     <div id="tb_booking_details_container"></div>
 </div>
+
