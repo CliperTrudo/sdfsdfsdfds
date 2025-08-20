@@ -1,4 +1,4 @@
-        <div id="tb_exam_date_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
+        <div id="tb_exam_date_step" class="tb-container tb-hidden" <?php echo $hidden_style; ?>>
             <h3>Seleccionar Fecha de Examen</h3>
             <form id="tb_exam_date_form" method="post">
                 <input type="hidden" id="tb_dni_verified" name="tb_dni_verified" value="<?php echo esc_attr($dni_verified); ?>">
