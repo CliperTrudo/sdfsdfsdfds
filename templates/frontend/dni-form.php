@@ -1,6 +1,6 @@
-        <div class="tb-container" <?php echo $container_style; ?>>
+        <div id="tb_dni_step" class="tb-container" <?php echo $container_style; ?>>
             <h3>Verificación de DNI</h3>
-            <form method="post">
+            <form id="tb_dni_form" method="post">
                 <p class="tb-form-group">
                     <label for="tb_dni">Introduce tu DNI:</label>
                     <input type="text" id="tb_dni" name="tb_dni" required placeholder="Ej: 12345678A">
