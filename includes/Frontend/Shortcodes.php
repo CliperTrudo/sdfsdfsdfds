@@ -26,56 +26,22 @@ function render_form_shortcode($atts = [])
 
     ob_start();
 
-    $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
-    $show_dni_form = true;
-    $show_exam_date_form = false;
-    $show_tutor_selection = false;
-    $dni_verified = '';
-    $email_verified = '';
-    $exam_date_selected = '';
     $current_date = date('Y-m-d');
 
-    if (isset($_POST['tb_submit_exam_date']) && !empty($_POST['tb_exam_date'])) {
-        $dni_verified = sanitize_text_field($_POST['tb_dni_verified']);
-        $email_verified = sanitize_email($_POST['tb_email_verified']);
-        $exam_date_selected = sanitize_text_field($_POST['tb_exam_date']);
-        if ($exam_date_selected < $current_date) {
-            echo '<div class="tb-message tb-message-error">La fecha del examen no puede ser anterior a hoy.</div>';
-            $show_dni_form = false;
-            $show_exam_date_form = true;
-        } else {
-            $show_dni_form = false;
-            $show_exam_date_form = false;
-            $show_tutor_selection = true;
-        }
-    } elseif (isset($_POST['tb_submit_dni']) && !empty($_POST['tb_dni']) && !empty($_POST['tb_email'])) {
-        $dni_input   = sanitize_text_field($_POST['tb_dni']);
-        $email_input = sanitize_email($_POST['tb_email']);
-        $alumno = $wpdb->get_row($wpdb->prepare("SELECT tiene_cita FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni_input, $email_input));
-        if ($alumno) {
-            if (intval($alumno->tiene_cita) === 0) {
-                $dni_verified = $dni_input;
-                $email_verified = $email_input;
-                $show_dni_form = false;
-                $show_exam_date_form = true;
-            } else {
-                echo '<div class="tb-message tb-message-error">El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.</div>';
-            }
-        } else {
-            echo '<div class="tb-message tb-message-error">El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.</div>';
-        }
-    }
+    // Contenedor principal que agrupa los tres pasos del formulario
+    echo '<div class="tb-container" ' . $container_style . '>';
 
-    if ($show_dni_form) {
-        include TB_PLUGIN_DIR . 'templates/frontend/dni-form.php';
-    }
-    if ($show_exam_date_form) {
-        include TB_PLUGIN_DIR . 'templates/frontend/exam-date-form.php';
-    }
-    if ($show_tutor_selection) {
-        $tutores = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores ORDER BY nombre ASC");
-        include TB_PLUGIN_DIR . 'templates/frontend/tutor-selection-calendar.php';
-    }
+    // Paso 1: Verificación de DNI
+    include TB_PLUGIN_DIR . 'templates/frontend/dni-form.php';
+
+    // Paso 2: Selección de fecha de examen (inicialmente oculto)
+    include TB_PLUGIN_DIR . 'templates/frontend/exam-date-form.php';
+
+    // Paso 3: Selección de tutor y franja horaria (inicialmente oculto)
+    $tutores = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores ORDER BY nombre ASC");
+    include TB_PLUGIN_DIR . 'templates/frontend/tutor-selection-calendar.php';
+
+    echo '</div>';
 
     return ob_get_clean();
 }
