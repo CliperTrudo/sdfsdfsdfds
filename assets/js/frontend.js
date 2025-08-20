@@ -1,4 +1,5 @@
-jQuery(document).ready(function($) {
+(function($){
+  $(function(){
   var ajaxurl = tbBooking.ajaxUrl;
   var slotsByDate = {};           // Franjas horarias agrupadas por fecha
   var allSortedDates = [];        // Todas las fechas ordenadas
@@ -12,8 +13,8 @@ jQuery(document).ready(function($) {
 
     $.post(ajaxurl, { action: 'tb_verify_dni', dni: dni, email: email }, function(response) {
       if (response.success) {
-        $('#tb_dni_step').hide();
-        $('#tb_exam_date_step').removeClass('tb-hidden').show();
+        $('#tb_dni_step').addClass('tbk-hidden');
+        $('#tb_exam_date_step').removeClass('tbk-hidden');
         $('#tb_dni_verified').val(dni);
         $('#tb_email_verified').val(email);
       } else {
@@ -31,8 +32,8 @@ jQuery(document).ready(function($) {
       alert('La fecha del examen no puede ser anterior a hoy.');
       return;
     }
-    $('#tb_exam_date_step').hide();
-    $('#tb_tutor_selection_step').removeClass('tb-hidden').show();
+    $('#tb_exam_date_step').addClass('tbk-hidden');
+    $('#tb_tutor_selection_step').removeClass('tbk-hidden');
     $('#tb_exam_date_final').val(examDate);
     var dni = $('#tb_dni_verified').val();
     var email = $('#tb_email_verified').val();
@@ -196,7 +197,7 @@ jQuery(document).ready(function($) {
     var calendarContainer = $('#tb_calendar_container');
 
     $('#tb_submit_booking').prop('disabled', true);
-    $('#tb_response_message').hide();
+    $('#tb_response_message').addClass('tbk-hidden');
     calendarContainer.html('<p class="tb-message tb-message-info">Cargando franjas horarias...</p>');
 
     if (tutor_id) {
@@ -249,19 +250,19 @@ jQuery(document).ready(function($) {
               calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron franjas de tiempo disponibles para este tutor en el rango de fechas seleccionado.</p>');
             }
           } else {
-            $('#tb_response_message').html('<p class="tb-message tb-message-error">Error al obtener la disponibilidad: ' + (response.data || 'Error desconocido') + '</p>').show();
+            $('#tb_response_message').html('<p class="tb-message tb-message-error">Error al obtener la disponibilidad: ' + (response.data || 'Error desconocido') + '</p>').removeClass('tbk-hidden');
             calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
           console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
-          $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').show();
+          $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').removeClass('tbk-hidden');
           calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
         }
       });
     } else {
       calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
-      $('#tb_response_message').hide();
+      $('#tb_response_message').addClass('tbk-hidden');
     }
   });
 
@@ -271,7 +272,7 @@ jQuery(document).ready(function($) {
 
     var selectedSlot = $('input[name="selected_slot"]:checked');
     if (selectedSlot.length === 0) {
-      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona una franja horaria.</p>').show();
+      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona una franja horaria.</p>').removeClass('tbk-hidden');
       return;
     }
 
@@ -284,7 +285,7 @@ jQuery(document).ready(function($) {
     var nonce      = $('#tb_booking_nonce_field').val();
 
     $('#tb_submit_booking').prop('disabled', true).val('Procesando...');
-    $('#tb_response_message').html('<p class="tb-message tb-message-info">Procesando tu reserva, por favor espera...</p>').show();
+    $('#tb_response_message').html('<p class="tb-message tb-message-info">Procesando tu reserva, por favor espera...</p>').removeClass('tbk-hidden');
 
     $.ajax({
       url: ajaxurl,
@@ -322,22 +323,23 @@ jQuery(document).ready(function($) {
 
           var cardHtml = '<div class="tb-booking-card">' + messageHtml + '</div>';
           $('#tb_booking_details_container').html(cardHtml);
-          $('#tb_response_message').hide();
+          $('#tb_response_message').addClass('tbk-hidden');
           $('#tb_booking_form').hide();
 
           // Limpiar el formulario para evitar nuevas selecciones
           $('#tb_booking_form')[0].reset();
           $('#tb_submit_booking').prop('disabled', true).val('Confirmar Reserva');
         } else {
-          $('#tb_response_message').html('<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>').show();
+          $('#tb_response_message').html('<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>').removeClass('tbk-hidden');
           $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
         }
       },
       error: function(jqXHR, textStatus, errorThrown) {
         console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
-        $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').show();
+        $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').removeClass('tbk-hidden');
         $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
       }
     });
   });
-});
+  });
+})(jQuery);

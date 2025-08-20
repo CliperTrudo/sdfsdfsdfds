@@ -8,8 +8,8 @@
   --tb-container-max-width: 450px;
 }
 
-.tb-hidden {
-  display: none;
+.tbk-hidden {
+  display: none !important;
 }
 
 /* Contenedor base del plugin */

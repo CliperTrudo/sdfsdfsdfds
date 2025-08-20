@@ -1,4 +1,4 @@
-<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
+<div id="tb_tutor_selection_step" class="tb-container tbk-hidden" <?php echo $container_style; ?>>
     <h3>Reservar Tutoría</h3>
     <p id="tb_summary" class="tb-summary">
         <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
@@ -24,7 +24,7 @@
             </div>
 
             <div class="tb-action-feedback-area">
-                <div id="tb_response_message" class="tb-message tb-hidden"></div>
+                <div id="tb_response_message" class="tb-message tbk-hidden"></div>
                 <input type="submit" id="tb_submit_booking" value="Confirmar Reserva" class="tb-button" disabled>
             </div>
         </div>
