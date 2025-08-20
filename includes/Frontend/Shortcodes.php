@@ -3,13 +3,18 @@ namespace TutoriasBooking\Frontend;
 
 function enqueue_assets()
 {
-    wp_enqueue_style('tb-frontend', plugins_url('../../assets/css/frontend.css', __FILE__));
+    $deps = [];
+    if (wp_style_is('elementor-frontend', 'registered')) {
+        $deps[] = 'elementor-frontend';
+    }
+
+    wp_enqueue_style('tb-frontend', plugins_url('../../assets/css/frontend.css', __FILE__), $deps);
     wp_enqueue_script('tb-frontend', plugins_url('../../assets/js/frontend.js', __FILE__), ['jquery'], false, true);
     wp_localize_script('tb-frontend', 'tbBooking', [
         'ajaxUrl' => admin_url('admin-ajax.php')
     ]);
 }
-add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets');
+add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets', 20);
 
 function render_form_shortcode($atts = [])
 {
