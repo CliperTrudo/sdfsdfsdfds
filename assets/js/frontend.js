@@ -1,45 +1,8 @@
 jQuery(document).ready(function($) {
-  var ajaxurl = (typeof tbBooking !== 'undefined' && tbBooking.ajaxUrl)
-    ? tbBooking.ajaxUrl
-    : window.location.origin + '/wp-admin/admin-ajax.php';
+  var ajaxurl = tbBooking.ajaxUrl;
   var slotsByDate = {};           // Franjas horarias agrupadas por fecha
   var allSortedDates = [];        // Todas las fechas ordenadas
   var calendarStartDate, calendarEndDate, currentMonthDate, selectedDate;
-
-  // Paso 1: verificación de DNI sin recargar la página
-  $('#tb_dni_form').on('submit', function(e) {
-    e.preventDefault();
-    var dni = $('#tb_dni').val();
-    var email = $('#tb_email').val();
-
-    $.post(ajaxurl, { action: 'tb_verify_dni', dni: dni, email: email }, function(response) {
-      if (response.success) {
-        $('#tb_dni_step').hide();
-        $('#tb_exam_date_step').removeClass('tb-hidden').show();
-        $('#tb_dni_verified').val(dni);
-        $('#tb_email_verified').val(email);
-      } else {
-        alert(response.data);
-      }
-    });
-  });
-
-  // Paso 2: selección de fecha de examen
-  $('#tb_exam_date_form').on('submit', function(e) {
-    e.preventDefault();
-    var examDate = $('#tb_exam_date').val();
-    var minDate = $('#tb_exam_date').attr('min');
-    if (examDate < minDate) {
-      alert('La fecha del examen no puede ser anterior a hoy.');
-      return;
-    }
-    $('#tb_exam_date_step').hide();
-    $('#tb_tutor_selection_step').removeClass('tb-hidden').show();
-    $('#tb_exam_date_final').val(examDate);
-    var dni = $('#tb_dni_verified').val();
-    var email = $('#tb_email_verified').val();
-    $('#tb_summary').html('<strong>DNI:</strong> ' + dni + ' | <strong>Email:</strong> ' + email + ' | <strong>Fecha de Examen:</strong> ' + examDate);
-  });
 
   // Formatea fecha a YYYY-MM-DD
   function formatDate(date) {

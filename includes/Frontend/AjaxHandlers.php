@@ -22,38 +22,7 @@ class AjaxHandlers {
         // Hook para procesar la reserva (para usuarios logueados y no logueados)
         add_action('wp_ajax_tb_process_booking', [self::class, 'ajax_process_booking']);
         add_action('wp_ajax_nopriv_tb_process_booking', [self::class, 'ajax_process_booking']);
-        // Hook para verificar DNI y correo electrónico
-        add_action('wp_ajax_tb_verify_dni', [self::class, 'ajax_verify_dni']);
-        add_action('wp_ajax_nopriv_tb_verify_dni', [self::class, 'ajax_verify_dni']);
         error_log('TutoriasBooking: AjaxHandlers::init() - Hooks AJAX registrados.');
-    }
-
-    /**
-     * Verifica que el DNI y el correo correspondan a un alumno válido sin cita previa.
-     */
-    public static function ajax_verify_dni() {
-        global $wpdb;
-
-        $dni   = isset($_POST['dni']) ? sanitize_text_field($_POST['dni']) : '';
-        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-
-        if (empty($dni) || empty($email)) {
-            wp_send_json_error('Faltan datos para la verificación.');
-            return;
-        }
-
-        $table = $wpdb->prefix . 'alumnos_reserva';
-        $alumno = $wpdb->get_row($wpdb->prepare("SELECT tiene_cita FROM {$table} WHERE dni = %s AND email = %s", $dni, $email));
-
-        if ($alumno) {
-            if (intval($alumno->tiene_cita) === 0) {
-                wp_send_json_success(['dni' => $dni, 'email' => $email]);
-            } else {
-                wp_send_json_error('El DNI introducido ya tiene una cita registrada.');
-            }
-        } else {
-            wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos.');
-        }
     }
 
     /**
