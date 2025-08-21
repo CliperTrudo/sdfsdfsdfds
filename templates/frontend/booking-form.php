@@ -10,8 +10,10 @@
             <label for="tb_email">Introduce tu correo electrónico:</label>
             <input type="email" id="tb_email" name="tb_email" required placeholder="ejemplo@correo.com">
         </p>
-        <?php if (TB_RECAPTCHA_SITE_KEY) : ?>
-        <div class="g-recaptcha" data-sitekey="<?php echo esc_attr(TB_RECAPTCHA_SITE_KEY); ?>"></div>
+        <?php if (TB_RECAPTCHA_SITE_KEY) :
+            $recaptcha_theme = getenv('TB_RECAPTCHA_THEME');
+        ?>
+        <div class="g-recaptcha" data-sitekey="<?php echo esc_attr(TB_RECAPTCHA_SITE_KEY); ?>"<?php echo $recaptcha_theme ? ' data-theme="' . esc_attr($recaptcha_theme) . '"' : ''; ?>></div>
         <?php endif; ?>
         <p class="tb-form-actions">
             <input type="submit" name="tb_submit_dni" value="Verificar Datos" class="tb-button">

@@ -15,7 +15,14 @@ function enqueue_assets()
 
     $deps = ['jquery'];
     if (TB_RECAPTCHA_SITE_KEY) {
-        wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', [], null, true);
+        $recaptcha_src = 'https://www.google.com/recaptcha/api.js';
+        $lang = getenv('TB_RECAPTCHA_LANGUAGE');
+        if ($lang) {
+            $recaptcha_src = \add_query_arg('hl', $lang, $recaptcha_src);
+        }
+        wp_enqueue_script('google-recaptcha', $recaptcha_src, [], false, true);
+        wp_script_add_data('google-recaptcha', 'async', true);
+        wp_script_add_data('google-recaptcha', 'defer', true);
         $deps[] = 'google-recaptcha';
     }
 
