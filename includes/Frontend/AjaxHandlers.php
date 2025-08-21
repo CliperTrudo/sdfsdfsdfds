@@ -181,6 +181,28 @@ class AjaxHandlers {
             wp_send_json_error('Error de seguridad. Nonce inválido.');
         }
 
+        // Verify Google reCAPTCHA v2 if keys are defined
+        if (TB_RECAPTCHA_SECRET_KEY) {
+            $recaptcha_response = sanitize_text_field($_POST['g-recaptcha-response'] ?? '');
+            if (empty($recaptcha_response)) {
+                wp_send_json_error('Error en la validación de reCAPTCHA.');
+            }
+            $verify = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
+                'body' => [
+                    'secret'   => TB_RECAPTCHA_SECRET_KEY,
+                    'response' => $recaptcha_response,
+                    'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+                ],
+            ]);
+            if (is_wp_error($verify)) {
+                wp_send_json_error('No se pudo verificar reCAPTCHA.');
+            }
+            $verify_body = json_decode(wp_remote_retrieve_body($verify), true);
+            if (empty($verify_body['success'])) {
+                wp_send_json_error('La verificación de reCAPTCHA ha fallado.');
+            }
+        }
+
         $dni   = sanitize_text_field($_POST['dni'] ?? '');
         $email = sanitize_email($_POST['email'] ?? '');
 

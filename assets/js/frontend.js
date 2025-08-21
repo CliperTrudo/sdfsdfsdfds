@@ -24,6 +24,15 @@ jQuery(document).ready(function($) {
     var email = $('#tb_email').val().trim();
     var nonce = $('#tb_booking_nonce_field').val();
 
+    var recaptcha = '';
+    if (typeof grecaptcha !== 'undefined') {
+      recaptcha = grecaptcha.getResponse();
+      if (!recaptcha) {
+        $('#tb_dni_message').removeClass('tb-hidden').addClass('tb-message-error').text('Por favor, completa el reCAPTCHA.');
+        return;
+      }
+    }
+
     $('#tb_dni_message').addClass('tb-hidden').removeClass('tb-message-error').text('');
 
     $.ajax({
@@ -33,7 +42,8 @@ jQuery(document).ready(function($) {
         action: 'tb_verify_dni',
         dni: dni,
         email: email,
-        nonce: nonce
+        nonce: nonce,
+        'g-recaptcha-response': recaptcha
       },
       success: function(response) {
         if (response.success) {
@@ -48,6 +58,11 @@ jQuery(document).ready(function($) {
       },
       error: function() {
         $('#tb_dni_message').removeClass('tb-hidden').addClass('tb-message-error').text('Error en la verificación.');
+      },
+      complete: function() {
+        if (typeof grecaptcha !== 'undefined') {
+          grecaptcha.reset();
+        }
       }
     });
   });

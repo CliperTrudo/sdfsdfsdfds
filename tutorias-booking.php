@@ -29,6 +29,14 @@ if ( ! defined( 'TB_PLUGIN_DIR' ) ) {
     define( 'TB_PLUGIN_DIR', plugin_dir_path( TB_PLUGIN_FILE ) );
 }
 
+// Google reCAPTCHA keys (defined via environment variables or wp-config)
+if ( ! defined( 'TB_RECAPTCHA_SITE_KEY' ) ) {
+    define( 'TB_RECAPTCHA_SITE_KEY', getenv('TB_RECAPTCHA_SITE_KEY') ?: '' );
+}
+if ( ! defined( 'TB_RECAPTCHA_SECRET_KEY' ) ) {
+    define( 'TB_RECAPTCHA_SECRET_KEY', getenv('TB_RECAPTCHA_SECRET_KEY') ?: '' );
+}
+
 // Composer autoload
 $composerAutoload = TB_PLUGIN_DIR . 'vendor/autoload.php';
 if (file_exists($composerAutoload)) {

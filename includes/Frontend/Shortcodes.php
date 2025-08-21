@@ -12,10 +12,17 @@ function enqueue_assets()
         [],
         filemtime(TB_PLUGIN_DIR . $css_rel)
     );
+
+    $deps = ['jquery'];
+    if (TB_RECAPTCHA_SITE_KEY) {
+        wp_enqueue_script('google-recaptcha', 'https://www.google.com/recaptcha/api.js', [], null, true);
+        $deps[] = 'google-recaptcha';
+    }
+
     wp_enqueue_script(
         'tb-frontend',
         plugins_url($js_rel, TB_PLUGIN_FILE),
-        ['jquery'],
+        $deps,
         filemtime(TB_PLUGIN_DIR . $js_rel),
         true
     );
