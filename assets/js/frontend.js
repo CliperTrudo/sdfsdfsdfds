@@ -17,66 +17,6 @@ jQuery(document).ready(function($) {
     return [year, month, day].join('-');
   }
 
-  // Paso 1: verificación de DNI y correo
-  $('#tb_dni_form').submit(function(e) {
-    e.preventDefault();
-    var dni   = $('#tb_dni').val().trim();
-    var email = $('#tb_email').val().trim();
-    var nonce = $('#tb_booking_nonce_field').val();
-
-    $('#tb_dni_message').addClass('tb-hidden').removeClass('tb-message-error').text('');
-
-    $.ajax({
-      url: ajaxurl,
-      type: 'POST',
-      data: {
-        action: 'tb_verify_dni',
-        dni: dni,
-        email: email,
-        nonce: nonce
-      },
-      success: function(response) {
-        if (response.success) {
-          $('#tb_dni_verified').val(dni);
-          $('#tb_email_verified').val(email);
-          $('#tb_dni_step').fadeOut(function() {
-            $('#tb_exam_date_step').removeClass('tb-hidden').hide().fadeIn();
-          });
-        } else {
-          $('#tb_dni_message').removeClass('tb-hidden').addClass('tb-message-error').text(response.data);
-        }
-      },
-      error: function() {
-        $('#tb_dni_message').removeClass('tb-hidden').addClass('tb-message-error').text('Error en la verificación.');
-      }
-    });
-  });
-
-  // Paso 2: selección de fecha de examen
-  $('#tb_exam_date_form').submit(function(e) {
-    e.preventDefault();
-    var examDate = $('#tb_exam_date').val();
-    var currentDate = formatDate(new Date());
-
-    $('#tb_exam_date_message').addClass('tb-hidden').removeClass('tb-message-error').text('');
-
-    if (!examDate || examDate < currentDate) {
-      $('#tb_exam_date_message').removeClass('tb-hidden').addClass('tb-message-error').text('La fecha del examen no puede ser anterior a hoy.');
-      return;
-    }
-
-    var dni   = $('#tb_dni_verified').val();
-    var email = $('#tb_email_verified').val();
-    $('#tb_dni_final').val(dni);
-    $('#tb_email_final').val(email);
-    $('#tb_exam_date_final').val(examDate);
-    $('#tb_summary').html('<strong>DNI:</strong> ' + dni + ' | <strong>Email:</strong> ' + email + ' | <strong>Fecha de Examen:</strong> ' + examDate);
-
-    $('#tb_exam_date_step').fadeOut(function() {
-      $('#tb_tutor_selection_step').removeClass('tb-hidden').hide().fadeIn();
-    });
-  });
-
   // Renderiza las franjas horarias para una fecha en un modal flotante
   function renderSlotsForDate(date) {
     var overlay = $('#tb_slots_overlay');
