@@ -70,7 +70,9 @@ function render_form_shortcode($atts = [])
     $tutores             = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores ORDER BY nombre ASC");
 
     ob_start();
+    echo '<div class="shortcode-sandbox">';
     include TB_PLUGIN_DIR . 'templates/frontend/booking-form.php';
+    echo '</div>';
     return ob_get_clean();
 }
 add_shortcode('formulario_dni', __NAMESPACE__ . '\\render_form_shortcode');
