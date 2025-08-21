@@ -1,3 +1,4 @@
+
 (() => {
   if (customElements.get('tb-widget-aislado')) return;
 
@@ -22,3 +23,4 @@
   }
   customElements.define('tb-widget-aislado', TBWidgetAislado);
 })();
+

@@ -93,10 +93,12 @@ add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_isolated_widget_scri
 
 /**
  * Render shortcode that wraps content in a Shadow DOM web component.
+
  *
  * @param array  $atts    Shortcode attributes.
  * @param string $content Content within shortcode.
  * @return string
+
  */
 function render_isolated_widget_shortcode($atts = [], $content = '')
 {
@@ -118,5 +120,6 @@ function render_isolated_widget_shortcode($atts = [], $content = '')
          . '<h3 class="title">' . esc_html($atts['title']) . '</h3>'
          . do_shortcode($content)
          . '</tb-widget-aislado>';
+
 }
 add_shortcode('tb_widget_aislado', __NAMESPACE__ . '\\render_isolated_widget_shortcode');
