@@ -6,11 +6,7 @@ function enqueue_assets()
     $css_rel = 'assets/css/frontend.css';
     $js_rel  = 'assets/js/frontend.js';
 
-    wp_enqueue_style(
-        'tb-frontend',
-        plugins_url($css_rel, TB_PLUGIN_FILE),
-        [],
-        filemtime(TB_PLUGIN_DIR . $css_rel)
+    wp_enqueue_style('tb-frontend', plugins_url($css_rel, TB_PLUGIN_FILE), [], filemtime(TB_PLUGIN_DIR . $css_rel)
     );
 
     $deps = ['jquery'];
