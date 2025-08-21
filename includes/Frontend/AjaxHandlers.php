@@ -22,6 +22,9 @@ class AjaxHandlers {
         // Hook para procesar la reserva (para usuarios logueados y no logueados)
         add_action('wp_ajax_tb_process_booking', [self::class, 'ajax_process_booking']);
         add_action('wp_ajax_nopriv_tb_process_booking', [self::class, 'ajax_process_booking']);
+        // Verificación de DNI y correo
+        add_action('wp_ajax_tb_verify_dni', [self::class, 'ajax_verify_dni']);
+        add_action('wp_ajax_nopriv_tb_verify_dni', [self::class, 'ajax_verify_dni']);
         error_log('TutoriasBooking: AjaxHandlers::init() - Hooks AJAX registrados.');
     }
 
@@ -166,6 +169,37 @@ class AjaxHandlers {
         // Enviar las franjas horarias filtradas (disponibles) al frontend en formato JSON
         wp_send_json_success($filtered_slots);
         error_log('TutoriasBooking: ajax_get_available_slots() - Respuesta JSON enviada.');
+    }
+
+    /**
+     * Verifica que el DNI y el correo existan en la base de datos y no tengan cita previa.
+     */
+    public static function ajax_verify_dni() {
+        global $wpdb;
+
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tb_booking_nonce')) {
+            wp_send_json_error('Error de seguridad. Nonce inválido.');
+        }
+
+        $dni   = sanitize_text_field($_POST['dni'] ?? '');
+        $email = sanitize_email($_POST['email'] ?? '');
+
+        if (empty($dni) || empty($email)) {
+            wp_send_json_error('Faltan datos.');
+        }
+
+        $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
+        $alumno = $wpdb->get_row($wpdb->prepare("SELECT tiene_cita FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
+
+        if ($alumno) {
+            if (intval($alumno->tiene_cita) === 0) {
+                wp_send_json_success('Datos verificados.');
+            } else {
+                wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
+            }
+        } else {
+            wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.');
+        }
     }
 
     /**
