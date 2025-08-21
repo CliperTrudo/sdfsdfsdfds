@@ -13,9 +13,10 @@
             <input type="submit" name="tb_submit_dni" value="Verificar Datos" class="tb-button">
         </p>
     </form>
+    <div id="tb_dni_message" class="tb-message tb-hidden"></div>
 </div>
 
-<div id="tb_exam_date_step" class="tb-container tb-hidden" <?php echo $hidden_style; ?>>
+<div id="tb_exam_date_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
     <h3>Seleccionar Fecha de Examen</h3>
     <form id="tb_exam_date_form" method="post">
         <input type="hidden" id="tb_dni_verified" name="tb_dni_verified" value="<?php echo esc_attr($dni_verified); ?>">
@@ -30,9 +31,10 @@
             <input type="submit" name="tb_submit_exam_date" value="Siguiente" class="tb-button">
         </p>
     </form>
+    <div id="tb_exam_date_message" class="tb-message tb-hidden"></div>
 </div>
 
-<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $hidden_style; ?>>
+<div id="tb_tutor_selection_step" class="tb-container tb-hidden" <?php echo $container_style; ?>>
     <h3>Reservar Tutoría</h3>
     <p id="tb_summary" class="tb-summary">
         <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
