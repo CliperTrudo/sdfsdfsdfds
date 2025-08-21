@@ -6,7 +6,11 @@ function enqueue_assets()
     $css_rel = 'assets/css/frontend.css';
     $js_rel  = 'assets/js/frontend.js';
 
-    wp_enqueue_style('tb-frontend', plugins_url($css_rel, TB_PLUGIN_FILE), [], filemtime(TB_PLUGIN_DIR . $css_rel)
+    wp_enqueue_style(
+        'tb-frontend',
+        plugins_url($css_rel, TB_PLUGIN_FILE),
+        [],
+        filemtime(TB_PLUGIN_DIR . $css_rel)
     );
 
     $deps = ['jquery'];
@@ -33,7 +37,7 @@ function enqueue_assets()
         'ajaxUrl' => admin_url('admin-ajax.php')
     ]);
 }
-add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets');
+add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets', 100);
 
 function render_form_shortcode($atts = [])
 {
