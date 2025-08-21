@@ -6,10 +6,19 @@ function enqueue_assets()
     $css_rel = 'assets/css/frontend.css';
     $js_rel  = 'assets/js/frontend.js';
 
+    // Ensure our stylesheet loads after Elementor's if present
+    $style_deps = [];
+    if (wp_style_is('elementor-frontend', 'enqueued')) {
+        $style_deps[] = 'elementor-frontend';
+    }
+    if (wp_style_is('elementor-pro', 'enqueued')) {
+        $style_deps[] = 'elementor-pro';
+    }
+
     wp_enqueue_style(
         'tb-frontend',
         plugins_url($css_rel, TB_PLUGIN_FILE),
-        [],
+        $style_deps,
         filemtime(TB_PLUGIN_DIR . $css_rel)
     );
 
@@ -37,7 +46,8 @@ function enqueue_assets()
         'ajaxUrl' => admin_url('admin-ajax.php')
     ]);
 }
-add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets', 100);
+// Load assets after most styles/scripts so our CSS takes precedence
+add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_assets', PHP_INT_MAX);
 
 function render_form_shortcode($atts = [])
 {
