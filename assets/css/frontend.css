@@ -8,29 +8,6 @@
   --tb-container-max-width: 450px;
 }
 
-/* Sandbox por clase para aislar estilos de botones */
-.shortcode-sandbox :is(button,[type="button"],[type="submit"]) {
-  all: revert;
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: initial;
-  text-decoration: none;
-}
-
-/* Neutraliza estados hover/focus aplicados globalmente */
-.shortcode-sandbox :is(button,[type="button"],[type="submit"]):hover,
-.shortcode-sandbox :is(button,[type="button"],[type="submit"]):focus {
-  all: revert;
-  font: inherit;
-  color: inherit !important;
-  background: none !important;
-  border-color: currentColor;
-  text-decoration: none !important;
-  box-shadow: none !important;
-  outline: revert;
-}
-
 /* Contenedor base del plugin */
 .tb-container {
   width: 100%;
