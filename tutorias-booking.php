@@ -29,6 +29,21 @@ if ( ! defined( 'TB_PLUGIN_DIR' ) ) {
     define( 'TB_PLUGIN_DIR', plugin_dir_path( TB_PLUGIN_FILE ) );
 }
 
+// Load environment variables from .env file if present
+$env_file = TB_PLUGIN_DIR . '.env';
+if (file_exists($env_file)) {
+    $env = parse_ini_file($env_file, false, INI_SCANNER_RAW);
+    if (is_array($env)) {
+        foreach ($env as $key => $value) {
+            if (getenv($key) === false) {
+                putenv("{$key}={$value}");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
+}
+
 // Google reCAPTCHA keys (defined via environment variables or wp-config)
 if ( ! defined( 'TB_RECAPTCHA_SITE_KEY' ) ) {
     define( 'TB_RECAPTCHA_SITE_KEY', getenv('TB_RECAPTCHA_SITE_KEY') ?: '' );
