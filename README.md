@@ -39,6 +39,14 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
    Por defecto, el formulario ocupa un ancho máximo de **450px**, pero puedes ajustarlo usando el atributo opcional
    `width`, por ejemplo: ` [formulario_dni width="400px"] ` o ` [formulario_dni width="50%"] `.
 
+4. Para mostrar contenido con estilos completamente aislados, utiliza el shortcode:
+   ```
+   [tb_widget_aislado title="Mi título" variant="info"]Tu contenido[/tb_widget_aislado]
+   ```
+   El atributo opcional `title` define el encabezado (por defecto "Contenido aislado").
+   El atributo `variant` permite elegir estilos predefinidos, como `info` para un mensaje informativo.
+   El contenido y el título se mueven al Shadow DOM, de modo que los estilos globales no los afectan.
+
 ## Estructura del proyecto
 ```
 assets/      CSS y JavaScript del frontend y del área de administración.
