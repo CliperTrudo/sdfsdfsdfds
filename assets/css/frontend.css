@@ -27,6 +27,8 @@
   box-sizing: border-box;
 }
 
+.tb-hidden { display: none; }
+
 /* Títulos de sección */
 .tb-container h3 {
   text-align: center;
