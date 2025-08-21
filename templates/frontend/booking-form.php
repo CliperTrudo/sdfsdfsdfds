@@ -23,6 +23,7 @@
 </div>
 
 <div id="tb_exam_date_step" class="tb-container tb-hidden" style="display:none;<?php echo esc_attr($container_style); ?>">
+    <button type="button" id="tb_back_to_dni" class="tb-back-button">&larr;</button>
     <h3>Seleccionar Fecha de Examen</h3>
     <form id="tb_exam_date_form" method="post">
         <input type="hidden" id="tb_dni_verified" name="tb_dni_verified" value="<?php echo esc_attr($dni_verified); ?>">
@@ -41,10 +42,9 @@
 </div>
 
 <div id="tb_tutor_selection_step" class="tb-container tb-hidden" style="display:none;<?php echo esc_attr($container_style); ?>">
+    <button type="button" id="tb_back_to_exam_date" class="tb-back-button">&larr;</button>
     <h3>Reservar Tutoría</h3>
     <p id="tb_summary" class="tb-summary">
-        <strong>DNI:</strong> <?php echo esc_html($dni_verified); ?> |
-        <strong>Email:</strong> <?php echo esc_html($email_verified); ?> |
         <strong>Fecha de Examen:</strong> <?php echo esc_html($exam_date_selected); ?>
     </p>
 
@@ -63,15 +63,15 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-
-            <div class="tb-action-feedback-area">
-                <div id="tb_response_message" class="tb-message tb-hidden"></div>
-                <input type="submit" id="tb_submit_booking" value="Confirmar Reserva" class="tb-button" disabled>
-            </div>
         </div>
         <div id="tb_calendar_container" class="tb-calendar-container">
             <p>Selecciona un tutor para ver las franjas horarias disponibles.</p>
         </div>
+        <div id="tb_confirmation_area" class="tb-confirm-area">
+            <span id="tb_selected_slot" class="tb-selected-slot"></span>
+            <input type="submit" id="tb_submit_booking" value="Confirmar Reserva" class="tb-button" disabled>
+        </div>
+        <div id="tb_response_message" class="tb-message tb-hidden"></div>
     </form>
     <div id="tb_booking_details_container"></div>
 </div>

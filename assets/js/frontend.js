@@ -67,6 +67,19 @@ jQuery(document).ready(function($) {
     });
   });
 
+  // Botones para volver al paso anterior
+  $('#tb_back_to_dni').on('click', function() {
+    $('#tb_exam_date_step').fadeOut(function() {
+      $('#tb_dni_step').fadeIn();
+    });
+  });
+
+  $('#tb_back_to_exam_date').on('click', function() {
+    $('#tb_tutor_selection_step').fadeOut(function() {
+      $('#tb_exam_date_step').fadeIn();
+    });
+  });
+
   // Paso 2: selección de fecha de examen
   $('#tb_exam_date_form').submit(function(e) {
     e.preventDefault();
@@ -85,7 +98,7 @@ jQuery(document).ready(function($) {
     $('#tb_dni_final').val(dni);
     $('#tb_email_final').val(email);
     $('#tb_exam_date_final').val(examDate);
-    $('#tb_summary').html('<strong>DNI:</strong> ' + dni + ' | <strong>Email:</strong> ' + email + ' | <strong>Fecha de Examen:</strong> ' + examDate);
+    $('#tb_summary').html('<strong>Fecha de Examen:</strong> ' + examDate);
 
     $('#tb_exam_date_step').fadeOut(function() {
       $('#tb_tutor_selection_step').removeClass('tb-hidden').hide().fadeIn();
@@ -277,7 +290,8 @@ jQuery(document).ready(function($) {
               selectedDate = null; // No preseleccionar fecha
 
               // Pintar calendario + texto del slot seleccionado
-              calendarContainer.html('<div id="tb_calendar"></div><div id="tb_selected_slot" class="tb-selected-slot"></div>');
+              calendarContainer.html('<div id="tb_calendar"></div>');
+              $('#tb_selected_slot').text('');
 
               // Crear overlay si no existe
               if (!$('#tb_slots_overlay').length) {

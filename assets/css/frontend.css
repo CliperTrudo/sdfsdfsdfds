@@ -60,6 +60,28 @@
   font-weight: 600;
 }
 
+.tb-back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  color: var(--tb-primary-color);
+  margin-bottom: 10px;
+}
+.tb-back-button:hover {
+  color: var(--tb-primary-dark);
+}
+
+.tb-confirm-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  text-align: center;
+}
+
 /* Calendario de disponibilidad */
 .tb-calendar-month { margin-bottom: 25px; }
 .tb-calendar-month-name { font-weight: 600; }
