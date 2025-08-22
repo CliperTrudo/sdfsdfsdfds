@@ -331,6 +331,15 @@ class AjaxHandlers {
             // Calcular el día de la semana de la fecha del examen
             $day_of_week = date_i18n('l', strtotime($exam_date));
 
+            // Enviar correos electrónicos a alumno y tutor con los datos de la cita
+            $student_subject = 'Confirmación de tutoría';
+            $student_message = "Hola {$nombreAlumno},\n\nTu cita de tutoría ha sido confirmada.\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}\n\nGracias.";
+            wp_mail($email, $student_subject, $student_message);
+
+            $tutor_subject = 'Nueva tutoría reservada';
+            $tutor_message = "Se ha reservado una tutoría con {$nombreAlumno} {$apellidoAlumno} ({$dni}).\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nEmail del alumno: {$email}\nEnlace de la reunión: {$event->hangoutLink}";
+            wp_mail($tutor->email, $tutor_subject, $tutor_message);
+
             // Enviar respuesta de éxito al frontend con los detalles de la reserva
             wp_send_json_success([
                 'message'            => 'Reserva confirmada con éxito. Se ha enviado una invitación por correo electrónico.',
