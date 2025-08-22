@@ -39,6 +39,12 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
    Por defecto, el formulario ocupa un ancho máximo de **450px**, pero puedes ajustarlo usando el atributo opcional
    `width`, por ejemplo: ` [formulario_dni width="400px"] ` o ` [formulario_dni width="50%"] `.
 
+4. Para que los tutores conecten su calendario desde el frontend, inserta el shortcode:
+   ```
+   [tutor_connect]
+   ```
+   Tras introducir su correo, el tutor podrá autorizar el acceso a su Google Calendar.
+
 ## Estructura del proyecto
 ```
 assets/      CSS y JavaScript del frontend y del área de administración.
