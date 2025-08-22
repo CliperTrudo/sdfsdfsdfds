@@ -13,6 +13,12 @@ class AdminController {
     public static function handle_page() {
         global $wpdb;
 
+        if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
+            $tutor_id = isset($_GET['tutor_id']) ? intval($_GET['tutor_id']) : 0;
+            self::handle_assign_availability($tutor_id);
+            return;
+        }
+
         $messages = [];
 
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
@@ -156,6 +162,48 @@ class AdminController {
         }
 
         include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
+    }
+
+    private static function handle_assign_availability($tutor_id) {
+        global $wpdb;
+
+        $messages = [];
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
+        if (!$tutor) {
+            $messages[] = ['type' => 'error', 'text' => 'Tutor no encontrado.'];
+            $existing_dates = [];
+            include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
+            return;
+        }
+
+        if (isset($_POST['tb_assign_availability'])) {
+            $start = sanitize_text_field($_POST['tb_start_time'] ?? '');
+            $end   = sanitize_text_field($_POST['tb_end_time'] ?? '');
+            $dates = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array)$_POST['tb_dates']) : [];
+            if ($start && $end && !empty($dates)) {
+                foreach ($dates as $date) {
+                    $start_dt = $date . 'T' . $start . ':00';
+                    $end_dt   = $date . 'T' . $end . ':00';
+                    CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                }
+                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+            } else {
+                $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
+            }
+        }
+
+        $start_range = date('Y-m-d');
+        $end_range = date('Y-m-d', strtotime('+6 months'));
+        $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+        $existing_dates = [];
+        foreach ($events as $ev) {
+            if (isset($ev->start->dateTime)) {
+                $existing_dates[] = date('Y-m-d', strtotime($ev->start->dateTime));
+            }
+        }
+        $existing_dates = array_values(array_unique($existing_dates));
+
+        include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
     }
 
     private static function import_tutores_from_xlsx($file_path) {
