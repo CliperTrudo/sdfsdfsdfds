@@ -88,26 +88,16 @@ function render_tutor_connect_shortcode($atts = [])
         $container_style = 'max-width:' . esc_attr($atts['width']) . ';';
     }
 
-    $tutor_id    = 0;
-    $auth_url    = '';
+    $auth_url    = add_query_arg(['action' => 'tb_auth_google'], home_url());
     $message     = '';
     $message_type = '';
 
     if (isset($_GET['google_auth']) && $_GET['google_auth'] === 'success') {
         $message = 'Cuenta conectada correctamente.';
         $message_type = 'success';
-    } elseif (!empty($_POST['tb_tutor_email']) && isset($_POST['tb_tutor_connect_nonce']) && wp_verify_nonce($_POST['tb_tutor_connect_nonce'], 'tb_tutor_connect')) {
-        $email = sanitize_email($_POST['tb_tutor_email']);
-        $tutor_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}tutores WHERE email = %s", $email));
-        if ($tutor_id) {
-            $auth_url = add_query_arg([
-                'action'   => 'tb_auth_google',
-                'tutor_id' => $tutor_id
-            ], home_url());
-        } else {
-            $message = 'Correo no encontrado.';
-            $message_type = 'error';
-        }
+    } elseif (isset($_GET['google_auth']) && $_GET['google_auth'] === 'not_found') {
+        $message = 'Usuario no se encuentra en la base de datos.';
+        $message_type = 'error';
     }
 
     ob_start();
