@@ -22,6 +22,9 @@ class AdminMenu {
             return;
         }
         wp_enqueue_style('tb-admin', TB_PLUGIN_URL . 'assets/css/admin.css');
+        if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
+            wp_enqueue_style('tb-frontend', TB_PLUGIN_URL . 'assets/css/frontend.css');
+        }
         wp_enqueue_script('tb-admin', TB_PLUGIN_URL . 'assets/js/admin.js', ['jquery'], false, true);
     }
 }

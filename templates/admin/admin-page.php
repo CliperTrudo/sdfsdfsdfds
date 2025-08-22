@@ -32,12 +32,15 @@
                     <?php $tok = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores_tokens WHERE tutor_id=%d", $t->id)); ?>
                     <?php $est = $tok ? '✅ Conectado' : '❌ No conectado'; ?>
                     <?php $url = admin_url("admin.php?page=tb-tutores&action=tb_auth_google&tutor_id={$t->id}"); ?>
+                    <?php $avail_url = admin_url("admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id={$t->id}"); ?>
                     <tr>
                         <td><?php echo esc_html($t->nombre); ?></td>
                         <td><?php echo esc_html($t->email); ?></td>
                         <td><?php echo $est; ?></td>
                         <td>
                             <a href="<?php echo esc_url($url); ?>" class="tb-link">Conectar Calendar</a>
+                            <span> | </span>
+                            <a href="<?php echo esc_url($avail_url); ?>" class="tb-link">Asignar Disponibilidad</a>
                             <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este tutor?');">
                                 <input type="hidden" name="tb_delete_tutor_id" value="<?php echo esc_attr($t->id); ?>">
                                 <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
