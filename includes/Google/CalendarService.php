@@ -78,7 +78,14 @@ class CalendarService {
             'conferenceData' => ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]]
         ]);
         try {
-            return $service->events->insert($calendarId, $event, ['conferenceDataVersion'=>1]);
+            return $service->events->insert(
+                $calendarId,
+                $event,
+                [
+                    'conferenceDataVersion' => 1,
+                    'sendUpdates' => 'all',
+                ]
+            );
         } catch (\Exception $e) {
             return null;
         }
