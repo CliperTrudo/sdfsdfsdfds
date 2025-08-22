@@ -1,3 +1,9 @@
+.tb-admin-wrapper {
+    max-width: 900px;
+    padding: 20px;
+    background: #fff;
+}
+
 .tb-title {
     font-size: 26px;
     margin-bottom: 10px;
@@ -88,33 +94,4 @@
     margin: 0 auto; /* Esto centra el contenedor horizontalmente */
     padding: 20px;
     background: #fff;
-}
-
-.tb-card {
-    background: #f9f9f9;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    max-width: 500px;
-}
-#tb-calendar {
-    margin-top: 15px;
-}
-#tb-calendar .tb-date-unavailable a {
-    background: #e0e0e0 !important;
-    color: #777 !important;
-    cursor: default !important;
-}
-#tb-selected-dates {
-    list-style: none;
-    padding: 0;
-    margin-top: 10px;
-}
-#tb-selected-dates li {
-    display: inline-block;
-    background: #2271b1;
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 3px;
-    margin: 2px;
 }

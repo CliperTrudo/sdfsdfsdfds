@@ -38,8 +38,6 @@
                         <td><?php echo $est; ?></td>
                         <td>
                             <a href="<?php echo esc_url($url); ?>" class="tb-link">Conectar Calendar</a>
-                            <?php $disp = admin_url("admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id={$t->id}"); ?>
-                            <a href="<?php echo esc_url($disp); ?>" class="tb-link">Asignar Disponibilidad</a>
                             <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este tutor?');">
                                 <input type="hidden" name="tb_delete_tutor_id" value="<?php echo esc_attr($t->id); ?>">
                                 <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
