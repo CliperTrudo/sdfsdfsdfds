@@ -172,7 +172,7 @@ class AdminController {
         if (!$tutor) {
             $messages[] = ['type' => 'error', 'text' => 'Tutor no encontrado.'];
             $existing_dates = [];
-            include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
+            self::render_assign_availability($tutor, $messages, $existing_dates);
             return;
         }
 
@@ -203,7 +203,37 @@ class AdminController {
         }
         $existing_dates = array_values(array_unique($existing_dates));
 
-        include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
+        self::render_assign_availability($tutor, $messages, $existing_dates);
+    }
+
+    private static function render_assign_availability($tutor, $messages, $existing_dates) {
+        ?>
+        <script>
+            var tbExistingAvailabilityDates = <?php echo wp_json_encode($existing_dates); ?>;
+        </script>
+        <div class="tb-admin-wrapper">
+            <?php foreach ($messages as $msg): ?>
+                <div class="<?php echo $msg['type'] === 'success' ? 'notice-success' : 'notice-error'; ?> notice is-dismissible tb-notice">
+                    <p><?php echo esc_html($msg['text']); ?></p>
+                </div>
+            <?php endforeach; ?>
+
+            <div class="tb-card">
+                <h2>Asignar Disponibilidad a <?php echo esc_html($tutor->nombre ?? ''); ?></h2>
+                <form method="POST">
+                    <label for="tb-start">Inicio</label>
+                    <input id="tb-start" type="time" name="tb_start_time" required>
+                    <label for="tb-end">Fin</label>
+                    <input id="tb-end" type="time" name="tb_end_time" required>
+                    <div id="tb-calendar"></div>
+                    <ul id="tb-selected-dates"></ul>
+                    <div id="tb-hidden-dates"></div>
+                    <button type="submit" name="tb_assign_availability" class="tb-button">Guardar</button>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=tb-tutores')); ?>" class="tb-button">Volver</a>
+                </form>
+            </div>
+        </div>
+        <?php
     }
 
     private static function import_tutores_from_xlsx($file_path) {
