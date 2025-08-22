@@ -30,6 +30,7 @@ class GoogleClient {
         $client->addScope(\Google_Service_Calendar::CALENDAR_EVENTS);
         $client->addScope(\Google_Service_Calendar::CALENDAR_READONLY);
         $client->addScope('https://www.googleapis.com/auth/meetings');
+        $client->addScope(\Google_Service_Oauth2::USERINFO_EMAIL);
         return $client;
     }
 
@@ -79,30 +80,54 @@ class GoogleClient {
     public static function handle_oauth() {
         if (isset($_GET['action']) && $_GET['action'] == 'tb_auth_google') {
             $tutor_id = isset($_GET['tutor_id']) ? intval($_GET['tutor_id']) : 0;
-            if (!$tutor_id) { wp_die('ID de tutor no válido.'); }
             $client = self::get_client();
-            $client->setState('google_auth_' . $tutor_id);
+            if ($tutor_id) {
+                $client->setState('google_auth_' . $tutor_id);
+            } else {
+                $client->setState('google_auth_email');
+            }
             wp_redirect($client->createAuthUrl());
             exit;
         }
 
-        if (isset($_GET['code']) && isset($_GET['state']) && strpos($_GET['state'], 'google_auth_') === 0) {
-            $tutor_id = intval(str_replace('google_auth_', '', $_GET['state']));
-            if (!$tutor_id) { wp_die('ID de tutor no válido en el estado de Google.'); }
+        if (isset($_GET['code']) && isset($_GET['state'])) {
+            $state = $_GET['state'];
             $client = self::get_client();
             try {
                 $client->authenticate($_GET['code']);
                 $tokens = $client->getAccessToken();
-                if (isset($tokens['access_token'])) {
+                if (!isset($tokens['access_token'])) {
+                    wp_die('No se pudo obtener el token de acceso de Google.');
+                }
+
+                if ($state === 'google_auth_email') {
+                    $oauth2 = new \Google_Service_Oauth2($client);
+                    $email = $oauth2->userinfo->get()->getEmail();
+                    global $wpdb;
+                    $tutor_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}tutores WHERE email=%s", $email));
+                    if ($tutor_id) {
+                        self::save_tokens($tutor_id, $tokens['access_token'], $tokens['refresh_token'] ?? null, $tokens['expires_in']);
+                        $redirect = is_admin()
+                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
+                            : home_url('?google_auth=success');
+                    } else {
+                        $redirect = is_admin()
+                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_not_found')
+                            : home_url('?google_auth=not_found');
+                    }
+                } elseif (strpos($state, 'google_auth_') === 0) {
+                    $tutor_id = intval(str_replace('google_auth_', '', $state));
+                    if (!$tutor_id) { wp_die('ID de tutor no válido en el estado de Google.'); }
                     self::save_tokens($tutor_id, $tokens['access_token'], $tokens['refresh_token'] ?? null, $tokens['expires_in']);
                     $redirect = is_admin()
                         ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
                         : home_url('?google_auth=success');
-                    wp_redirect($redirect);
-                    exit;
                 } else {
-                    wp_die('No se pudo obtener el token de acceso de Google.');
+                    return;
                 }
+
+                wp_redirect($redirect);
+                exit;
             } catch (\Exception $e) {
                 wp_die('Error de autenticación de Google: ' . $e->getMessage());
             }
