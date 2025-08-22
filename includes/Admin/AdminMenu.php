@@ -22,6 +22,8 @@ class AdminMenu {
             return;
         }
         wp_enqueue_style('tb-admin', TB_PLUGIN_URL . 'assets/css/admin.css');
-        wp_enqueue_script('tb-admin', TB_PLUGIN_URL . 'assets/js/admin.js', ['jquery'], false, true);
+        wp_enqueue_style('tb-jquery-ui', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css');
+        wp_enqueue_script('jquery-ui-datepicker');
+        wp_enqueue_script('tb-admin', TB_PLUGIN_URL . 'assets/js/admin.js', ['jquery', 'jquery-ui-datepicker'], false, true);
     }
 }

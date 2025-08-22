@@ -13,6 +13,11 @@ class AdminController {
     public static function handle_page() {
         global $wpdb;
 
+        if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability' && isset($_GET['tutor_id'])) {
+            self::assign_availability_page(intval($_GET['tutor_id']));
+            return;
+        }
+
         $messages = [];
 
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
@@ -156,6 +161,32 @@ class AdminController {
         }
 
         include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
+    }
+
+    private static function assign_availability_page($tutor_id) {
+        global $wpdb;
+
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor) {
+            return;
+        }
+
+        $messages = [];
+        if (isset($_POST['tb_assign_availability'])) {
+            $start = sanitize_text_field($_POST['tb_start_time']);
+            $end   = sanitize_text_field($_POST['tb_end_time']);
+            $dates = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array)$_POST['tb_dates']) : [];
+            foreach ($dates as $date) {
+                $start_dt = date('Y-m-d\TH:i:s', strtotime($date . ' ' . $start));
+                $end_dt   = date('Y-m-d\TH:i:s', strtotime($date . ' ' . $end));
+                CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+            }
+            if (!empty($dates)) {
+                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada.'];
+            }
+        }
+
+        include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
     }
 
     private static function import_tutores_from_xlsx($file_path) {
