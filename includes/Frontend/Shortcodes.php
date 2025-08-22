@@ -93,10 +93,33 @@ add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_isolated_widget_scri
 
 /**
  * Render shortcode that wraps content in a Shadow DOM web component.
+
+ *
+ * @param array  $atts    Shortcode attributes.
+ * @param string $content Content within shortcode.
+ * @return string
+
  */
 function render_isolated_widget_shortcode($atts = [], $content = '')
 {
     wp_enqueue_script('tb-widget-aislado');
-    return '<tb-widget-aislado>' . do_shortcode($content) . '</tb-widget-aislado>';
+
+    $atts = shortcode_atts([
+        'title'   => 'Contenido aislado',
+        'variant' => '',
+    ], $atts, 'tb_widget_aislado');
+
+    // $content = wp_kses_post($content);
+
+    $styles = '';
+    if ($atts['variant'] === 'info') {
+        $styles = ' style="--tb-card-bg:#eef6ff;--tb-card-fg:#0b3d91"';
+    }
+
+    return '<tb-widget-aislado' . $styles . '>'
+         . '<h3 class="title">' . esc_html($atts['title']) . '</h3>'
+         . do_shortcode($content)
+         . '</tb-widget-aislado>';
+
 }
 add_shortcode('tb_widget_aislado', __NAMESPACE__ . '\\render_isolated_widget_shortcode');

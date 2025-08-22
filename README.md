@@ -41,9 +41,13 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
 
 4. Para mostrar contenido con estilos completamente aislados, utiliza el shortcode:
    ```
-   [tb_widget_aislado]Tu contenido[/tb_widget_aislado]
+
+   [tb_widget_aislado title="Mi título" variant="info"]Tu contenido[/tb_widget_aislado]
    ```
-   Este shortcode renderiza un pequeño "card" dentro de un Web Component con **Shadow DOM**, evitando que estilos globales (p.ej. de Elementor) afecten a su presentación.
+   El atributo opcional `title` define el encabezado (por defecto "Contenido aislado").
+   El atributo `variant` permite elegir estilos predefinidos, como `info` para un mensaje informativo.
+   El contenido y el título se mueven al Shadow DOM, de modo que los estilos globales no los afectan.
+
 
 ## Estructura del proyecto
 ```
