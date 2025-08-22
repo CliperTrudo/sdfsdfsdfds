@@ -4,14 +4,6 @@ jQuery(document).ready(function($) {
   var allSortedDates = [];        // Todas las fechas ordenadas
   var calendarStartDate, calendarEndDate, currentMonthDate, selectedDate;
 
-  // Ejemplo: comportamiento personalizado antes de enviar el formulario
-  var tbButton = document.querySelector(".tb-button");
-  if (tbButton) {
-    tbButton.addEventListener("click", function (e) {
-      console.log("Enviar button clicked");
-    });
-  }
-
   // Formatea fecha a YYYY-MM-DD
   function formatDate(date) {
     var d = new Date(date),

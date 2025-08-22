@@ -74,29 +74,3 @@ function render_form_shortcode($atts = [])
     return ob_get_clean();
 }
 add_shortcode('formulario_dni', __NAMESPACE__ . '\\render_form_shortcode');
-
-/**
- * Enqueue the JavaScript for the isolated widget web component.
- */
-function enqueue_isolated_widget_script()
-{
-    $js_rel = 'assets/js/tb-widget-aislado.js';
-    wp_register_script(
-        'tb-widget-aislado',
-        plugins_url($js_rel, TB_PLUGIN_FILE),
-        [],
-        filemtime(TB_PLUGIN_DIR . $js_rel),
-        true
-    );
-}
-add_action('wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_isolated_widget_script');
-
-/**
- * Render shortcode that wraps content in a Shadow DOM web component.
- */
-function render_isolated_widget_shortcode($atts = [], $content = '')
-{
-    wp_enqueue_script('tb-widget-aislado');
-    return '<tb-widget-aislado>' . do_shortcode($content) . '</tb-widget-aislado>';
-}
-add_shortcode('tb_widget_aislado', __NAMESPACE__ . '\\render_isolated_widget_shortcode');

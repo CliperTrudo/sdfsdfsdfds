@@ -10,7 +10,7 @@
                     <input type="email" id="tb_email" name="tb_email" required placeholder="ejemplo@correo.com">
                 </p>
                 <p class="tb-form-actions">
-                    <button type="submit" name="tb_submit_dni" class="tb-button">Enviar</button>
+                    <input type="submit" name="tb_submit_dni" value="Verificar Datos" class="tb-button">
                 </p>
             </form>
         </div>
