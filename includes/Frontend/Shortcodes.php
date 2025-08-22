@@ -88,7 +88,14 @@ function render_tutor_connect_shortcode($atts = [])
         $container_style = 'max-width:' . esc_attr($atts['width']) . ';';
     }
 
-    $auth_url    = add_query_arg(['action' => 'tb_auth_google'], home_url());
+    $current_url = home_url($_SERVER['REQUEST_URI']);
+    $auth_url    = add_query_arg(
+        [
+            'action'   => 'tb_auth_google',
+            'redirect' => urlencode($current_url)
+        ],
+        home_url()
+    );
     $message     = '';
     $message_type = '';
 

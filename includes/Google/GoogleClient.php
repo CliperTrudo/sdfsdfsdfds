@@ -80,19 +80,23 @@ class GoogleClient {
     public static function handle_oauth() {
         if (isset($_GET['action']) && $_GET['action'] == 'tb_auth_google') {
             $tutor_id = isset($_GET['tutor_id']) ? intval($_GET['tutor_id']) : 0;
+            $redirect = isset($_GET['redirect']) ? urldecode($_GET['redirect']) : '';
             $client = self::get_client();
-            if ($tutor_id) {
-                $client->setState('google_auth_' . $tutor_id);
-            } else {
-                $client->setState('google_auth_email');
+            $state = $tutor_id ? 'google_auth_' . $tutor_id : 'google_auth_email';
+            if ($redirect) {
+                $state .= '|' . urlencode($redirect);
             }
+            $client->setState($state);
             wp_redirect($client->createAuthUrl());
             exit;
         }
 
         if (isset($_GET['code']) && isset($_GET['state'])) {
-            $state = $_GET['state'];
+            $state_raw = $_GET['state'];
             $client = self::get_client();
+            $parts = explode('|', $state_raw, 2);
+            $state = $parts[0];
+            $redirect_param = isset($parts[1]) ? wp_validate_redirect(urldecode($parts[1]), false) : false;
             try {
                 $client->authenticate($_GET['code']);
                 $tokens = $client->getAccessToken();
@@ -100,6 +104,7 @@ class GoogleClient {
                     wp_die('No se pudo obtener el token de acceso de Google.');
                 }
 
+                $status = 'success';
                 if ($state === 'google_auth_email') {
                     $oauth2 = new \Google_Service_Oauth2($client);
                     $email = $oauth2->userinfo->get()->getEmail();
@@ -107,26 +112,32 @@ class GoogleClient {
                     $tutor_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}tutores WHERE email=%s", $email));
                     if ($tutor_id) {
                         self::save_tokens($tutor_id, $tokens['access_token'], $tokens['refresh_token'] ?? null, $tokens['expires_in']);
-                        $redirect = is_admin()
-                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
-                            : home_url('?google_auth=success');
                     } else {
-                        $redirect = is_admin()
-                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_not_found')
-                            : home_url('?google_auth=not_found');
+                        $status = 'not_found';
                     }
                 } elseif (strpos($state, 'google_auth_') === 0) {
                     $tutor_id = intval(str_replace('google_auth_', '', $state));
                     if (!$tutor_id) { wp_die('ID de tutor no válido en el estado de Google.'); }
                     self::save_tokens($tutor_id, $tokens['access_token'], $tokens['refresh_token'] ?? null, $tokens['expires_in']);
-                    $redirect = is_admin()
-                        ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
-                        : home_url('?google_auth=success');
                 } else {
                     return;
                 }
 
-                wp_redirect($redirect);
+                if ($redirect_param) {
+                    $final_redirect = add_query_arg('google_auth', $status, $redirect_param);
+                    wp_safe_redirect($final_redirect);
+                } else {
+                    if ($status === 'success') {
+                        $final_redirect = is_admin()
+                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
+                            : home_url('?google_auth=success');
+                    } else {
+                        $final_redirect = is_admin()
+                            ? admin_url('admin.php?page=tb-tutores&message=google_auth_not_found')
+                            : home_url('?google_auth=not_found');
+                    }
+                    wp_redirect($final_redirect);
+                }
                 exit;
             } catch (\Exception $e) {
                 wp_die('Error de autenticación de Google: ' . $e->getMessage());
