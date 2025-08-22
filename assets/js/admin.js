@@ -6,9 +6,18 @@ jQuery(function($){
     }
 
     var dates = [];
+    var unavailable = window.tbExistingAvailabilityDates || [];
     $cal.datepicker({
         dateFormat: 'yy-mm-dd',
+        beforeShowDay: function(date) {
+            var d = $.datepicker.formatDate('yy-mm-dd', date);
+            var isUnavailable = unavailable.indexOf(d) >= 0;
+            return [!isUnavailable, isUnavailable ? 'tb-date-unavailable' : ''];
+        },
         onSelect: function(dateText) {
+            if (unavailable.indexOf(dateText) >= 0) {
+                return;
+            }
             var idx = dates.indexOf(dateText);
             if (idx >= 0) {
                 dates.splice(idx, 1);

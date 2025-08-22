@@ -186,6 +186,22 @@ class AdminController {
             }
         }
 
+        $existing_dates = [];
+        $start_range = date('Y-m-d');
+        $end_range   = date('Y-m-d', strtotime('+1 year'));
+        $existing_events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+        foreach ($existing_events as $event) {
+            $start_obj = $event->getStart();
+            $date_str  = $start_obj->getDate();
+            if (!$date_str) {
+                $date_str = substr($start_obj->getDateTime(), 0, 10);
+            }
+            if ($date_str) {
+                $existing_dates[] = $date_str;
+            }
+        }
+        $existing_dates = array_values(array_unique($existing_dates));
+
         include TB_PLUGIN_DIR . 'templates/admin/assign-availability.php';
     }
 

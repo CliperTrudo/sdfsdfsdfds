@@ -1,4 +1,7 @@
 <?php /** @var array $messages */ ?>
+<script>
+    var tbExistingAvailabilityDates = <?php echo wp_json_encode($existing_dates); ?>;
+</script>
 <div class="tb-admin-wrapper">
     <?php foreach ($messages as $msg): ?>
         <div class="<?php echo $msg['type'] === 'success' ? 'notice-success' : 'notice-error'; ?> notice is-dismissible tb-notice">
