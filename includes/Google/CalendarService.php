@@ -90,4 +90,37 @@ class CalendarService {
             return null;
         }
     }
+
+    /**
+     * Delete all calendar events containing the provided DNI.
+     */
+    public static function delete_events_by_dni($dni) {
+        global $wpdb;
+        $deleted = 0;
+        $tutors = $wpdb->get_results("SELECT id, calendar_id FROM {$wpdb->prefix}tutores");
+        foreach ($tutors as $tutor) {
+            if (empty($tutor->calendar_id)) { continue; }
+            $service = self::get_calendar_service($tutor->id);
+            if (!$service) { continue; }
+            $opt = [
+                'q'            => $dni,
+                'singleEvents' => true,
+                'maxResults'   => 2500,
+            ];
+            try {
+                $events = $service->events->listEvents($tutor->calendar_id, $opt);
+                foreach ($events->getItems() as $event) {
+                    try {
+                        $service->events->delete($tutor->calendar_id, $event->id, ['sendUpdates' => 'all']);
+                        $deleted++;
+                    } catch (\Exception $e) {
+                        // Ignorar errores individuales de borrado
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignorar errores al listar eventos
+            }
+        }
+        return $deleted;
+    }
 }
