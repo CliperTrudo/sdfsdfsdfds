@@ -95,7 +95,10 @@ class GoogleClient {
                 $tokens = $client->getAccessToken();
                 if (isset($tokens['access_token'])) {
                     self::save_tokens($tutor_id, $tokens['access_token'], $tokens['refresh_token'] ?? null, $tokens['expires_in']);
-                    wp_redirect(admin_url('admin.php?page=tb-tutores&message=google_auth_success'));
+                    $redirect = is_admin()
+                        ? admin_url('admin.php?page=tb-tutores&message=google_auth_success')
+                        : home_url('?google_auth=success');
+                    wp_redirect($redirect);
                     exit;
                 } else {
                     wp_die('No se pudo obtener el token de acceso de Google.');
@@ -108,3 +111,4 @@ class GoogleClient {
 }
 
 add_action('admin_init', [GoogleClient::class, 'handle_oauth']);
+add_action('init', [GoogleClient::class, 'handle_oauth']);
