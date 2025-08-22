@@ -1,6 +1,8 @@
 <?php
 namespace TutoriasBooking\Admin;
 
+use TutoriasBooking\Google\CalendarService;
+
 /**
  * Handles logic for the admin page and prepares data for the view.
  */
@@ -27,8 +29,13 @@ class AdminController {
         }
 
         if ($table_exists && isset($_POST['tb_reset_cita_id'])) {
-            $alumno_id = intval($_POST['tb_reset_cita_id']);
-            $updated   = $wpdb->update(
+            $alumno_id   = intval($_POST['tb_reset_cita_id']);
+            $alumno_data = $wpdb->get_row($wpdb->prepare("SELECT dni FROM {$alumnos_reserva_table} WHERE id = %d", $alumno_id));
+            if ($alumno_data) {
+                CalendarService::delete_events_by_dni($alumno_data->dni);
+            }
+
+            $updated = $wpdb->update(
                 $alumnos_reserva_table,
                 ['tiene_cita' => 0],
                 ['id' => $alumno_id],
@@ -36,7 +43,7 @@ class AdminController {
                 ['%d']
             );
             if ($updated !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'El campo "Tiene Cita" del alumno con ID ' . esc_html($alumno_id) . ' se ha establecido en 0.'];
+                $messages[] = ['type' => 'success', 'text' => 'La reserva del alumno con ID ' . esc_html($alumno_id) . ' ha sido eliminada y el campo "Tiene Cita" se ha establecido en 0.'];
             } else {
                 $messages[] = ['type' => 'error', 'text' => 'Error al actualizar el campo "Tiene Cita".'];
             }
