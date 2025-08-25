@@ -1,4 +1,8 @@
 jQuery(function($){
+    if (!$('#tb-calendar').length) {
+        return;
+    }
+
     var existingDates = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
     var existingSlots = window.tbExistingAvailabilitySlots || {};
     var selected = [];
@@ -100,49 +104,40 @@ jQuery(function($){
         calendar.html(html);
     }
 
-    if ($('#tb-calendar').length) {
-        $('#tb-calendar').on('click', '.tb-calendar-day.tb-day-available', function(){
-            var date = $(this).data('date');
-            var idx = selected.indexOf(date);
-            if (idx > -1) {
-                selected.splice(idx,1);
-            } else {
-                selected.push(date);
-            }
-            renderCalendar(current);
-            refreshSelected();
-        });
-
-        $('#tb-calendar').on('click', '#tb_prev_month', function(){
-            if ($(this).prop('disabled')) return;
-            current.setMonth(current.getMonth() - 1);
-            renderCalendar(current);
-        });
-
-        $('#tb-calendar').on('click', '#tb_next_month', function(){
-            if ($(this).prop('disabled')) return;
-            current.setMonth(current.getMonth() + 1);
-            renderCalendar(current);
-        });
-
-        $('#tb-calendar').on('click', '.tb-day-dots', function(e){
-            e.stopPropagation();
-            $('#tb-day-menu').remove();
-            var date = $(this).closest('.tb-day-has-availability').data('date');
-            var offset = $(this).offset();
-            var menu = $('<div id="tb-day-menu" class="tb-day-menu"><button type="button" class="tb-day-info">Información</button><button type="button" class="tb-day-edit">Editar</button></div>');
-            menu.css({top: offset.top + $(this).height(), left: offset.left});
-            menu.data('date', date);
-            $('body').append(menu);
-        });
-
+    $('#tb-calendar').on('click', '.tb-calendar-day.tb-day-available', function(){
+        var date = $(this).data('date');
+        var idx = selected.indexOf(date);
+        if (idx > -1) {
+            selected.splice(idx,1);
+        } else {
+            selected.push(date);
+        }
         renderCalendar(current);
         refreshSelected();
-    } else {
-        if ($('#tb-time-slots .tb-time-slot').length === 0) {
-            addSlot();
-        }
-    }
+    });
+
+    $('#tb-calendar').on('click', '#tb_prev_month', function(){
+        if ($(this).prop('disabled')) return;
+        current.setMonth(current.getMonth() - 1);
+        renderCalendar(current);
+    });
+
+    $('#tb-calendar').on('click', '#tb_next_month', function(){
+        if ($(this).prop('disabled')) return;
+        current.setMonth(current.getMonth() + 1);
+        renderCalendar(current);
+    });
+
+    $('#tb-calendar').on('click', '.tb-day-dots', function(e){
+        e.stopPropagation();
+        $('#tb-day-menu').remove();
+        var date = $(this).closest('.tb-day-has-availability').data('date');
+        var offset = $(this).offset();
+        var menu = $('<div id="tb-day-menu" class="tb-day-menu"><button type="button" class="tb-day-info">Información</button><button type="button" class="tb-day-edit">Editar</button></div>');
+        menu.css({top: offset.top + $(this).height(), left: offset.left});
+        menu.data('date', date);
+        $('body').append(menu);
+    });
 
     $('body').on('click', function(){ $('#tb-day-menu').remove(); });
 
@@ -178,5 +173,8 @@ jQuery(function($){
         refreshSelected();
         menu.remove();
     });
+
+    renderCalendar(current);
+    refreshSelected();
 });
 
