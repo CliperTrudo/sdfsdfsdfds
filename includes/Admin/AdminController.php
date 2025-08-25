@@ -219,14 +219,6 @@ class AdminController {
         }
         $existing_dates = array_values(array_unique($existing_dates));
         $existing_slots = array_map('array_values', $existing_slots);
-        // Pass availability data to the admin script before it loads so that
-        // the calendar can render existing slots and dates correctly.
-        wp_add_inline_script(
-            'tb-admin',
-            'window.tbExistingAvailabilityDates = ' . wp_json_encode($existing_dates) . ';\n' .
-            'window.tbExistingAvailabilitySlots = ' . wp_json_encode($existing_slots) . ';',
-            'before'
-        );
 
         self::render_assign_availability($tutor, $messages, $existing_dates, $existing_slots);
     }
@@ -260,6 +252,10 @@ class AdminController {
                 </form>
             </div>
         </div>
+        <script>
+            window.tbExistingAvailabilityDates = <?php echo wp_json_encode($existing_dates); ?>;
+            window.tbExistingAvailabilitySlots = <?php echo wp_json_encode($existing_slots); ?>;
+        </script>
         <?php
     }
 
