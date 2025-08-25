@@ -22,14 +22,19 @@ jQuery(function($){
         container.append(slot);
     }
 
-    $('#tb-time-slots').on('click', '.tb-add-slot', function(){
+    // Use delegated events to ensure handlers work even if the container
+    // is rendered dynamically after the script runs.
+    $(document).on('click', '#tb-time-slots .tb-add-slot', function(){
         addSlot();
     });
 
-    $('#tb-time-slots').on('click', '.tb-remove-slot', function(){
+    $(document).on('click', '#tb-time-slots .tb-remove-slot', function(){
         $(this).closest('.tb-time-slot').remove();
         if ($('#tb-time-slots .tb-add-slot').length === 0) {
-            $('#tb-time-slots .tb-time-slot').last().find('button').removeClass('tb-remove-slot').addClass('tb-add-slot').text('+');
+            $('#tb-time-slots .tb-time-slot').last().find('button')
+                .removeClass('tb-remove-slot')
+                .addClass('tb-add-slot')
+                .text('+');
         }
     });
 
