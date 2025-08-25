@@ -75,6 +75,21 @@ includes/    Código PHP organizado en módulos:
 templates/   Plantillas HTML para el frontend y el panel de administración.
 tutorias-booking.php  Archivo principal del plugin.
 ```
+## Estructura de los archivos Excel
+
+Importación de tutores
+- El archivo debe ser un .xlsx con una fila de encabezados (que se ignora al importar) y, a partir de la segunda fila, dos columnas:
+   1. Nombre
+   2. Email
+Cada fila con el nombre y el correo de un tutor se inserta en la tabla tutores, usando el email también como calendar_id
+
+Importación de alumnos
+- El archivo también debe ser .xlsx con encabezados en la primera fila y las siguientes columnas en este orden:
+   1. DNI
+   2. Nombre
+   3. Apellido
+   4. Email
+Cada fila se inserta en la tabla de alumnos de reserva (alumnos_reserva) si el DNI no existe ya en la base de datos
 
 ## Notas
 - El plugin utiliza *nonces* de WordPress para asegurar las solicitudes AJAX.
