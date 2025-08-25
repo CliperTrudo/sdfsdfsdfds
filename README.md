@@ -1,6 +1,20 @@
 # Tutorías – Reserva de Exámenes
 
+[![License: GPL v2 or later](https://img.shields.io/badge/License-GPL%20v2%20or%20later-blue.svg)](LICENSE)
+
 Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías de examen. Se integra con **Google Calendar** y **Google Meet** para automatizar la creación de eventos y el envío de invitaciones a los alumnos.
+
+## Índice
+- [Características](#características)
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Configuración](#configuración)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Notas](#notas)
+- [Contribución](#contribución)
+- [Licencia](#licencia)
+- [Autores](#autores)
 
 ## Características
 - **Formulario de reserva para alumnos** con verificación de DNI.
@@ -45,6 +59,11 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
    ```
    Tras introducir su correo, el tutor podrá autorizar el acceso a su Google Calendar.
 
+## Configuración
+- Coloca tu archivo `credentials.json` en la carpeta `keys/` para habilitar la integración con Google Calendar.
+- Si necesitas otra zona horaria distinta de **Europe/Madrid**, actualízala en el código del plugin.
+- Personaliza el ancho del formulario `[formulario_dni]` mediante el atributo `width` del shortcode.
+
 ## Estructura del proyecto
 ```
 assets/      CSS y JavaScript del frontend y del área de administración.
@@ -59,8 +78,16 @@ tutorias-booking.php  Archivo principal del plugin.
 
 ## Notas
 - El plugin utiliza *nonces* de WordPress para asegurar las solicitudes AJAX.
-- La zona horaria por defecto es **Europe/Madrid**; modifícala si es necesario.
 - Los logs de depuración se envían a `error_log` para facilitar el diagnóstico de problemas.
 
+## Contribución
+Las contribuciones son bienvenidas. Para colaborar:
+1. Haz un fork del repositorio y crea una rama para tu mejora o corrección.
+2. Instala las dependencias con `composer install`.
+3. Envía un pull request describiendo los cambios propuestos.
+
 ## Licencia
-Este proyecto se distribuye bajo la licencia **GPL-2.0-or-later**.
+Este proyecto se distribuye bajo la licencia **GPL-2.0-or-later**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+## Autores
+- Equipo IT de Versus
