@@ -18,9 +18,11 @@ class AdminMenu {
     }
 
     public static function enqueue_assets($hook) {
-        if ($hook !== 'toplevel_page_tb-tutores') {
+        // Ensure assets are loaded on all plugin pages, even with additional actions.
+        if (strpos($hook, 'tb-tutores') === false) {
             return;
         }
+
         wp_enqueue_style('tb-admin', TB_PLUGIN_URL . 'assets/css/admin.css');
         if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
             wp_enqueue_style('tb-frontend', TB_PLUGIN_URL . 'assets/css/frontend.css');
