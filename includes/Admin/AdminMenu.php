@@ -18,7 +18,7 @@ class AdminMenu {
     }
 
     public static function enqueue_assets($hook) {
-        if ($hook !== 'toplevel_page_tb-tutores') {
+        if (strpos($hook, 'tb-tutores') === false) {
             return;
         }
         wp_enqueue_style('tb-admin', TB_PLUGIN_URL . 'assets/css/admin.css');
