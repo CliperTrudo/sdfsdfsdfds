@@ -19,9 +19,14 @@ class AjaxHandlers {
         }
         $events = CalendarService::get_available_calendar_events($tutor_id, $date, $date);
         $slots = [];
+        $madridTz = new \DateTimeZone('Europe/Madrid');
         foreach ($events as $ev) {
             if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
-                $slots[] = date('H:i', strtotime($ev->start->dateTime)) . '-' . date('H:i', strtotime($ev->end->dateTime));
+                $start = new \DateTime($ev->start->dateTime);
+                $start->setTimezone($madridTz);
+                $end = new \DateTime($ev->end->dateTime);
+                $end->setTimezone($madridTz);
+                $slots[] = $start->format('H:i') . '-' . $end->format('H:i');
             }
         }
         wp_send_json_success($slots);

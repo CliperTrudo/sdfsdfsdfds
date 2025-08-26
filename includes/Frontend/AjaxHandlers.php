@@ -85,9 +85,11 @@ class AjaxHandlers {
         $available_slots = [];
         // Generar franjas de 45 minutos a partir de los eventos "DISPONIBLE"
         foreach ($available_events as $event) {
-            // Aseguramos que los objetos DateTime de los eventos de Google Calendar también usen la zona horaria de Madrid.
-            $event_start = new \DateTime($event->start->dateTime, $madrid_timezone);
-            $event_end   = new \DateTime($event->end->dateTime, $madrid_timezone);
+            // Convert Google Calendar event times from UTC to Europe/Madrid
+            $event_start = new \DateTime($event->start->dateTime);
+            $event_start->setTimezone($madrid_timezone);
+            $event_end   = new \DateTime($event->end->dateTime);
+            $event_end->setTimezone($madrid_timezone);
             error_log("TutoriasBooking: Processing available event from {$event_start->format('Y-m-d H:i')} to {$event_end->format('Y-m-d H:i')}");
 
             $current_slot_start = clone $event_start;
@@ -118,9 +120,11 @@ class AjaxHandlers {
         $busy_intervals = [];
         // Convertir los eventos ocupados en intervalos de DateTime para facilitar la comparación
         foreach ($busy_events as $event) {
-            // Aseguramos que los objetos DateTime de los eventos de Google Calendar también usen la zona horaria de Madrid.
-            $start = new \DateTime($event->start->dateTime, $madrid_timezone);
-            $end   = new \DateTime($event->end->dateTime, $madrid_timezone);
+            // Convert Google Calendar busy event times from UTC to Europe/Madrid
+            $start = new \DateTime($event->start->dateTime);
+            $start->setTimezone($madrid_timezone);
+            $end   = new \DateTime($event->end->dateTime);
+            $end->setTimezone($madrid_timezone);
             $busy_intervals[] = ['start' => $start, 'end' => $end];
             error_log("TutoriasBooking: Busy interval: from {$start->format('Y-m-d H:i')} to {$end->format('Y-m-d H:i')}");
         }
@@ -267,11 +271,16 @@ class AjaxHandlers {
             return;
         }
 
-        // Formatear las fechas y horas a formato ISO 8601 para Google Calendar
+        // Formatear las fechas y horas a formato ISO 8601 y convertirlas a UTC
         $start_datetime_iso = $exam_date . 'T' . $start_time . ':00';
-        $end_datetime_iso   = $exam_date . 'T' . $end_time . ':00';
-        error_log("TutoriasBooking: ajax_process_booking() - Datetime ISO: Start={$start_datetime_iso}, End={$end_datetime_iso}");
-
+        $end_datetime_iso   = $exam_date . 'T' . $end_time   . ':00';
+        $madrid_timezone = new \DateTimeZone('Europe/Madrid');
+        $utc_timezone    = new \DateTimeZone('UTC');
+        $start_dt_obj = new \DateTime($start_datetime_iso, $madrid_timezone);
+        $end_dt_obj   = new \DateTime($end_datetime_iso,   $madrid_timezone);
+        $start_datetime_utc = $start_dt_obj->setTimezone($utc_timezone)->format('c');
+        $end_datetime_utc   = $end_dt_obj->setTimezone($utc_timezone)->format('c');
+        error_log("TutoriasBooking: ajax_process_booking() - Datetime ISO UTC: Start={$start_datetime_utc}, End={$end_datetime_utc}");
 
         // Obtener los datos del tutor de la base de datos
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT nombre, email FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
@@ -288,8 +297,8 @@ class AjaxHandlers {
         $attendees   = [$email, $tutor->email]; // Asistentes del evento
         error_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
-        // Crear el evento en Google Calendar a través del CalendarService
-        $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_iso, $end_datetime_iso, $attendees);
+        // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
+        $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees);
 
         // Si el evento se creó con éxito en Google Calendar
         if ($event) {
@@ -349,6 +358,8 @@ class AjaxHandlers {
                 'exam_date'          => $exam_date,
                 'start_time'         => $start_time,
                 'end_time'           => $end_time,
+                'start_datetime_utc' => $start_datetime_utc,
+                'end_datetime_utc'   => $end_datetime_utc,
                 'day_of_week'        => $day_of_week,
                 'student_first_name' => $nombreAlumno,
                 'student_last_name'  => $apellidoAlumno

@@ -25,9 +25,18 @@ class CalendarService {
         $service = self::get_calendar_service($tutor_id);
         if (!$service) { return []; }
         $calendarId = $tutor->calendar_id;
+
+        // Convert provided dates from Europe/Madrid to UTC before querying the API
+        $madridTz = new \DateTimeZone('Europe/Madrid');
+        $utcTz    = new \DateTimeZone('UTC');
+        $startObj = new \DateTime($start_date . ' 00:00:00', $madridTz);
+        $endObj   = new \DateTime($end_date   . ' 23:59:59', $madridTz);
+        $startObj->setTimezone($utcTz);
+        $endObj->setTimezone($utcTz);
+
         $opt = [
-            'timeMin' => date('c', strtotime($start_date.' 00:00:00')),
-            'timeMax' => date('c', strtotime($end_date.' 23:59:59')),
+            'timeMin' => $startObj->format('c'),
+            'timeMax' => $endObj->format('c'),
             'singleEvents' => true,
             'orderBy' => 'startTime'
         ];
@@ -68,11 +77,12 @@ class CalendarService {
         $service = self::get_calendar_service($tutor_id);
         if (!$service) { return null; }
         $calendarId = $tutor->calendar_id;
+        // $start_datetime and $end_datetime are expected to be in UTC
         $event = new \Google_Service_Calendar_Event([
             'summary' => $summary,
             'description' => $description,
-            'start' => ['dateTime'=>$start_datetime,'timeZone'=>'Europe/Madrid'],
-            'end'   => ['dateTime'=>$end_datetime,'timeZone'=>'Europe/Madrid'],
+            'start' => ['dateTime' => $start_datetime, 'timeZone' => 'UTC'],
+            'end'   => ['dateTime' => $end_datetime,   'timeZone' => 'UTC'],
             'attendees' => array_map(fn($e)=>['email'=>$e], $attendees),
             'reminders' => ['useDefault'=>false,'overrides'=>[['method'=>'email','minutes'=>60],['method'=>'popup','minutes'=>10]]],
             'conferenceData' => ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]]

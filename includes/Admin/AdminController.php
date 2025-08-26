@@ -209,9 +209,12 @@ class AdminController {
         $end_range = date('Y-m-d', strtotime('+6 months'));
         $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
         $existing_dates = [];
+        $madridTz = new \DateTimeZone('Europe/Madrid');
         foreach ($events as $ev) {
             if (isset($ev->start->dateTime)) {
-                $existing_dates[] = date('Y-m-d', strtotime($ev->start->dateTime));
+                $start = new \DateTime($ev->start->dateTime);
+                $start->setTimezone($madridTz);
+                $existing_dates[] = $start->format('Y-m-d');
             }
         }
         $existing_dates = array_values(array_unique($existing_dates));
@@ -221,9 +224,13 @@ class AdminController {
             $day_events = CalendarService::get_available_calendar_events($tutor_id, $edit_date, $edit_date);
             foreach ($day_events as $ev) {
                 if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                    $start = new \DateTime($ev->start->dateTime);
+                    $start->setTimezone($madridTz);
+                    $end = new \DateTime($ev->end->dateTime);
+                    $end->setTimezone($madridTz);
                     $edit_ranges[] = [
-                        'start' => date('H:i', strtotime($ev->start->dateTime)),
-                        'end'   => date('H:i', strtotime($ev->end->dateTime)),
+                        'start' => $start->format('H:i'),
+                        'end'   => $end->format('H:i'),
                     ];
                 }
             }
