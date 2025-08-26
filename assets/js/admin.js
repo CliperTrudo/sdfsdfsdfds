@@ -3,8 +3,24 @@ jQuery(function($){
         return;
     }
 
+    // Add/remove time ranges
+    $('#tb-time-ranges').on('click', '.tb-add-range', function(){
+        var $clone = $(this).closest('.tb-time-range').clone();
+        $clone.find('input').val('');
+        $clone.find('.tb-add-range').remove();
+        $clone.append('<button type="button" class="tb-button tb-remove-range">-</button>');
+        $('#tb-time-ranges').append($clone);
+    });
+
+    $('#tb-time-ranges').on('click', '.tb-remove-range', function(){
+        $(this).closest('.tb-time-range').remove();
+    });
+
     var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
     var selected = [];
+    if (window.tbEditingDate) {
+        selected.push(window.tbEditingDate);
+    }
     var startDate = new Date();
     startDate.setHours(0,0,0,0);
     var endDate = new Date();
@@ -61,15 +77,28 @@ jQuery(function($){
             var dateObj = new Date(year, month, d);
             var dateStr = formatDate(dateObj);
             var classes = 'tb-calendar-day';
-            if (dateObj < startDate || dateObj > endDate || existing.indexOf(dateStr) !== -1) {
+            if (dateObj < startDate || dateObj > endDate) {
                 classes += ' tb-day-unavailable';
+                html += '<div class="' + classes + '"><span class="tb-day-number">' + d + '</span></div>';
+                continue;
+            }
+            if (existing.indexOf(dateStr) !== -1) {
+                classes += ' tb-day-unavailable';
+                var cell = '<div class="' + classes + '" data-date="' + dateStr + '">';
+                cell += '<span class="tb-day-number">' + d + '</span>';
+                cell += '<button type="button" class="tb-day-menu-btn">⋮</button>';
+                cell += '<div class="tb-day-menu" data-date="' + dateStr + '">';
+                cell += '<button type="button" class="tb-view">Ver disponibilidad</button>';
+                cell += '<button type="button" class="tb-edit">Editar disponibilidad</button>';
+                cell += '</div></div>';
+                html += cell;
             } else {
                 classes += ' tb-day-available';
                 if (selected.indexOf(dateStr) !== -1) {
                     classes += ' tb-selected';
                 }
+                html += '<div class="' + classes + '" data-date="' + dateStr + '"><span class="tb-day-number">' + d + '</span></div>';
             }
-            html += '<div class="' + classes + '" data-date="' + dateStr + '">' + d + '</div>';
         }
         html += '</div></div>';
         calendar.html(html);
@@ -100,7 +129,55 @@ jQuery(function($){
         renderCalendar(current);
     });
 
+    // Menu actions
+    $('#tb-calendar').on('click', '.tb-day-menu-btn', function(e){
+        e.stopPropagation();
+        var $menu = $(this).siblings('.tb-day-menu');
+        $('.tb-day-menu').not($menu).hide();
+        $menu.toggle();
+    });
+
+    $(document).on('click', function(){
+        $('.tb-day-menu').hide();
+    });
+
+    $('#tb-calendar').on('click', '.tb-day-menu .tb-view', function(){
+        var date = $(this).parent().data('date');
+        $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date}, function(res){
+            if (res.success) {
+                alert(res.data.join('\n'));
+            } else {
+                alert(res.data || 'Error al obtener la disponibilidad');
+            }
+        });
+    });
+
+    $('#tb-calendar').on('click', '.tb-day-menu .tb-edit', function(){
+        var date = $(this).parent().data('date');
+        var url = new URL(window.location.href);
+        url.searchParams.set('edit_date', date);
+        window.location.href = url.toString();
+    });
+
+    // Prefill ranges when editing
+    if (Array.isArray(window.tbEditingRanges) && window.tbEditingRanges.length > 0) {
+        $('#tb-time-ranges').empty();
+        window.tbEditingRanges.forEach(function(r, idx){
+            var html = '<div class="tb-time-range">';
+            html += '<label>Inicio</label>';
+            html += '<input type="time" name="tb_start_time[]" value="' + r.start + '" required>';
+            html += '<label>Fin</label>';
+            html += '<input type="time" name="tb_end_time[]" value="' + r.end + '" required>';
+            if (idx === window.tbEditingRanges.length - 1) {
+                html += '<button type="button" class="tb-button tb-add-range">+</button>';
+            } else {
+                html += '<button type="button" class="tb-button tb-remove-range">-</button>';
+            }
+            html += '</div>';
+            $('#tb-time-ranges').append(html);
+        });
+    }
+
     renderCalendar(current);
     refreshSelected();
 });
-

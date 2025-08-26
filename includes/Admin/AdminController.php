@@ -176,10 +176,17 @@ class AdminController {
             return;
         }
 
+        $edit_date = isset($_GET['edit_date']) ? sanitize_text_field($_GET['edit_date']) : '';
+
         if (isset($_POST['tb_assign_availability'])) {
             $starts = isset($_POST['tb_start_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_start_time']) : [];
             $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
             $dates  = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array) $_POST['tb_dates']) : [];
+            $editing_date = isset($_POST['tb_editing_date']) ? sanitize_text_field($_POST['tb_editing_date']) : '';
+            if (!empty($editing_date)) {
+                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+                $dates = [$editing_date];
+            }
             if (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 foreach ($dates as $date) {
                     foreach ($starts as $idx => $start) {
@@ -209,10 +216,24 @@ class AdminController {
         }
         $existing_dates = array_values(array_unique($existing_dates));
 
-        self::render_assign_availability($tutor, $messages, $existing_dates);
+        $edit_ranges = [];
+        if ($edit_date) {
+            $day_events = CalendarService::get_available_calendar_events($tutor_id, $edit_date, $edit_date);
+            foreach ($day_events as $ev) {
+                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                    $edit_ranges[] = [
+                        'start' => date('H:i', strtotime($ev->start->dateTime)),
+                        'end'   => date('H:i', strtotime($ev->end->dateTime)),
+                    ];
+                }
+            }
+            $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
+        }
+
+        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges);
     }
 
-    private static function render_assign_availability($tutor, $messages, $existing_dates) {
+    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = []) {
         ?>
         <div class="tb-admin-wrapper">
             <?php foreach ($messages as $msg): ?>
@@ -236,6 +257,9 @@ class AdminController {
                     <div id="tb-calendar"></div>
                     <ul id="tb-selected-dates"></ul>
                     <div id="tb-hidden-dates"></div>
+                    <?php if ($edit_date): ?>
+                        <input type="hidden" name="tb_editing_date" value="<?php echo esc_attr($edit_date); ?>">
+                    <?php endif; ?>
                     <button type="submit" name="tb_assign_availability" class="tb-button">Guardar</button>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=tb-tutores')); ?>" class="tb-button">Volver</a>
                 </form>
@@ -243,123 +267,9 @@ class AdminController {
         </div>
         <script>
             var tbExistingAvailabilityDates = <?php echo wp_json_encode($existing_dates); ?>;
-            jQuery(function($){
-                if (!$('#tb-calendar').length) {
-                    return;
-                }
-
-                $('#tb-time-ranges').on('click', '.tb-add-range', function(){
-                    var $clone = $(this).closest('.tb-time-range').clone();
-                    $clone.find('input').val('');
-                    $clone.find('.tb-add-range').remove();
-                    $clone.append('<button type="button" class="tb-button tb-remove-range">-</button>');
-                    $('#tb-time-ranges').append($clone);
-                });
-
-                $('#tb-time-ranges').on('click', '.tb-remove-range', function(){
-                    $(this).closest('.tb-time-range').remove();
-                });
-
-                var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
-                var selected = [];
-                var startDate = new Date();
-                startDate.setHours(0,0,0,0);
-                var endDate = new Date();
-                endDate.setMonth(endDate.getMonth() + 3);
-                endDate.setHours(0,0,0,0);
-                var current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-
-                function formatDate(d) {
-                    var month = '' + (d.getMonth() + 1);
-                    var day = '' + d.getDate();
-                    var year = d.getFullYear();
-                    if (month.length < 2) month = '0' + month;
-                    if (day.length < 2) day = '0' + day;
-                    return [year, month, day].join('-');
-                }
-
-                function refreshSelected() {
-                    var list = $('#tb-selected-dates').empty();
-                    var hidden = $('#tb-hidden-dates').empty();
-                    selected.sort();
-                    selected.forEach(function(d){
-                        list.append('<li>' + d + '</li>');
-                        hidden.append('<input type="hidden" name="tb_dates[]" value="' + d + '">');
-                    });
-                }
-
-                function renderCalendar(monthDate) {
-                    var calendar = $('#tb-calendar');
-                    var month = monthDate.getMonth();
-                    var year = monthDate.getFullYear();
-                    var monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-                    var dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-
-                    var html = '<div class="tb-calendar-month">';
-                    html += '<div class="tb-calendar-nav">';
-                    var prevDisabled = (monthDate.getFullYear() === startDate.getFullYear() && monthDate.getMonth() <= startDate.getMonth());
-                    var nextDisabled = (monthDate.getFullYear() === endDate.getFullYear() && monthDate.getMonth() >= endDate.getMonth());
-                    html += '<button id="tb_prev_month" class="tb-nav-btn"' + (prevDisabled ? ' disabled' : '') + '>&lt;</button>';
-                    html += '<span class="tb-calendar-month-name">' + monthNames[month] + ' ' + year + '</span>';
-                    html += '<button id="tb_next_month" class="tb-nav-btn"' + (nextDisabled ? ' disabled' : '') + '>&gt;</button>';
-                    html += '</div>';
-
-                    html += '<div class="tb-calendar-week-day-names">';
-                    dayNames.forEach(function(d){ html += '<div class="tb-calendar-week-day">' + d + '</div>'; });
-                    html += '</div>';
-
-                    html += '<div class="tb-calendar-days">';
-                    var firstDayIndex = new Date(year, month, 1).getDay();
-                    for (var i=0; i<firstDayIndex; i++) {
-                        html += '<div class="tb-calendar-day tb-empty"></div>';
-                    }
-                    var daysInMonth = new Date(year, month + 1, 0).getDate();
-                    for (var d=1; d<=daysInMonth; d++) {
-                        var dateObj = new Date(year, month, d);
-                        var dateStr = formatDate(dateObj);
-                        var classes = 'tb-calendar-day';
-                        if (dateObj < startDate || dateObj > endDate || existing.indexOf(dateStr) !== -1) {
-                            classes += ' tb-day-unavailable';
-                        } else {
-                            classes += ' tb-day-available';
-                            if (selected.indexOf(dateStr) !== -1) {
-                                classes += ' tb-selected';
-                            }
-                        }
-                        html += '<div class="' + classes + '" data-date="' + dateStr + '">' + d + '</div>';
-                    }
-                    html += '</div></div>';
-                    calendar.html(html);
-                }
-
-                $('#tb-calendar').on('click', '.tb-calendar-day.tb-day-available', function(){
-                    var date = $(this).data('date');
-                    var idx = selected.indexOf(date);
-                    if (idx > -1) {
-                        selected.splice(idx,1);
-                        $(this).removeClass('tb-selected');
-                    } else {
-                        selected.push(date);
-                        $(this).addClass('tb-selected');
-                    }
-                    refreshSelected();
-                });
-
-                $('#tb-calendar').on('click', '#tb_prev_month', function(){
-                    if ($(this).prop('disabled')) return;
-                    current.setMonth(current.getMonth() - 1);
-                    renderCalendar(current);
-                });
-
-                $('#tb-calendar').on('click', '#tb_next_month', function(){
-                    if ($(this).prop('disabled')) return;
-                    current.setMonth(current.getMonth() + 1);
-                    renderCalendar(current);
-                });
-
-                renderCalendar(current);
-                refreshSelected();
-            });
+            var tbEditingDate = <?php echo $edit_date ? "'" . esc_js($edit_date) . "'" : 'null'; ?>;
+            var tbEditingRanges = <?php echo wp_json_encode($edit_ranges); ?>;
+            var tbTutorId = <?php echo (int)($tutor->id ?? 0); ?>;
         </script>
         <?php
     }
