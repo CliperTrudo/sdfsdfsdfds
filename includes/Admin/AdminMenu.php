@@ -21,10 +21,32 @@ class AdminMenu {
         if ($hook !== 'toplevel_page_tb-tutores') {
             return;
         }
-        wp_enqueue_style('tb-admin', TB_PLUGIN_URL . 'assets/css/admin.css');
+        $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
+        $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
+        $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
+
+        wp_enqueue_style(
+            'tb-admin',
+            TB_PLUGIN_URL . 'assets/css/admin.css',
+            [],
+            file_exists($admin_css) ? filemtime($admin_css) : false
+        );
+
         if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
-            wp_enqueue_style('tb-frontend', TB_PLUGIN_URL . 'assets/css/frontend.css');
+            wp_enqueue_style(
+                'tb-frontend',
+                TB_PLUGIN_URL . 'assets/css/frontend.css',
+                [],
+                file_exists($frontend_css) ? filemtime($frontend_css) : false
+            );
         }
-        wp_enqueue_script('tb-admin', TB_PLUGIN_URL . 'assets/js/admin.js', ['jquery'], false, true);
+
+        wp_enqueue_script(
+            'tb-admin',
+            TB_PLUGIN_URL . 'assets/js/admin.js',
+            ['jquery'],
+            file_exists($admin_js) ? filemtime($admin_js) : false,
+            true
+        );
     }
 }
