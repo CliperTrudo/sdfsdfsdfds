@@ -3,6 +3,14 @@ jQuery(function($){
         return;
     }
 
+    var defaultRangeHtml = '<div class="tb-time-range">'
+        + '<label>Inicio</label>'
+        + '<input type="time" name="tb_start_time[]" required>'
+        + '<label>Fin</label>'
+        + '<input type="time" name="tb_end_time[]" required>'
+        + '<button type="button" class="tb-button tb-add-range">+</button>'
+        + '</div>';
+
     // Add/remove time ranges
     $('#tb-time-ranges').on('click', '.tb-add-range', function(){
         var $clone = $(this).closest('.tb-time-range').clone();
@@ -106,6 +114,15 @@ jQuery(function($){
 
     $('#tb-calendar').on('click', '.tb-calendar-day.tb-day-available', function(){
         var date = $(this).data('date');
+        if (window.tbEditingDate && date !== window.tbEditingDate) {
+            window.tbEditingDate = null;
+            selected = [];
+            $('input[name="tb_editing_date"]').remove();
+            $('#tb-time-ranges').html(defaultRangeHtml);
+            renderCalendar(current);
+            refreshSelected();
+            return;
+        }
         var idx = selected.indexOf(date);
         if (idx > -1) {
             selected.splice(idx,1);
