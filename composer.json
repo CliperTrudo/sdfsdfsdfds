@@ -1,9 +1,0 @@
-{
-    "name": "sergio/tutorias-booking",
-    "description": "Plugin Reservas",
-    "type": "wordpress-plugins",
-    "license": "GPL-2.0-or-later",
-    "require": {
-        "google/apiclient": "2.14"
-    }
-}
