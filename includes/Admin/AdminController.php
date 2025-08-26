@@ -252,7 +252,12 @@ class AdminController {
                     var $clone = $(this).closest('.tb-time-range').clone();
                     $clone.find('input').val('');
                     $clone.find('.tb-add-range').remove();
+                    $clone.append('<button type="button" class="tb-button tb-remove-range">-</button>');
                     $('#tb-time-ranges').append($clone);
+                });
+
+                $('#tb-time-ranges').on('click', '.tb-remove-range', function(){
+                    $(this).closest('.tb-time-range').remove();
                 });
 
                 var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
