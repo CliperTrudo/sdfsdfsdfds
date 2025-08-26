@@ -177,14 +177,20 @@ class AdminController {
         }
 
         if (isset($_POST['tb_assign_availability'])) {
-            $start = sanitize_text_field($_POST['tb_start_time'] ?? '');
-            $end   = sanitize_text_field($_POST['tb_end_time'] ?? '');
-            $dates = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array)$_POST['tb_dates']) : [];
-            if ($start && $end && !empty($dates)) {
+            $starts = isset($_POST['tb_start_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_start_time']) : [];
+            $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
+            $dates  = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array) $_POST['tb_dates']) : [];
+            if (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 foreach ($dates as $date) {
-                    $start_dt = $date . 'T' . $start . ':00';
-                    $end_dt   = $date . 'T' . $end . ':00';
-                    CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                    foreach ($starts as $idx => $start) {
+                        $end = $ends[$idx] ?? '';
+                        if (!$start || !$end) {
+                            continue;
+                        }
+                        $start_dt = $date . 'T' . $start . ':00';
+                        $end_dt   = $date . 'T' . $end . ':00';
+                        CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                    }
                 }
                 $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
             } else {
@@ -218,10 +224,15 @@ class AdminController {
             <div class="tb-card">
                 <h2>Asignar Disponibilidad a <?php echo esc_html($tutor->nombre ?? ''); ?></h2>
                 <form method="POST">
-                    <label for="tb-start">Inicio</label>
-                    <input id="tb-start" type="time" name="tb_start_time" required>
-                    <label for="tb-end">Fin</label>
-                    <input id="tb-end" type="time" name="tb_end_time" required>
+                    <div id="tb-time-ranges">
+                        <div class="tb-time-range">
+                            <label>Inicio</label>
+                            <input type="time" name="tb_start_time[]" required>
+                            <label>Fin</label>
+                            <input type="time" name="tb_end_time[]" required>
+                            <button type="button" class="tb-button tb-add-range">+</button>
+                        </div>
+                    </div>
                     <div id="tb-calendar"></div>
                     <ul id="tb-selected-dates"></ul>
                     <div id="tb-hidden-dates"></div>
@@ -236,6 +247,13 @@ class AdminController {
                 if (!$('#tb-calendar').length) {
                     return;
                 }
+
+                $('#tb-time-ranges').on('click', '.tb-add-range', function(){
+                    var $clone = $(this).closest('.tb-time-range').clone();
+                    $clone.find('input').val('');
+                    $clone.find('.tb-add-range').remove();
+                    $('#tb-time-ranges').append($clone);
+                });
 
                 var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
                 var selected = [];
