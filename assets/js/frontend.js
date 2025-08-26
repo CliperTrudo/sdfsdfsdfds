@@ -361,7 +361,13 @@ jQuery(document).ready(function($) {
             messageHtml += '<p>Día: ' + response.data.day_of_week + '</p>';
           }
 
-          if (response.data.exam_date && response.data.start_time && response.data.end_time) {
+          if (response.data.start_datetime_utc && response.data.end_datetime_utc) {
+            var startLocal = new Date(response.data.start_datetime_utc)
+              .toLocaleString('es-ES', { timeZone: 'Europe/Madrid' });
+            var endLocal = new Date(response.data.end_datetime_utc)
+              .toLocaleString('es-ES', { timeZone: 'Europe/Madrid' });
+            messageHtml += '<p>Fecha: ' + startLocal + ' - ' + endLocal + '</p>';
+          } else if (response.data.exam_date && response.data.start_time && response.data.end_time) {
             messageHtml += '<p>Fecha: ' + response.data.exam_date + ' de ' + response.data.start_time + ' a ' + response.data.end_time + '</p>';
           }
 
