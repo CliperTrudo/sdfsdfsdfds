@@ -3,38 +3,13 @@ jQuery(function($){
         return;
     }
 
-    var existingDates = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
-    var existingSlots = window.tbExistingAvailabilitySlots || {};
+    var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
     var selected = [];
-
-    function addSlot(start, end) {
-        start = start || '';
-        end = end || '';
-        var container = $('#tb-time-slots');
-        var slot = $('<div class="tb-time-slot">'
-            + '<label>Inicio</label><input type="time" name="tb_start_time[]" value="'+start+'" required>'
-            + '<label>Fin</label><input type="time" name="tb_end_time[]" value="'+end+'" required>'
-            + '<button type="button" class="tb-button tb-add-slot">+</button>'
-            + '</div>');
-        if (container.find('.tb-add-slot').length) {
-            container.find('.tb-add-slot').last().removeClass('tb-add-slot').addClass('tb-remove-slot').text('-');
-        }
-        container.append(slot);
-    }
-
-    $('#tb-time-slots').on('click', '.tb-add-slot', function(){
-        addSlot();
-    });
-
-    $('#tb-time-slots').on('click', '.tb-remove-slot', function(){
-        $(this).closest('.tb-time-slot').remove();
-        if ($('#tb-time-slots .tb-add-slot').length === 0) {
-            $('#tb-time-slots .tb-time-slot').last().find('button').removeClass('tb-remove-slot').addClass('tb-add-slot').text('+');
-        }
-    });
-
-    var startDate = new Date(); startDate.setHours(0,0,0,0);
-    var endDate = new Date(); endDate.setMonth(endDate.getMonth() + 3); endDate.setHours(0,0,0,0);
+    var startDate = new Date();
+    startDate.setHours(0,0,0,0);
+    var endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 3);
+    endDate.setHours(0,0,0,0);
     var current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
     function formatDate(d) {
@@ -86,19 +61,15 @@ jQuery(function($){
             var dateObj = new Date(year, month, d);
             var dateStr = formatDate(dateObj);
             var classes = 'tb-calendar-day';
-            var inner = '<span class="tb-day-number">'+d+'</span>';
-            if (dateObj < startDate || dateObj > endDate) {
+            if (dateObj < startDate || dateObj > endDate || existing.indexOf(dateStr) !== -1) {
                 classes += ' tb-day-unavailable';
-            } else if (existingDates.indexOf(dateStr) !== -1) {
-                classes += ' tb-day-unavailable tb-day-has-availability';
-                inner += '<span class="tb-day-dots">...</span>';
             } else {
                 classes += ' tb-day-available';
                 if (selected.indexOf(dateStr) !== -1) {
                     classes += ' tb-selected';
                 }
             }
-            html += '<div class="' + classes + '" data-date="' + dateStr + '">' + inner + '</div>';
+            html += '<div class="' + classes + '" data-date="' + dateStr + '">' + d + '</div>';
         }
         html += '</div></div>';
         calendar.html(html);
@@ -109,10 +80,11 @@ jQuery(function($){
         var idx = selected.indexOf(date);
         if (idx > -1) {
             selected.splice(idx,1);
+            $(this).removeClass('tb-selected');
         } else {
             selected.push(date);
+            $(this).addClass('tb-selected');
         }
-        renderCalendar(current);
         refreshSelected();
     });
 
@@ -126,52 +98,6 @@ jQuery(function($){
         if ($(this).prop('disabled')) return;
         current.setMonth(current.getMonth() + 1);
         renderCalendar(current);
-    });
-
-    $('#tb-calendar').on('click', '.tb-day-dots', function(e){
-        e.stopPropagation();
-        $('#tb-day-menu').remove();
-        var date = $(this).closest('.tb-day-has-availability').data('date');
-        var offset = $(this).offset();
-        var menu = $('<div id="tb-day-menu" class="tb-day-menu"><button type="button" class="tb-day-info">Información</button><button type="button" class="tb-day-edit">Editar</button></div>');
-        menu.css({top: offset.top + $(this).height(), left: offset.left});
-        menu.data('date', date);
-        $('body').append(menu);
-    });
-
-    $('body').on('click', function(){ $('#tb-day-menu').remove(); });
-
-    $('body').on('click', '#tb-day-menu .tb-day-info', function(e){
-        e.stopPropagation();
-        var menu = $('#tb-day-menu');
-        var date = menu.data('date');
-        var slots = existingSlots[date] || [];
-        alert('Disponibilidad de ' + date + ':\n' + (slots.join('\n') || 'Sin tramos'));
-        menu.remove();
-    });
-
-    function loadSlots(slots) {
-        var container = $('#tb-time-slots').empty();
-        if (!slots.length) {
-            addSlot();
-        } else {
-            slots.forEach(function(s){
-                var parts = s.split('-');
-                addSlot(parts[0], parts[1]);
-            });
-        }
-    }
-
-    $('body').on('click', '#tb-day-menu .tb-day-edit', function(e){
-        e.stopPropagation();
-        var menu = $('#tb-day-menu');
-        var date = menu.data('date');
-        var slots = existingSlots[date] || [];
-        selected = [date];
-        loadSlots(slots);
-        renderCalendar(current);
-        refreshSelected();
-        menu.remove();
     });
 
     renderCalendar(current);
