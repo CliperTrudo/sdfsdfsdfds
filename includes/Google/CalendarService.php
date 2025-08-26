@@ -92,6 +92,28 @@ class CalendarService {
     }
 
     /**
+     * Delete all "DISPONIBLE" events for a specific date.
+     */
+    public static function delete_available_events_for_date($tutor_id, $date) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) { return 0; }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) { return 0; }
+        $events = self::get_available_calendar_events($tutor_id, $date, $date);
+        $deleted = 0;
+        foreach ($events as $event) {
+            try {
+                $service->events->delete($tutor->calendar_id, $event->id, ['sendUpdates' => 'all']);
+                $deleted++;
+            } catch (\Exception $e) {
+                // Ignore individual deletion errors
+            }
+        }
+        return $deleted;
+    }
+
+    /**
      * Delete all calendar events containing the provided DNI.
      */
     public static function delete_events_by_dni($dni) {
