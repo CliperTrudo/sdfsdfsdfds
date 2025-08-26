@@ -1,1 +1,0 @@
-<!-- Reservations table template -->
