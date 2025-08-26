@@ -43,7 +43,7 @@
 
 <div id="tb_tutor_selection_step" class="tb-container tb-hidden" style="display:none;<?php echo esc_attr($container_style); ?>">
     <button type="button" id="tb_back_to_exam_date" class="tb-back-button">&larr;</button>
-    <h3>Reservar Tutoría</h3>
+    <h3>Reservar Entrevista</h3>
     <p id="tb_summary" class="tb-summary">
         <strong>Fecha de Examen:</strong> <?php echo esc_html($exam_date_selected); ?>
     </p>
