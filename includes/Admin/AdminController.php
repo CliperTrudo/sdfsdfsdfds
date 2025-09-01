@@ -194,8 +194,16 @@ class AdminController {
                         if (!$start || !$end) {
                             continue;
                         }
-                        $start_dt = $date . 'T' . $start . ':00';
-                        $end_dt   = $date . 'T' . $end . ':00';
+
+                        $madridTz = new \DateTimeZone('Europe/Madrid');
+                        $utcTz    = new \DateTimeZone('UTC');
+
+                        $startObj = new \DateTime($date . 'T' . $start . ':00', $madridTz);
+                        $endObj   = new \DateTime($date . 'T' . $end   . ':00', $madridTz);
+
+                        $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
+                        $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
+
                         CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
                     }
                 }
