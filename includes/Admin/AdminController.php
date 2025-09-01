@@ -208,6 +208,11 @@ class AdminController {
                     }
                 }
                 $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+                if ($editing_date) {
+                    $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
+                    wp_safe_redirect($redirect);
+                    exit;
+                }
             } else {
                 $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
             }

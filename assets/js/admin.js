@@ -104,8 +104,18 @@ jQuery(function($){
         calendar.html(html);
     }
 
+    function cancelEditing(){
+        var url = new URL(window.location.href);
+        url.searchParams.delete('edit_date');
+        window.location.href = url.toString();
+    }
+
     $('#tb-calendar').on('click', '.tb-calendar-day.tb-day-available', function(){
         var date = $(this).data('date');
+        if (window.tbEditingDate && date !== window.tbEditingDate) {
+            cancelEditing();
+            return;
+        }
         var idx = selected.indexOf(date);
         if (idx > -1) {
             selected.splice(idx,1);
@@ -118,12 +128,20 @@ jQuery(function($){
     });
 
     $('#tb-calendar').on('click', '#tb_prev_month', function(){
+        if (window.tbEditingDate) {
+            cancelEditing();
+            return;
+        }
         if ($(this).prop('disabled')) return;
         current.setMonth(current.getMonth() - 1);
         renderCalendar(current);
     });
 
     $('#tb-calendar').on('click', '#tb_next_month', function(){
+        if (window.tbEditingDate) {
+            cancelEditing();
+            return;
+        }
         if ($(this).prop('disabled')) return;
         current.setMonth(current.getMonth() + 1);
         renderCalendar(current);
@@ -131,6 +149,10 @@ jQuery(function($){
 
     // Menu actions
     $('#tb-calendar').on('click', '.tb-day-menu-btn', function(e){
+        if (window.tbEditingDate) {
+            cancelEditing();
+            return;
+        }
         e.stopPropagation();
         var $menu = $(this).siblings('.tb-day-menu');
         $('.tb-day-menu').not($menu).hide();
@@ -141,7 +163,12 @@ jQuery(function($){
         $('.tb-day-menu').hide();
     });
 
-    $('#tb-calendar').on('click', '.tb-day-menu .tb-view', function(){
+    $('#tb-calendar').on('click', '.tb-day-menu .tb-view', function(e){
+        if (window.tbEditingDate) {
+            e.preventDefault();
+            cancelEditing();
+            return;
+        }
         var date = $(this).parent().data('date');
         $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date}, function(res){
             if (res.success) {
@@ -152,8 +179,13 @@ jQuery(function($){
         });
     });
 
-    $('#tb-calendar').on('click', '.tb-day-menu .tb-edit', function(){
+    $('#tb-calendar').on('click', '.tb-day-menu .tb-edit', function(e){
         var date = $(this).parent().data('date');
+        if (window.tbEditingDate && date !== window.tbEditingDate) {
+            e.preventDefault();
+            cancelEditing();
+            return;
+        }
         var url = new URL(window.location.href);
         url.searchParams.set('edit_date', date);
         window.location.href = url.toString();
