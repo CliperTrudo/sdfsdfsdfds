@@ -362,8 +362,11 @@ class AdminController {
                                         $busyEnd   = new \DateTime($ev->end->dateTime);
                                         $busyEnd->setTimezone($madridTz);
                                         if ($busyStart < $endObj && $busyEnd > $startObj) {
-                                            $overlap = true;
-                                            break;
+                                            // Allow busy events entirely within the availability range
+                                            if (!($busyStart >= $startObj && $busyEnd <= $endObj)) {
+                                                $overlap = true;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
