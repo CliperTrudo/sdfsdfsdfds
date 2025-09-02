@@ -267,10 +267,16 @@ class AdminController {
                                 $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
 
                                 $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
-                                if (!$created) {
+                                if (is_wp_error($created)) {
+                                    error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
+                                    $messages[] = [
+                                        'type' => 'error',
+                                        'text' => sprintf('Error al crear la disponibilidad para %s de %s a %s: %s', $date, $range['start'], $range['end'], $created->get_error_message())
+                                    ];
                                     $creation_failed = true;
                                     break 2;
                                 }
+                                error_log('TutoriasBooking: handle_assign_availability - Evento creado correctamente: ' . ($created->id ?? 'sin ID'));
                                 $any_created = true;
                             }
                         }
@@ -285,7 +291,12 @@ class AdminController {
                                         $end_dt   = (new \DateTime($ev->end->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
                                         $summary = $ev->summary ?? 'DISPONIBLE';
                                         $description = $ev->description ?? '';
-                                        CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_dt, $end_dt);
+                                        $restored = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_dt, $end_dt);
+                                        if (is_wp_error($restored)) {
+                                            error_log('TutoriasBooking: handle_assign_availability - Error al restaurar evento: ' . $restored->get_error_message());
+                                        } else {
+                                            error_log('TutoriasBooking: handle_assign_availability - Evento restaurado: ' . ($restored->id ?? 'sin ID'));
+                                        }
                                     }
                                 }
                             }

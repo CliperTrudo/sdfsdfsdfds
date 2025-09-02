@@ -300,6 +300,12 @@ class AjaxHandlers {
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
         $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees);
 
+        if (is_wp_error($event)) {
+            error_log('TutoriasBooking: ajax_process_booking() - Error al crear evento de Google Calendar: ' . $event->get_error_message());
+            wp_send_json_error('Error al crear el evento de Google Calendar: ' . $event->get_error_message());
+            return;
+        }
+
         // Si el evento se creó con éxito en Google Calendar
         if ($event) {
             error_log('TutoriasBooking: ajax_process_booking() - Evento de Google Calendar creado con éxito. Event ID: ' . $event->id . ', Meet Link: ' . $event->hangoutLink);
