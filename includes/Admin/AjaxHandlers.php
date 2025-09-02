@@ -2,10 +2,12 @@
 namespace TutoriasBooking\Admin;
 
 use TutoriasBooking\Google\CalendarService;
+use TutoriasBooking\Admin\AppointmentsController;
 
 class AjaxHandlers {
     public static function init() {
         add_action('wp_ajax_tb_get_day_availability', [self::class, 'ajax_get_day_availability']);
+        add_action('wp_ajax_tb_edit_appointment', [self::class, 'ajax_edit_appointment']);
     }
 
     public static function ajax_get_day_availability() {
@@ -31,5 +33,18 @@ class AjaxHandlers {
             }
         }
         wp_send_json_success($slots);
+    }
+
+    public static function ajax_edit_appointment() {
+        check_ajax_referer('tb_edit_appointment', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permisos insuficientes.');
+        }
+
+        $result = AppointmentsController::handle_edit();
+        if (is_wp_error($result)) {
+            wp_send_json_error($result->get_error_message());
+        }
+        wp_send_json_success($result);
     }
 }

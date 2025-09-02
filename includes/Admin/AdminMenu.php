@@ -63,6 +63,7 @@ class AdminMenu {
             'tbAdminData',
             [
                 'ajax_nonce' => wp_create_nonce('tb_get_day_availability'),
+                'edit_nonce' => wp_create_nonce('tb_edit_appointment'),
                 'maxMonths'  => TB_MAX_MONTHS,
             ]
         );
