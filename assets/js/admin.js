@@ -61,6 +61,7 @@ jQuery(function($){
     function refreshSelected() {
         var list = $('#tb-selected-dates').empty();
         var hidden = $('#tb-hidden-dates').empty();
+        selected = Array.from(new Set(selected));
         selected.sort();
         selected.forEach(function(d){
             list.append('<li>' + d + '</li>');
