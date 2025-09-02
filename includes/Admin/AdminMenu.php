@@ -48,5 +48,11 @@ class AdminMenu {
             file_exists($admin_js) ? filemtime($admin_js) : false,
             true
         );
+
+        wp_localize_script(
+            'tb-admin',
+            'tbAdminData',
+            ['ajax_nonce' => wp_create_nonce('tb_get_day_availability')]
+        );
     }
 }

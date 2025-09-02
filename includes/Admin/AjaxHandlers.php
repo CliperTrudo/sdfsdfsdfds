@@ -9,6 +9,7 @@ class AjaxHandlers {
     }
 
     public static function ajax_get_day_availability() {
+        check_ajax_referer('tb_get_day_availability', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permisos insuficientes.');
         }

@@ -191,7 +191,7 @@ jQuery(function($){
             return;
         }
         var date = $(this).parent().data('date');
-        $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date}, function(res){
+        $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date, nonce: tbAdminData.ajax_nonce}, function(res){
             if (res.success) {
                 alert(res.data.join('\n'));
             } else {
