@@ -73,9 +73,13 @@ class CalendarService {
     public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[]) {
         global $wpdb;
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
-        if (!$tutor || empty($tutor->calendar_id)) { return null; }
+        if (!$tutor || empty($tutor->calendar_id)) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
         $service = self::get_calendar_service($tutor_id);
-        if (!$service) { return null; }
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
         $calendarId = $tutor->calendar_id;
         // $start_datetime and $end_datetime are expected to be in UTC
         $event = new \Google_Service_Calendar_Event([
@@ -97,7 +101,7 @@ class CalendarService {
                 ]
             );
         } catch (\Exception $e) {
-            return null;
+            return new \WP_Error('event_creation_failed', $e->getMessage());
         }
     }
 
