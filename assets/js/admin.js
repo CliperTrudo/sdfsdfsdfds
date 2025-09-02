@@ -7,14 +7,35 @@ jQuery(function($){
     $('#tb-time-ranges').on('click', '.tb-add-range', function(){
         var $clone = $(this).closest('.tb-time-range').clone();
         $clone.find('input').val('');
-        $clone.find('.tb-add-range').remove();
-        $clone.append('<button type="button" class="tb-button tb-remove-range">-</button>');
         $('#tb-time-ranges').append($clone);
+        updateRangeButtons();
     });
 
     $('#tb-time-ranges').on('click', '.tb-remove-range', function(){
         $(this).closest('.tb-time-range').remove();
+        updateRangeButtons();
     });
+
+    function updateRangeButtons(){
+        var $ranges = $('#tb-time-ranges .tb-time-range');
+        $ranges.find('.tb-add-range, .tb-remove-range').remove();
+        $ranges.each(function(idx){
+            if (window.tbEditingDate) {
+                if (idx === $ranges.length - 1) {
+                    $(this).append('<button type="button" class="tb-button tb-add-range">+</button>');
+                    $(this).append('<button type="button" class="tb-button tb-remove-range">-</button>');
+                } else {
+                    $(this).append('<button type="button" class="tb-button tb-remove-range">-</button>');
+                }
+            } else {
+                if (idx === 0) {
+                    $(this).append('<button type="button" class="tb-button tb-add-range">+</button>');
+                } else {
+                    $(this).append('<button type="button" class="tb-button tb-remove-range">-</button>');
+                }
+            }
+        });
+    }
 
     var existing = Array.isArray(window.tbExistingAvailabilityDates) ? window.tbExistingAvailabilityDates : [];
     var selected = [];
@@ -200,15 +221,11 @@ jQuery(function($){
             html += '<input type="time" name="tb_start_time[]" value="' + r.start + '" required>';
             html += '<label>Fin</label>';
             html += '<input type="time" name="tb_end_time[]" value="' + r.end + '" required>';
-            if (idx === window.tbEditingRanges.length - 1) {
-                html += '<button type="button" class="tb-button tb-add-range">+</button>';
-            } else {
-                html += '<button type="button" class="tb-button tb-remove-range">-</button>';
-            }
             html += '</div>';
             $('#tb-time-ranges').append(html);
         });
     }
+    updateRangeButtons();
 
     renderCalendar(current);
     refreshSelected();
@@ -239,6 +256,10 @@ jQuery(function($){
         if (!valid) {
             e.preventDefault();
             alert('Los rangos de tiempo son inválidos o se solapan.');
+        } else if (window.tbEditingDate && ranges.length === 0) {
+            if (!confirm('Se eliminará la disponibilidad existente para este día. ¿Desea continuar?')) {
+                e.preventDefault();
+            }
         }
     });
 });
