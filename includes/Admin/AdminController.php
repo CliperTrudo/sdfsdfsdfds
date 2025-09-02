@@ -248,6 +248,10 @@ class AdminController {
                                 $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
                                 $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
 
+                                $dayStart = new \DateTime($date . 'T00:00:00', $madridTz);
+                                $dayEnd   = new \DateTime($date . 'T23:59:59', $madridTz);
+                                $hasDSTChange = count($madridTz->getTransitions($dayStart->getTimestamp(), $dayEnd->getTimestamp())) > 1;
+
                                 $busy = CalendarService::get_busy_calendar_events($tutor_id, $startObj->format('Y-m-d'), $endObj->format('Y-m-d'));
                                 $overlap = false;
                                 foreach ($busy as $ev) {
@@ -270,8 +274,17 @@ class AdminController {
                                     continue;
                                 }
 
-                                $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
-                                $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                if ($hasDSTChange) {
+                                    $duration   = $endObj->getTimestamp() - $startObj->getTimestamp();
+                                    $startUtcObj = clone $startObj;
+                                    $startUtcObj->setTimezone($utcTz);
+                                    $endUtcObj   = (clone $startUtcObj)->modify('+' . $duration . ' seconds');
+                                    $start_dt    = $startUtcObj->format('Y-m-d\\TH:i:s');
+                                    $end_dt      = $endUtcObj->format('Y-m-d\\TH:i:s');
+                                } else {
+                                    $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                    $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                }
 
                                 $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
                                 if (is_wp_error($created)) {
