@@ -183,9 +183,10 @@ class AdminController {
             $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
             $dates  = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array) $_POST['tb_dates']) : [];
             $editing_date = isset($_POST['tb_editing_date']) ? sanitize_text_field($_POST['tb_editing_date']) : '';
+            $original_events = [];
             if (!empty($editing_date)) {
-                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
                 $dates = [$editing_date];
+                $original_events = CalendarService::get_available_calendar_events($tutor_id, $editing_date, $editing_date);
             }
             if (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 $today      = date('Y-m-d');
@@ -224,22 +225,53 @@ class AdminController {
                     if ($valid) {
                         $madridTz = new \DateTimeZone('Europe/Madrid');
                         $utcTz    = new \DateTimeZone('UTC');
+                        $creation_failed = false;
+                        if ($editing_date) {
+                            CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+                        }
                         foreach ($dates as $date) {
                             foreach ($ranges as $range) {
                                 $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
                                 $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
 
-                                $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
-                                $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
+                                $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
 
-                                CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                                $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                                if (!$created) {
+                                    $creation_failed = true;
+                                    break 2;
+                                }
                             }
                         }
-                        $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
-                        if ($editing_date) {
-                            $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
-                            wp_safe_redirect($redirect);
-                            exit;
+                        if ($creation_failed) {
+                            foreach ($dates as $date) {
+                                CalendarService::delete_available_events_for_date($tutor_id, $date);
+                            }
+                            if ($editing_date) {
+                                foreach ($original_events as $ev) {
+                                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                                        $start_dt = (new \DateTime($ev->start->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                        $end_dt   = (new \DateTime($ev->end->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                                        $summary = $ev->summary ?? 'DISPONIBLE';
+                                        $description = $ev->description ?? '';
+                                        CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_dt, $end_dt);
+                                    }
+                                }
+                            }
+                            $msg = 'Error al crear los eventos de disponibilidad.';
+                            if ($editing_date) {
+                                $msg .= ' Se restauró la disponibilidad original.';
+                            }
+                            $messages[] = ['type' => 'error', 'text' => $msg];
+                        } else {
+                            $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+                            if ($editing_date) {
+                                $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' .
+$tutor_id);
+                                wp_safe_redirect($redirect);
+                                exit;
+                            }
                         }
                     } else {
                         $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan.'];
