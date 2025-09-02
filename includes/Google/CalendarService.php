@@ -106,6 +106,36 @@ class CalendarService {
     }
 
     /**
+     * Update an existing event in a tutor's calendar.
+     *
+     * @param string $event_id            Google Calendar event ID.
+     * @param string $new_start_datetime  UTC start datetime (ISO 8601).
+     * @param string $new_end_datetime    UTC end datetime (ISO 8601).
+     * @param string $calendar_id         Tutor calendar identifier.
+     *
+     * @return \Google_Service_Calendar_Event|\WP_Error
+     */
+    public static function update_event($event_id, $new_start_datetime, $new_end_datetime, $calendar_id) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}tutores WHERE calendar_id = %s", $calendar_id));
+        if (!$tutor) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
+        $service = self::get_calendar_service($tutor->id);
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
+        try {
+            $event = $service->events->get($calendar_id, $event_id);
+            $event->setStart(new \Google_Service_Calendar_EventDateTime(['dateTime' => $new_start_datetime, 'timeZone' => 'UTC']));
+            $event->setEnd(new \Google_Service_Calendar_EventDateTime(['dateTime' => $new_end_datetime, 'timeZone' => 'UTC']));
+            return $service->events->update($calendar_id, $event->getId(), $event, ['sendUpdates' => 'all']);
+        } catch (\Exception $e) {
+            return new \WP_Error('event_update_failed', $e->getMessage());
+        }
+    }
+
+    /**
      * Delete all "DISPONIBLE" events for a specific date.
      */
     public static function delete_available_events_for_date($tutor_id, $date) {
