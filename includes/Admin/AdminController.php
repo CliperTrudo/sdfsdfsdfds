@@ -232,6 +232,7 @@ class AdminController {
                         $madridTz = new \DateTimeZone('Europe/Madrid');
                         $utcTz    = new \DateTimeZone('UTC');
                         $creation_failed = false;
+                        $any_created = false;
                         if ($editing_date) {
                             CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
                         }
@@ -239,6 +240,28 @@ class AdminController {
                             foreach ($ranges as $range) {
                                 $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
                                 $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
+
+                                $busy = CalendarService::get_busy_calendar_events($tutor_id, $startObj->format('Y-m-d'), $endObj->format('Y-m-d'));
+                                $overlap = false;
+                                foreach ($busy as $ev) {
+                                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                                        $busyStart = new \DateTime($ev->start->dateTime);
+                                        $busyStart->setTimezone($madridTz);
+                                        $busyEnd   = new \DateTime($ev->end->dateTime);
+                                        $busyEnd->setTimezone($madridTz);
+                                        if ($busyStart < $endObj && $busyEnd > $startObj) {
+                                            $overlap = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if ($overlap) {
+                                    $messages[] = [
+                                        'type' => 'error',
+                                        'text' => sprintf('No se creó la disponibilidad para %s de %s a %s por solaparse con otro evento.', $date, $range['start'], $range['end'])
+                                    ];
+                                    continue;
+                                }
 
                                 $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
                                 $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
@@ -248,6 +271,7 @@ class AdminController {
                                     $creation_failed = true;
                                     break 2;
                                 }
+                                $any_created = true;
                             }
                         }
                         if ($creation_failed) {
@@ -271,12 +295,14 @@ class AdminController {
                             }
                             $messages[] = ['type' => 'error', 'text' => $msg];
                         } else {
-                            $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
-                            if ($editing_date) {
-                                $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' .
-$tutor_id);
-                                wp_safe_redirect($redirect);
-                                exit;
+                            if ($any_created) {
+                                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+                                if ($editing_date) {
+                                    $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' .
+                                    $tutor_id);
+                                    wp_safe_redirect($redirect);
+                                    exit;
+                                }
                             }
                         }
                     } else {
