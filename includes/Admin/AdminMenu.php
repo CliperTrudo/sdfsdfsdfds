@@ -15,19 +15,10 @@ class AdminMenu {
             'tb-tutores',
             '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
         );
-
-        add_menu_page(
-            'Citas',
-            'Citas',
-            'manage_options',
-            'tb_citas',
-            ['\\TutoriasBooking\\Admin\\AppointmentsController', 'render_page']
-        );
     }
 
     public static function enqueue_assets($hook) {
-        $pages = ['toplevel_page_tb-tutores', 'toplevel_page_tb_citas'];
-        if (!in_array($hook, $pages, true)) {
+        if ($hook !== 'toplevel_page_tb-tutores') {
             return;
         }
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
@@ -63,9 +54,6 @@ class AdminMenu {
             'tbAdminData',
             [
                 'ajax_nonce' => wp_create_nonce('tb_get_day_availability'),
-                'edit_nonce' => wp_create_nonce('tb_edit_appointment'),
-                'upload_nonce' => wp_create_nonce('tb_upload_attachment'),
-                'delete_nonce' => wp_create_nonce('tb_delete_attachment'),
                 'maxMonths'  => TB_MAX_MONTHS,
             ]
         );

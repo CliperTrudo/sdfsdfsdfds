@@ -37,16 +37,5 @@ class Activator {
             UNIQUE KEY unique_dni (dni)
         ) {$charset_collate};";
         dbDelta($sql_reserva);
-
-        $sql_adjuntos = "CREATE TABLE {$wpdb->prefix}tb_cita_adjuntos (
-            id INT AUTO_INCREMENT,
-            cita_id INT NOT NULL,
-            file_url TEXT NOT NULL,
-            uploaded_by BIGINT(20) UNSIGNED NOT NULL,
-            uploaded_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY cita_id (cita_id)
-        ) {$charset_collate};";
-        dbDelta($sql_adjuntos);
     }
 }
