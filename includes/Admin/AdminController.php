@@ -235,11 +235,34 @@ class AdminController {
             }
             $dates = array_unique($dates);
             if ($editing_date && empty($starts) && empty($ends)) {
-                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
-                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad eliminada correctamente.'];
-                $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
-                wp_safe_redirect($redirect);
-                exit;
+                $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $editing_date, $editing_date);
+                if (!empty($busy_events)) {
+                    $madridTz = new \DateTimeZone('Europe/Madrid');
+                    foreach ($busy_events as $ev) {
+                        if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                            $start = new \DateTime($ev->start->dateTime);
+                            $start->setTimezone($madridTz);
+                            $end = new \DateTime($ev->end->dateTime);
+                            $end->setTimezone($madridTz);
+                            $messages[] = [
+                                'type' => 'error',
+                                'text' => sprintf(
+                                    'No se puede eliminar la disponibilidad porque existe la cita "%s" el %s de %s a %s.',
+                                    $ev->summary ?? '',
+                                    $start->format('Y-m-d'),
+                                    $start->format('H:i'),
+                                    $end->format('H:i')
+                                )
+                            ];
+                        }
+                    }
+                } else {
+                    CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+                    $messages[] = ['type' => 'success', 'text' => 'Disponibilidad eliminada correctamente.'];
+                    $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
+                    wp_safe_redirect($redirect);
+                    exit;
+                }
             } elseif (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 $today      = date('Y-m-d');
                 $date_valid = true;
@@ -282,16 +305,49 @@ class AdminController {
                     }
                     if ($valid) {
                         $madridTz = new \DateTimeZone('Europe/Madrid');
-                        $utcTz    = new \DateTimeZone('UTC');
-                        $creation_failed = false;
-                        $any_created = false;
-                        if ($editing_date) {
-                            CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
-                        }
+                        $conflict_msgs = [];
                         foreach ($dates as $date) {
-                            foreach ($ranges as $range) {
-                                $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
-                                $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
+                            $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $date, $date);
+                            foreach ($busy_events as $ev) {
+                                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                                    $start = new \DateTime($ev->start->dateTime);
+                                    $start->setTimezone($madridTz);
+                                    $end = new \DateTime($ev->end->dateTime);
+                                    $end->setTimezone($madridTz);
+                                    $inRange = false;
+                                    foreach ($ranges as $range) {
+                                        if ($range['start'] <= $start->format('H:i') && $range['end'] >= $end->format('H:i')) {
+                                            $inRange = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!$inRange) {
+                                        $conflict_msgs[] = sprintf(
+                                            'La cita "%s" el %s de %s a %s queda fuera de los tramos seleccionados.',
+                                            $ev->summary ?? '',
+                                            $start->format('Y-m-d'),
+                                            $start->format('H:i'),
+                                            $end->format('H:i')
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        if (!empty($conflict_msgs)) {
+                            foreach ($conflict_msgs as $cmsg) {
+                                $messages[] = ['type' => 'error', 'text' => $cmsg];
+                            }
+                        } else {
+                            $utcTz    = new \DateTimeZone('UTC');
+                            $creation_failed = false;
+                            $any_created = false;
+                            if ($editing_date) {
+                                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+                            }
+                            foreach ($dates as $date) {
+                                foreach ($ranges as $range) {
+                                    $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
+                                    $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
 
                                 $dayStart = new \DateTime($date . 'T00:00:00', $madridTz);
                                 $dayEnd   = new \DateTime($date . 'T23:59:59', $madridTz);
@@ -380,9 +436,10 @@ class AdminController {
                                     exit;
                                 }
                             }
-                        }
+                          }
+                      }
                     } else {
-                        $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.'];
+                      $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.'];
                     }
                 } else {
                     $messages[] = ['type' => 'error', 'text' => 'No se pueden asignar fechas anteriores a hoy.'];
