@@ -188,52 +188,64 @@ class AdminController {
                 $dates = [$editing_date];
             }
             if (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
-                $ranges = [];
-                $valid  = true;
-                foreach ($starts as $idx => $start) {
-                    $end = $ends[$idx] ?? '';
-                    if (!$start || !$end) {
-                        continue;
-                    }
-                    if ($start >= $end) {
-                        $valid = false;
+                $today      = date('Y-m-d');
+                $date_valid = true;
+                foreach ($dates as $date) {
+                    if ($date < $today) {
+                        $date_valid = false;
                         break;
                     }
-                    $ranges[] = ['start' => $start, 'end' => $end];
                 }
-                if ($valid) {
-                    usort($ranges, function ($a, $b) {
-                        return strcmp($a['start'], $b['start']);
-                    });
-                    for ($i = 1; $i < count($ranges); $i++) {
-                        if ($ranges[$i]['start'] < $ranges[$i - 1]['end']) {
+                if ($date_valid) {
+                    $ranges = [];
+                    $valid  = true;
+                    foreach ($starts as $idx => $start) {
+                        $end = $ends[$idx] ?? '';
+                        if (!$start || !$end) {
+                            continue;
+                        }
+                        if ($start >= $end) {
                             $valid = false;
                             break;
                         }
+                        $ranges[] = ['start' => $start, 'end' => $end];
                     }
-                }
-                if ($valid) {
-                    $madridTz = new \DateTimeZone('Europe/Madrid');
-                    $utcTz    = new \DateTimeZone('UTC');
-                    foreach ($dates as $date) {
-                        foreach ($ranges as $range) {
-                            $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
-                            $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
-
-                            $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
-                            $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
-
-                            CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                    if ($valid) {
+                        usort($ranges, function ($a, $b) {
+                            return strcmp($a['start'], $b['start']);
+                        });
+                        for ($i = 1; $i < count($ranges); $i++) {
+                            if ($ranges[$i]['start'] < $ranges[$i - 1]['end']) {
+                                $valid = false;
+                                break;
+                            }
                         }
                     }
-                    $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
-                    if ($editing_date) {
-                        $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
-                        wp_safe_redirect($redirect);
-                        exit;
+                    if ($valid) {
+                        $madridTz = new \DateTimeZone('Europe/Madrid');
+                        $utcTz    = new \DateTimeZone('UTC');
+                        foreach ($dates as $date) {
+                            foreach ($ranges as $range) {
+                                $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
+                                $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
+
+                                $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
+                                $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\TH:i:s');
+
+                                CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                            }
+                        }
+                        $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+                        if ($editing_date) {
+                            $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
+                            wp_safe_redirect($redirect);
+                            exit;
+                        }
+                    } else {
+                        $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan.'];
                     }
                 } else {
-                    $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan.'];
+                    $messages[] = ['type' => 'error', 'text' => 'No se pueden asignar fechas anteriores a hoy.'];
                 }
             } else {
                 $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
