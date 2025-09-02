@@ -45,7 +45,7 @@ jQuery(function($){
     var startDate = new Date();
     startDate.setHours(0,0,0,0);
     var endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 3);
+    endDate.setMonth(endDate.getMonth() + parseInt(tbAdminData.maxMonths, 10));
     endDate.setHours(0,0,0,0);
     var current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 

@@ -52,7 +52,10 @@ class AdminMenu {
         wp_localize_script(
             'tb-admin',
             'tbAdminData',
-            ['ajax_nonce' => wp_create_nonce('tb_get_day_availability')]
+            [
+                'ajax_nonce' => wp_create_nonce('tb_get_day_availability'),
+                'maxMonths'  => TB_MAX_MONTHS,
+            ]
         );
     }
 }

@@ -29,6 +29,10 @@ if ( ! defined( 'TB_PLUGIN_DIR' ) ) {
     define( 'TB_PLUGIN_DIR', plugin_dir_path( TB_PLUGIN_FILE ) );
 }
 
+if ( ! defined( 'TB_MAX_MONTHS' ) ) {
+    define( 'TB_MAX_MONTHS', 6 );
+}
+
 // Load environment variables from .env file if present
 $env_file = TB_PLUGIN_DIR . '.env';
 if (file_exists($env_file)) {
