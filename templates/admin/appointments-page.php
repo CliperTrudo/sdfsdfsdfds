@@ -4,7 +4,7 @@
 <div class="tb-admin-wrapper">
     <h1 class="tb-title">Gestión de Citas</h1>
     <input type="text" id="tb-appointments-filter" placeholder="Filtrar citas..." />
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <?php $appointments_table->display(); ?>
     </form>
 </div>

@@ -158,9 +158,10 @@ class Appointments_List_Table extends WP_List_Table {
             'tutor_id'  => 'Tutor',
             'alumno_id' => 'Alumno',
             'inicio'    => 'Inicio',
-            'fin'       => 'Fin',
-            'estado'    => 'Estado',
-            'actions'   => 'Acciones',
+            'fin'         => 'Fin',
+            'estado'      => 'Estado',
+            'attachments' => 'Adjuntos',
+            'actions'     => 'Acciones',
         ];
     }
 
@@ -187,5 +188,25 @@ class Appointments_List_Table extends WP_List_Table {
             intval( $item['tutor_id'] )
         );
         return $button;
+    }
+
+    public function column_attachments( $item ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'tb_cita_adjuntos';
+        $attachments = $wpdb->get_results( $wpdb->prepare( "SELECT id, file_url FROM {$table} WHERE cita_id = %d", $item['ID'] ) );
+        $html = '<div class="tb-attachments">';
+        if ( $attachments ) {
+            foreach ( $attachments as $att ) {
+                $html .= sprintf(
+                    '<div><a href="%1$s" target="_blank">%2$s</a> <button type="button" class="tb-delete-attachment" data-id="%3$d">Eliminar</button></div>',
+                    esc_url( $att->file_url ),
+                    esc_html( basename( $att->file_url ) ),
+                    intval( $att->id )
+                );
+            }
+        }
+        $html .= sprintf( '<input type="file" class="tb-attachment-input" data-cita="%d" />', intval( $item['ID'] ) );
+        $html .= '</div>';
+        return $html;
     }
 }
