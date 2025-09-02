@@ -6,6 +6,7 @@ class Loader {
         require_once TB_PLUGIN_DIR . 'includes/Admin/AdminMenu.php';
         require_once TB_PLUGIN_DIR . 'includes/Admin/AdminPage.php';
         require_once TB_PLUGIN_DIR . 'includes/Admin/AdminController.php';
+        require_once TB_PLUGIN_DIR . 'includes/Admin/AppointmentsController.php';
         require_once TB_PLUGIN_DIR . 'includes/Admin/AjaxHandlers.php';
         require_once TB_PLUGIN_DIR . 'includes/Frontend/Shortcodes.php';
         require_once TB_PLUGIN_DIR . 'includes/Frontend/AjaxHandlers.php';

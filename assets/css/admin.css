@@ -116,3 +116,12 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
+#tb-appointments-filter {
+    margin-bottom: 10px;
+    max-width: 300px;
+}
+
+.tb-admin-wrapper .wp-list-table th {
+    cursor: pointer;
+}

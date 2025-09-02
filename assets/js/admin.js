@@ -264,3 +264,18 @@ jQuery(function($){
         }
     });
 });
+
+jQuery(function($){
+    var $filter = $('#tb-appointments-filter');
+    if (!$filter.length) {
+        return;
+    }
+
+    $filter.on('keyup', function(){
+        var term = $(this).val().toLowerCase();
+        $('.wp-list-table tbody tr').each(function(){
+            var text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(term) > -1);
+        });
+    });
+});
