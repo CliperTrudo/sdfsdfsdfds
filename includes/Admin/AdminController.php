@@ -194,6 +194,7 @@ class AdminController {
                 $dates = [$editing_date];
                 $original_events = CalendarService::get_available_calendar_events($tutor_id, $editing_date, $editing_date);
             }
+            $dates = array_unique($dates);
             if ($editing_date && empty($starts) && empty($ends)) {
                 CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
                 $messages[] = ['type' => 'success', 'text' => 'Disponibilidad eliminada correctamente.'];
