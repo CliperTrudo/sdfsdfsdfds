@@ -212,4 +212,33 @@ jQuery(function($){
 
     renderCalendar(current);
     refreshSelected();
+
+    var $form = $('#tb-time-ranges').closest('form');
+    $form.on('submit', function(e){
+        var ranges = [];
+        var valid = true;
+        $('#tb-time-ranges .tb-time-range').each(function(){
+            var start = $(this).find('input[name="tb_start_time[]"]').val();
+            var end   = $(this).find('input[name="tb_end_time[]"]').val();
+            if (!start || !end) return;
+            if (start >= end) {
+                valid = false;
+                return false; // break
+            }
+            ranges.push({start:start, end:end});
+        });
+        if (valid) {
+            ranges.sort(function(a,b){ return a.start.localeCompare(b.start); });
+            for (var i=1; i<ranges.length; i++) {
+                if (ranges[i].start < ranges[i-1].end) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (!valid) {
+            e.preventDefault();
+            alert('Los rangos de tiempo son inválidos o se solapan.');
+        }
+    });
 });
