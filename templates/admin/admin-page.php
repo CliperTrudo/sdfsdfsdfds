@@ -13,12 +13,14 @@
         <h2 class="tb-subtitle">Tutores Registrados</h2>
 
         <form method="POST" class="tb-form">
+            <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
             <input name="tb_nombre" placeholder="Nombre" required>
             <input name="tb_email" type="email" placeholder="Email (Calendar ID)" required>
             <button type="submit" class="tb-button">Agregar Tutor</button>
         </form>
 
         <form method="POST" enctype="multipart/form-data" class="tb-form">
+            <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
             <input type="file" name="tb_tutores_file" accept=".xlsx" required>
             <button type="submit" name="tb_import_tutores" class="tb-button">Importar Tutores</button>
         </form>
@@ -42,6 +44,7 @@
                             <span> | </span>
                             <a href="<?php echo esc_url($avail_url); ?>" class="tb-link">Asignar Disponibilidad</a>
                             <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este tutor?');">
+                                <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                                 <input type="hidden" name="tb_delete_tutor_id" value="<?php echo esc_attr($t->id); ?>">
                                 <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
                             </form>
@@ -52,6 +55,7 @@
         </table>
 
         <form method="POST" onsubmit="return confirm('¿Eliminar todos los tutores?');" class="tb-form">
+            <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
             <button type="submit" name="tb_delete_all_tutores" class="tb-button tb-button-danger">Eliminar Todos los Tutores</button>
         </form>
     </section>
@@ -65,6 +69,7 @@
 
         <?php if ($table_exists): ?>
             <form method="POST" class="tb-form">
+                <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                 <input type="text" name="tb_alumno_dni" placeholder="DNI del Alumno" required>
                 <input type="text" name="tb_alumno_nombre" placeholder="Nombre" required>
                 <input type="text" name="tb_alumno_apellido" placeholder="Apellido" required>
@@ -73,6 +78,7 @@
             </form>
 
             <form method="POST" enctype="multipart/form-data" class="tb-form">
+                <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                 <input type="file" name="tb_alumnos_file" accept=".xlsx" required>
                 <button type="submit" name="tb_import_alumnos" class="tb-button">Importar Alumnos</button>
             </form>
@@ -102,11 +108,13 @@
                                 <td>
                                     <?php if ($alumno->tiene_cita): ?>
                                         <form method="POST" class="tb-inline-form">
+                                            <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                                             <input type="hidden" name="tb_reset_cita_id" value="<?php echo esc_attr($alumno->id); ?>">
                                             <button type="submit" class="tb-button">Poner en 0</button>
                                         </form>
                                     <?php endif; ?>
                                     <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
+                                        <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                                         <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
                                         <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
                                     </form>
@@ -117,6 +125,7 @@
                 </table>
 
                 <form method="POST" onsubmit="return confirm('¿Eliminar todos los alumnos?');" class="tb-form">
+                    <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
                     <button type="submit" name="tb_delete_all_alumnos" class="tb-button tb-button-danger">Eliminar Todos los Alumnos</button>
                 </form>
             <?php else: ?>

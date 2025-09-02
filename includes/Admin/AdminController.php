@@ -24,6 +24,10 @@ class AdminController {
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
         $table_exists          = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $alumnos_reserva_table)) === $alumnos_reserva_table;
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            check_admin_referer('tb_admin_action', 'tb_admin_nonce');
+        }
+
         if (isset($_POST['tb_import_tutores']) && !empty($_FILES['tb_tutores_file']['tmp_name'])) {
             $imported  = self::import_tutores_from_xlsx($_FILES['tb_tutores_file']['tmp_name']);
             $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' tutores.'];
@@ -179,6 +183,8 @@ class AdminController {
         $edit_date = isset($_GET['edit_date']) ? sanitize_text_field($_GET['edit_date']) : '';
 
         if (isset($_POST['tb_assign_availability'])) {
+            check_admin_referer('tb_assign_availability_action', 'tb_assign_availability_nonce');
+
             $starts = isset($_POST['tb_start_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_start_time']) : [];
             $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
             $dates  = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array) $_POST['tb_dates']) : [];
@@ -374,6 +380,7 @@ class AdminController {
             <div class="tb-card">
                 <h2>Asignar Disponibilidad a <?php echo esc_html($tutor->nombre ?? ''); ?></h2>
                 <form method="POST">
+                    <?php wp_nonce_field('tb_assign_availability_action', 'tb_assign_availability_nonce'); ?>
                     <div id="tb-time-ranges">
                         <div class="tb-time-range">
                             <label>Inicio</label>
