@@ -279,3 +279,51 @@ jQuery(function($){
         });
     });
 });
+
+jQuery(function($){
+    var $inputs = $('.tb-attachment-input');
+    if (!$inputs.length) {
+        return;
+    }
+
+    $inputs.on('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+        var citaId = $(this).data('cita');
+        var formData = new FormData();
+        formData.append('action', 'tb_upload_attachment');
+        formData.append('nonce', tbAdminData.upload_nonce);
+        formData.append('cita_id', citaId);
+        formData.append('attachment', file);
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(res){
+                if(res.success){
+                    location.reload();
+                } else {
+                    alert(res.data || 'Error al subir adjunto');
+                }
+            }
+        });
+    });
+
+    $('.tb-attachments').on('click', '.tb-delete-attachment', function(){
+        if(!confirm('¿Eliminar adjunto?')) return;
+        var id = $(this).data('id');
+        $.post(ajaxurl, {
+            action: 'tb_delete_attachment',
+            nonce: tbAdminData.delete_nonce,
+            attachment_id: id
+        }, function(res){
+            if(res.success){
+                location.reload();
+            } else {
+                alert(res.data || 'Error al eliminar adjunto');
+            }
+        });
+    });
+});

@@ -64,6 +64,8 @@ class AdminMenu {
             [
                 'ajax_nonce' => wp_create_nonce('tb_get_day_availability'),
                 'edit_nonce' => wp_create_nonce('tb_edit_appointment'),
+                'upload_nonce' => wp_create_nonce('tb_upload_attachment'),
+                'delete_nonce' => wp_create_nonce('tb_delete_attachment'),
                 'maxMonths'  => TB_MAX_MONTHS,
             ]
         );
