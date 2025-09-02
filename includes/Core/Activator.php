@@ -37,5 +37,37 @@ class Activator {
             UNIQUE KEY unique_dni (dni)
         ) {$charset_collate};";
         dbDelta($sql_reserva);
+
+        // Tabla principal de citas
+        $sql_citas = "CREATE TABLE {$wpdb->prefix}tb_citas (
+            id INT AUTO_INCREMENT,
+            alumno_id INT NOT NULL,
+            tutor_id INT NOT NULL,
+            event_id VARCHAR(255),
+            participant_name VARCHAR(200),
+            participant_email VARCHAR(100),
+            description TEXT,
+            location VARCHAR(255),
+            start_datetime DATETIME NOT NULL,
+            end_datetime DATETIME NOT NULL,
+            estado VARCHAR(50) DEFAULT 'confirmada',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) {$charset_collate};";
+        dbDelta($sql_citas);
+
+        // Historial de modificaciones de citas
+        $sql_historial = "CREATE TABLE {$wpdb->prefix}tb_citas_historial (
+            id INT AUTO_INCREMENT,
+            cita_id INT NOT NULL,
+            usuario INT,
+            accion VARCHAR(50),
+            datos LONGTEXT,
+            fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY cita_id (cita_id)
+        ) {$charset_collate};";
+        dbDelta($sql_historial);
     }
 }

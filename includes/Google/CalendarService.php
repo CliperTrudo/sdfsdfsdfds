@@ -106,6 +106,46 @@ class CalendarService {
     }
 
     /**
+     * Actualiza un evento existente en Google Calendar.
+     *
+     * @param int   $tutor_id   ID del tutor
+     * @param string $event_id  ID del evento en Google Calendar
+     * @param array  $changes   Claves permitidas: start, end, description, location
+     * @return \Google_Service_Calendar_Event|\WP_Error
+     */
+    public static function update_calendar_event($tutor_id, $event_id, $changes) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
+        try {
+            $event = $service->events->get($tutor->calendar_id, $event_id);
+            if (isset($changes['start'])) {
+                $event->start->dateTime = gmdate('c', strtotime($changes['start']));
+                $event->start->timeZone = 'UTC';
+            }
+            if (isset($changes['end'])) {
+                $event->end->dateTime = gmdate('c', strtotime($changes['end']));
+                $event->end->timeZone = 'UTC';
+            }
+            if (isset($changes['description'])) {
+                $event->setDescription($changes['description']);
+            }
+            if (isset($changes['location'])) {
+                $event->setLocation($changes['location']);
+            }
+            return $service->events->update($tutor->calendar_id, $event->id, $event, ['sendUpdates' => 'all']);
+        } catch (\Exception $e) {
+            return new \WP_Error('event_update_failed', $e->getMessage());
+        }
+    }
+
+    /**
      * Delete all "DISPONIBLE" events for a specific date.
      */
     public static function delete_available_events_for_date($tutor_id, $date) {

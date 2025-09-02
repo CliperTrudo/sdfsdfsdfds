@@ -11,6 +11,7 @@ class Loader {
         require_once TB_PLUGIN_DIR . 'includes/Frontend/AjaxHandlers.php';
         require_once TB_PLUGIN_DIR . 'includes/Google/GoogleClient.php';
         require_once TB_PLUGIN_DIR . 'includes/Google/CalendarService.php';
+        require_once TB_PLUGIN_DIR . 'includes/Core/AppointmentService.php';
 
         \TutoriasBooking\Admin\AdminMenu::register();
         \TutoriasBooking\Admin\AjaxHandlers::init();

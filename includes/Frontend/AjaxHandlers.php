@@ -343,6 +343,28 @@ class AjaxHandlers {
                 $reservation_id = $wpdb->insert_id;
             }
             error_log('TutoriasBooking: ajax_process_booking() - Registro actualizado. ID: ' . $reservation_id);
+
+            // Guardar la cita en la tabla propia
+            $citas_table = $wpdb->prefix . 'tb_citas';
+            $wpdb->insert(
+                $citas_table,
+                [
+                    'alumno_id'        => $reservation_id,
+                    'tutor_id'         => $tutor_id,
+                    'event_id'         => $event->id,
+                    'participant_name' => $nombreAlumno . ' ' . $apellidoAlumno,
+                    'participant_email'=> $email,
+                    'description'      => $description,
+                    'location'         => $event->hangoutLink,
+                    'start_datetime'   => $start_datetime_utc,
+                    'end_datetime'     => $end_datetime_utc,
+                    'estado'           => 'confirmada',
+                    'created_at'       => current_time('mysql'),
+                    'updated_at'       => current_time('mysql'),
+                ],
+                ['%d','%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s']
+            );
+
             // Calcular el día de la semana de la fecha del examen
             $day_of_week = date_i18n('l', strtotime($exam_date));
 
