@@ -188,7 +188,13 @@ class AdminController {
                 $dates = [$editing_date];
                 $original_events = CalendarService::get_available_calendar_events($tutor_id, $editing_date, $editing_date);
             }
-            if (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
+            if ($editing_date && empty($starts) && empty($ends)) {
+                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad eliminada correctamente.'];
+                $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
+                wp_safe_redirect($redirect);
+                exit;
+            } elseif (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 $today      = date('Y-m-d');
                 $date_valid = true;
                 foreach ($dates as $date) {
