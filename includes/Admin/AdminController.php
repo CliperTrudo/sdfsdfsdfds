@@ -176,14 +176,53 @@ class AdminController {
         if (!$tutor) {
             $messages[] = ['type' => 'error', 'text' => 'Tutor no encontrado.'];
             $existing_dates = [];
-            self::render_assign_availability($tutor, $messages, $existing_dates);
+            self::render_assign_availability($tutor, $messages, $existing_dates, '', [], '');
             return;
         }
 
         $edit_date = isset($_GET['edit_date']) ? sanitize_text_field($_GET['edit_date']) : '';
 
+        $start_range = date('Y-m-d');
+        $end_range   = date('Y-m-d', strtotime('+' . TB_MAX_MONTHS . ' months'));
+        $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+        $madridTz = new \DateTimeZone('Europe/Madrid');
+        $existing_dates = [];
+        foreach ($events as $ev) {
+            if (isset($ev->start->dateTime)) {
+                $start = new \DateTime($ev->start->dateTime);
+                $start->setTimezone($madridTz);
+                $existing_dates[] = $start->format('Y-m-d');
+            }
+        }
+        $existing_dates = array_values(array_unique($existing_dates));
+
+        $edit_ranges = [];
+        if ($edit_date) {
+            $day_events = CalendarService::get_available_calendar_events($tutor_id, $edit_date, $edit_date);
+            foreach ($day_events as $ev) {
+                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                    $start = new \DateTime($ev->start->dateTime);
+                    $start->setTimezone($madridTz);
+                    $end = new \DateTime($ev->end->dateTime);
+                    $end->setTimezone($madridTz);
+                    $edit_ranges[] = [
+                        'start' => $start->format('H:i'),
+                        'end'   => $end->format('H:i'),
+                    ];
+                }
+            }
+            $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
+        }
+
+        $availability_hash = md5(json_encode($events));
+
         if (isset($_POST['tb_assign_availability'])) {
             check_admin_referer('tb_assign_availability_action', 'tb_assign_availability_nonce');
+
+            $submitted_hash = isset($_POST['tb_availability_hash']) ? sanitize_text_field($_POST['tb_availability_hash']) : '';
+            if ($submitted_hash !== $availability_hash) {
+                $messages[] = ['type' => 'error', 'text' => 'La disponibilidad ha cambiado. Recarga la página e inténtalo de nuevo.'];
+            } else {
 
             $starts = isset($_POST['tb_start_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_start_time']) : [];
             $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
@@ -345,44 +384,43 @@ class AdminController {
             } else {
                 $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
             }
-        }
-
-        $start_range = date('Y-m-d');
-        $end_range   = date('Y-m-d', strtotime('+' . TB_MAX_MONTHS . ' months'));
-        $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
-        $existing_dates = [];
-        $madridTz = new \DateTimeZone('Europe/Madrid');
-        foreach ($events as $ev) {
-            if (isset($ev->start->dateTime)) {
-                $start = new \DateTime($ev->start->dateTime);
-                $start->setTimezone($madridTz);
-                $existing_dates[] = $start->format('Y-m-d');
             }
-        }
-        $existing_dates = array_values(array_unique($existing_dates));
 
-        $edit_ranges = [];
-        if ($edit_date) {
-            $day_events = CalendarService::get_available_calendar_events($tutor_id, $edit_date, $edit_date);
-            foreach ($day_events as $ev) {
-                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+            $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+            $availability_hash = md5(json_encode($events));
+            $existing_dates = [];
+            foreach ($events as $ev) {
+                if (isset($ev->start->dateTime)) {
                     $start = new \DateTime($ev->start->dateTime);
                     $start->setTimezone($madridTz);
-                    $end = new \DateTime($ev->end->dateTime);
-                    $end->setTimezone($madridTz);
-                    $edit_ranges[] = [
-                        'start' => $start->format('H:i'),
-                        'end'   => $end->format('H:i'),
-                    ];
+                    $existing_dates[] = $start->format('Y-m-d');
                 }
             }
-            $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
+            $existing_dates = array_values(array_unique($existing_dates));
+
+            $edit_ranges = [];
+            if ($edit_date) {
+                $day_events = CalendarService::get_available_calendar_events($tutor_id, $edit_date, $edit_date);
+                foreach ($day_events as $ev) {
+                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                        $start = new \DateTime($ev->start->dateTime);
+                        $start->setTimezone($madridTz);
+                        $end = new \DateTime($ev->end->dateTime);
+                        $end->setTimezone($madridTz);
+                        $edit_ranges[] = [
+                            'start' => $start->format('H:i'),
+                            'end'   => $end->format('H:i'),
+                        ];
+                    }
+                }
+                $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
+            }
         }
 
-        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges);
+        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash);
     }
 
-    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = []) {
+    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '') {
         ?>
         <div class="tb-admin-wrapper">
             <?php foreach ($messages as $msg): ?>
@@ -395,6 +433,7 @@ class AdminController {
                 <h2>Asignar Disponibilidad a <?php echo esc_html($tutor->nombre ?? ''); ?></h2>
                 <form method="POST">
                     <?php wp_nonce_field('tb_assign_availability_action', 'tb_assign_availability_nonce'); ?>
+                    <input type="hidden" name="tb_availability_hash" value="<?php echo esc_attr($availability_hash); ?>">
                     <div id="tb-time-ranges">
                         <div class="tb-time-range">
                             <label>Inicio</label>
