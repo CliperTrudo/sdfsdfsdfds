@@ -257,7 +257,13 @@ class AdminController {
                         if (!$start || !$end) {
                             continue;
                         }
-                        if ($start >= $end) {
+                        $startTs = strtotime($start);
+                        $endTs   = strtotime($end);
+                        if ($startTs === false || $endTs === false) {
+                            $valid = false;
+                            break;
+                        }
+                        if ($endTs <= $startTs || ($endTs - $startTs) >= DAY_IN_SECONDS) {
                             $valid = false;
                             break;
                         }
@@ -376,7 +382,7 @@ class AdminController {
                             }
                         }
                     } else {
-                        $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan.'];
+                        $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.'];
                     }
                 } else {
                     $messages[] = ['type' => 'error', 'text' => 'No se pueden asignar fechas anteriores a hoy.'];
