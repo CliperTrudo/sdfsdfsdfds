@@ -15,10 +15,19 @@ class AdminMenu {
             'tb-tutores',
             '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
         );
+
+        add_submenu_page(
+            'tb-tutores',
+            'Citas',
+            'Citas',
+            'manage_options',
+            'tb-citas',
+            [AppointmentsList::class, 'render']
+        );
     }
 
     public static function enqueue_assets($hook) {
-        if ($hook !== 'toplevel_page_tb-tutores') {
+        if (!in_array($hook, ['toplevel_page_tb-tutores', 'tb-tutores_page_tb-citas'], true)) {
             return;
         }
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
