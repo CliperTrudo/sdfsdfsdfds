@@ -335,7 +335,7 @@ class AdminController {
         }
 
         $start_range = date('Y-m-d');
-        $end_range = date('Y-m-d', strtotime('+6 months'));
+        $end_range   = date('Y-m-d', strtotime('+' . TB_MAX_MONTHS . ' months'));
         $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
         $existing_dates = [];
         $madridTz = new \DateTimeZone('Europe/Madrid');
