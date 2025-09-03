@@ -43,22 +43,43 @@ class AjaxHandlers {
         }
         global $wpdb;
         $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
-        $start = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
-        $end   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
-        $user_q = isset($_POST['user_id']) ? sanitize_text_field($_POST['user_id']) : '';
+        $startRaw = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
+        $endRaw   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
+        $user_q   = isset($_POST['user_id']) ? sanitize_text_field($_POST['user_id']) : '';
+
+        $madridTz = new \DateTimeZone('Europe/Madrid');
+
+        try {
+            $startObj = !empty($startRaw) ? new \DateTime($startRaw, $madridTz) : null;
+            $endObj   = !empty($endRaw)   ? new \DateTime($endRaw,   $madridTz) : null;
+
+            if (!$startObj && !$endObj) {
+                $today   = new \DateTime('now', $madridTz);
+                $startObj = clone $today;
+                $endObj   = clone $today;
+            } elseif (!$startObj) {
+                $startObj = clone $endObj;
+            } elseif (!$endObj) {
+                $endObj = clone $startObj;
+            }
+        } catch (\Exception $e) {
+            wp_send_json_error('Rango de fechas inválido.');
+        }
+
+        if (!$startObj || !$endObj) {
+            wp_send_json_error('No se pudo determinar un rango de fechas.');
+        }
+
+        $start = $startObj->format('Y-m-d');
+        $end   = $endObj->format('Y-m-d');
 
         $tutor_ids = $tutor_id > 0
             ? [$tutor_id]
             : $wpdb->get_col("SELECT id FROM {$wpdb->prefix}tutores");
 
         $data = [];
-        $madridTz = new \DateTimeZone('Europe/Madrid');
 
         foreach ($tutor_ids as $tid) {
-            if (empty($start) || empty($end)) {
-                continue;
-            }
-
             $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $user_q);
 
             foreach ($events as $ev) {
