@@ -42,7 +42,7 @@ class AjaxHandlers {
             wp_send_json_error('Permisos insuficientes.');
         }
         global $wpdb;
-        $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
+        $tutor_id = isset($_POST['tutor_id']) ? intval(sanitize_text_field($_POST['tutor_id'])) : 0;
         $startRaw = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $endRaw   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
         $user_dni = isset($_POST['user_dni']) ? sanitize_text_field($_POST['user_dni']) : '';
@@ -100,6 +100,7 @@ class AjaxHandlers {
                         'summary' => $ev->summary,
                         'start'   => $startObj->format('Y-m-d H:i'),
                         'end'     => $endObj->format('Y-m-d H:i'),
+                        'tutor_id'=> $tid,
                     ];
                 }
             }
@@ -113,7 +114,7 @@ class AjaxHandlers {
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permisos insuficientes.');
         }
-        $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
+        $tutor_id = isset($_POST['tutor_id']) ? intval(sanitize_text_field($_POST['tutor_id'])) : 0;
         $event_id = isset($_POST['event_id']) ? sanitize_text_field($_POST['event_id']) : '';
         $summary  = isset($_POST['summary']) ? sanitize_text_field($_POST['summary']) : '';
         $start    = isset($_POST['start']) ? sanitize_text_field($_POST['start']) : '';
@@ -143,7 +144,7 @@ class AjaxHandlers {
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permisos insuficientes.');
         }
-        $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
+        $tutor_id = isset($_POST['tutor_id']) ? intval(sanitize_text_field($_POST['tutor_id'])) : 0;
         $event_id = isset($_POST['event_id']) ? sanitize_text_field($_POST['event_id']) : '';
         if (!$tutor_id || empty($event_id)) {
             wp_send_json_error('Datos incompletos.');

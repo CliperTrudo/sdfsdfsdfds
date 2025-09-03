@@ -24,7 +24,7 @@ jQuery(function($){
         $.post(ajaxurl, data, function(res){
             if(res.success){
                 res.data.forEach(function(ev){
-                    var row = '<tr data-event-id="'+ev.id+'">';
+                    var row = '<tr data-event-id="'+ev.id+'" data-tutor-id="'+ev.tutor_id+'">';
                     row += '<td><input type="text" class="tb-event-summary" value="'+(ev.summary||'')+'"></td>';
                     row += '<td><input type="datetime-local" class="tb-event-start" value="'+ev.start.replace(' ','T')+'"></td>';
                     row += '<td><input type="datetime-local" class="tb-event-end" value="'+ev.end.replace(' ','T')+'"></td>';
@@ -43,7 +43,7 @@ jQuery(function($){
         var row = $(this).closest('tr');
         $.post(ajaxurl, {
             action: 'tb_update_event',
-            tutor_id: $('#tb_events_tutor').val(),
+            tutor_id: row.data('tutor-id'),
             event_id: row.data('event-id'),
             summary: row.find('.tb-event-summary').val(),
             start: row.find('.tb-event-start').val(),
@@ -61,7 +61,7 @@ jQuery(function($){
         var row = $(this).closest('tr');
         $.post(ajaxurl, {
             action: 'tb_delete_event',
-            tutor_id: $('#tb_events_tutor').val(),
+            tutor_id: row.data('tutor-id'),
             event_id: row.data('event-id'),
             nonce: tbEventsData.nonce
         }, function(res){
