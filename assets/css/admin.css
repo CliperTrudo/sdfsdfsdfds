@@ -116,3 +116,19 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
+.tb-notice {
+    margin: 10px 0;
+    padding: 10px;
+    border-left: 4px solid;
+}
+
+.tb-notice-success {
+    background-color: #f0f6f0;
+    border-color: #46b450;
+}
+
+.tb-notice-error {
+    background-color: #fbeaea;
+    border-color: #dc3232;
+}
