@@ -45,7 +45,11 @@ class AjaxHandlers {
         $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $startRaw = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $endRaw   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
-        $user_q   = isset($_POST['user_id']) ? sanitize_text_field($_POST['user_id']) : '';
+        $user_dni = isset($_POST['user_dni']) ? sanitize_text_field($_POST['user_dni']) : '';
+
+        if (!empty($user_dni) && !preg_match('/^[0-9A-Za-z]+$/', $user_dni)) {
+            wp_send_json_error('DNI inválido.');
+        }
 
         $madridTz = new \DateTimeZone('Europe/Madrid');
 
@@ -80,7 +84,7 @@ class AjaxHandlers {
         $data = [];
 
         foreach ($tutor_ids as $tid) {
-            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $user_q);
+            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $user_dni);
 
             foreach ($events as $ev) {
                 if (isset($ev->summary) && strtoupper(trim($ev->summary)) === 'DISPONIBLE') {
