@@ -24,6 +24,7 @@ class AdminMenu {
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
         $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
         $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
+        $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
 
         wp_enqueue_style(
             'tb-admin',
@@ -55,6 +56,22 @@ class AdminMenu {
             [
                 'ajax_nonce' => wp_create_nonce('tb_get_day_availability'),
                 'maxMonths'  => TB_MAX_MONTHS,
+            ]
+        );
+
+        wp_enqueue_script(
+            'tb-events',
+            TB_PLUGIN_URL . 'assets/js/events.js',
+            ['jquery'],
+            file_exists($events_js) ? filemtime($events_js) : false,
+            true
+        );
+
+        wp_localize_script(
+            'tb-events',
+            'tbEventsData',
+            [
+                'nonce' => wp_create_nonce('tb_events_nonce'),
             ]
         );
     }

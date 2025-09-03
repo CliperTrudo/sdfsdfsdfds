@@ -215,13 +215,13 @@ class AjaxHandlers {
         }
 
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
-        $alumno = $wpdb->get_row($wpdb->prepare("SELECT tiene_cita FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
+        $alumno = $wpdb->get_row($wpdb->prepare("SELECT 1 FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
 
         if ($alumno) {
-            if (intval($alumno->tiene_cita) === 0) {
-                wp_send_json_success('Datos verificados.');
-            } else {
+            if (CalendarService::has_events_by_dni($dni)) {
                 wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
+            } else {
+                wp_send_json_success('Datos verificados.');
             }
         } else {
             wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.');
@@ -310,39 +310,6 @@ class AjaxHandlers {
         if ($event) {
             error_log('TutoriasBooking: ajax_process_booking() - Evento de Google Calendar creado con éxito. Event ID: ' . $event->id . ', Meet Link: ' . $event->hangoutLink);
 
-            $table_name = $wpdb->prefix . 'alumnos_reserva';
-
-            $existing_student = $wpdb->get_row(
-                $wpdb->prepare(
-                    "SELECT id FROM {$table_name} WHERE dni = %s",
-                    $dni
-                )
-            );
-
-            if ($existing_student) {
-                $wpdb->update(
-                    $table_name,
-                    ['tiene_cita' => 1],
-                    ['id' => $existing_student->id],
-                    ['%d'],
-                    ['%d']
-                );
-                $reservation_id = $existing_student->id;
-            } else {
-                $wpdb->insert(
-                    $table_name,
-                    [
-                        'dni'        => $dni,
-                        'email'      => $email,
-                        'nombre'     => $nombreAlumno,
-                        'apellido'   => $apellidoAlumno,
-                        'tiene_cita' => 1
-                    ],
-                    ['%s', '%s', '%s', '%s', '%d']
-                );
-                $reservation_id = $wpdb->insert_id;
-            }
-            error_log('TutoriasBooking: ajax_process_booking() - Registro actualizado. ID: ' . $reservation_id);
             // Calcular el día de la semana de la fecha del examen
             $day_of_week = date_i18n('l', strtotime($exam_date));
 
@@ -360,7 +327,6 @@ class AjaxHandlers {
                 'message'            => 'Reserva confirmada con éxito. Se ha enviado una invitación por correo electrónico.',
                 'meet_link'          => $event->hangoutLink,
                 'event_id'           => $event->id,
-                'reservation_id'     => $reservation_id,
                 'exam_date'          => $exam_date,
                 'start_time'         => $start_time,
                 'end_time'           => $end_time,

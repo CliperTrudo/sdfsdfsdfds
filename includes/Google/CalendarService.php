@@ -106,6 +106,83 @@ class CalendarService {
     }
 
     /**
+     * Update an existing calendar event.
+     */
+    public static function update_calendar_event($tutor_id, $event_id, $summary, $description, $start_datetime, $end_datetime) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
+        try {
+            $event = $service->events->get($tutor->calendar_id, $event_id);
+            if ($summary !== null) { $event->setSummary($summary); }
+            if ($description !== null) { $event->setDescription($description); }
+            if ($start_datetime) {
+                $event->setStart(new \Google_Service_Calendar_EventDateTime(['dateTime' => $start_datetime, 'timeZone' => 'UTC']));
+            }
+            if ($end_datetime) {
+                $event->setEnd(new \Google_Service_Calendar_EventDateTime(['dateTime' => $end_datetime, 'timeZone' => 'UTC']));
+            }
+            return $service->events->update($tutor->calendar_id, $event->getId(), $event, ['sendUpdates' => 'all']);
+        } catch (\Exception $e) {
+            return new \WP_Error('event_update_failed', $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a calendar event.
+     */
+    public static function delete_calendar_event($tutor_id, $event_id) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
+        try {
+            $service->events->delete($tutor->calendar_id, $event_id, ['sendUpdates' => 'all']);
+            return true;
+        } catch (\Exception $e) {
+            return new \WP_Error('event_delete_failed', $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if any tutor has events containing the provided DNI.
+     */
+    public static function has_events_by_dni($dni) {
+        global $wpdb;
+        $tutors = $wpdb->get_results("SELECT id, calendar_id FROM {$wpdb->prefix}tutores");
+        foreach ($tutors as $tutor) {
+            if (empty($tutor->calendar_id)) { continue; }
+            $service = self::get_calendar_service($tutor->id);
+            if (!$service) { continue; }
+            $opt = [
+                'q' => $dni,
+                'singleEvents' => true,
+                'maxResults' => 1,
+            ];
+            try {
+                $events = $service->events->listEvents($tutor->calendar_id, $opt);
+                if (count($events->getItems()) > 0) {
+                    return true;
+                }
+            } catch (\Exception $e) {
+                // Ignore listing errors
+            }
+        }
+        return false;
+    }
+
+    /**
      * Delete all "DISPONIBLE" events for a specific date.
      */
     public static function delete_available_events_for_date($tutor_id, $date) {

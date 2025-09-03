@@ -135,4 +135,28 @@
             <p><em>La tabla de alumnos no está disponible. Activa el plugin nuevamente.</em></p>
         <?php endif; ?>
     </section>
+
+    <hr>
+
+    <h1 class="tb-title">Gestión de Citas</h1>
+
+    <section class="tb-section">
+        <form id="tb-events-form" class="tb-form">
+            <select id="tb_events_tutor">
+                <?php foreach ($tutores as $t): ?>
+                    <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <input type="date" id="tb_events_start" required>
+            <input type="date" id="tb_events_end" required>
+            <button type="submit" class="tb-button">Ver Citas</button>
+        </form>
+
+        <table id="tb-events-table" class="tb-table">
+            <thead>
+                <tr><th>Título</th><th>Inicio</th><th>Fin</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
 </div>
