@@ -23,7 +23,7 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
 - Creación automática de eventos en Google Calendar con enlace de Google Meet.
 - Notificaciones por correo electrónico a los asistentes.
 - Panel de administración para gestionar tutores y tokens de autenticación.
-- Almacenamiento de tutores y tokens en la base de datos de WordPress; las citas se gestionan directamente en Google Calendar.
+- Almacenamiento de reservas, tutores y tokens en la base de datos de WordPress.
 - Importación masiva de tutores y alumnos de reserva mediante archivos XLSX de Excel.
 
 ## Requisitos
