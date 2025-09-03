@@ -1,4 +1,17 @@
 jQuery(function($){
+    function tbShowNotice(message, type){
+        var $wrapper = $('.tb-admin-wrapper');
+        if(!$wrapper.length){
+            alert(message);
+            return;
+        }
+        var $notice = $('<div class="tb-notice tb-notice-' + type + '"><p>' + message + '</p></div>');
+        $wrapper.prepend($notice);
+        setTimeout(function(){
+            $notice.fadeOut(400, function(){ $(this).remove(); });
+        }, 3000);
+    }
+
     $('#tb-create-event-form').on('submit', function(e){
         e.preventDefault();
         var data = {
@@ -71,7 +84,9 @@ jQuery(function($){
             end: row.find('.tb-event-end').val(),
             nonce: tbEventsData.nonce
         }, function(res){
-            if(!res.success){
+            if(res.success){
+                tbShowNotice('Cita actualizada', 'success');
+            } else {
                 alert(res.data || 'Error al guardar');
             }
         });
@@ -88,6 +103,7 @@ jQuery(function($){
         }, function(res){
             if(res.success){
                 row.remove();
+                tbShowNotice('Cita eliminada', 'success');
             } else {
                 alert(res.data || 'Error al eliminar');
             }
