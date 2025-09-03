@@ -53,45 +53,18 @@ class AjaxHandlers {
 
         $data = [];
         $madridTz = new \DateTimeZone('Europe/Madrid');
-        $utcTz    = new \DateTimeZone('UTC');
 
         foreach ($tutor_ids as $tid) {
-            $service = CalendarService::get_calendar_service($tid);
-            $calendar_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id=%d",
-                $tid
-            ));
-            if (!$service || empty($calendar_id)) {
+            if (empty($start) || empty($end)) {
                 continue;
             }
 
-            $opts = ['singleEvents' => true, 'orderBy' => 'startTime'];
+            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $user_q);
 
-            if (!empty($start) && !empty($end)) {
-                try {
-                    $startObj = new \DateTime($start . ' 00:00:00', $madridTz);
-                    $endObj   = new \DateTime($end   . ' 23:59:59', $madridTz);
-                    $startObj->setTimezone($utcTz);
-                    $endObj->setTimezone($utcTz);
-                    $opts['timeMin'] = $startObj->format('c');
-                    $opts['timeMax'] = $endObj->format('c');
-                } catch (\Exception $e) {
-                    // Si las fechas no son válidas, omitimos este tutor
-                    continue;
+            foreach ($events as $ev) {
+                if (isset($ev->summary) && strtoupper(trim($ev->summary)) === 'DISPONIBLE') {
+                    continue; // omitir slots de disponibilidad
                 }
-            }
-
-            if (!empty($user_q)) {
-                $opts['q'] = $user_q;
-            }
-
-            try {
-                $events = $service->events->listEvents($calendar_id, $opts);
-            } catch (\Exception $e) {
-                continue;
-            }
-
-            foreach ($events->getItems() as $ev) {
                 if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
                     $startObj = new \DateTime($ev->start->dateTime);
                     $startObj->setTimezone($madridTz);
