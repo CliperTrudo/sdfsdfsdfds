@@ -1,12 +1,12 @@
 jQuery(function($){
     $('#tb-events-form').on('submit', function(e){
         e.preventDefault();
-        var tutor = $('#tb_events_tutor').val();
-        var user  = $('#tb_events_user').val();
-        var start = $('#tb_events_start').val();
-        var end   = $('#tb_events_end').val();
+        var tutor   = $('#tb_events_tutor').val();
+        var userDni = $('#tb_events_user').val();
+        var start   = $('#tb_events_start').val();
+        var end     = $('#tb_events_end').val();
 
-        if(!tutor && !user && !start && !end){
+        if(!tutor && !userDni && !start && !end){
             alert('Debe indicar al menos un filtro');
             return;
         }
@@ -15,10 +15,10 @@ jQuery(function($){
             action: 'tb_list_events',
             nonce: tbEventsData.nonce
         };
-        if(tutor) data.tutor_id = tutor;
-        if(user)  data.user_id  = user;
-        if(start) data.start_date = start;
-        if(end)   data.end_date   = end;
+        if(tutor)   data.tutor_id = tutor;
+        if(userDni) data.user_dni = userDni;
+        if(start)   data.start_date = start;
+        if(end)     data.end_date   = end;
 
         $('#tb-events-table tbody').empty();
         $.post(ajaxurl, data, function(res){
