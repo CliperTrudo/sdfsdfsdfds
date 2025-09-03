@@ -143,12 +143,21 @@
     <section class="tb-section">
         <form id="tb-events-form" class="tb-form">
             <select id="tb_events_tutor">
+                <option value="">Todos los tutores</option>
                 <?php foreach ($tutores as $t): ?>
                     <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="date" id="tb_events_start" required>
-            <input type="date" id="tb_events_end" required>
+            <select id="tb_events_user">
+                <option value="">Todos los alumnos</option>
+                <?php foreach ($alumnos_reserva as $alumno): ?>
+                    <option value="<?php echo esc_attr($alumno->id); ?>">
+                        <?php echo esc_html($alumno->nombre . ' ' . $alumno->apellido); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <input type="date" id="tb_events_start" placeholder="Fecha inicio (opcional)">
+            <input type="date" id="tb_events_end" placeholder="Fecha fin (opcional)">
             <button type="submit" class="tb-button">Ver Citas</button>
         </form>
 
