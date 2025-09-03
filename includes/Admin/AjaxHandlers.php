@@ -92,10 +92,11 @@ class AjaxHandlers {
                     $endObj   = new \DateTime($ev->end->dateTime);
                     $endObj->setTimezone($madridTz);
                     $data[] = [
-                        'id'      => $ev->id,
-                        'summary' => $ev->summary,
-                        'start'   => $startObj->format('Y-m-d H:i'),
-                        'end'     => $endObj->format('Y-m-d H:i'),
+                        'id'       => $ev->id,
+                        'summary'  => $ev->summary,
+                        'start'    => $startObj->format('Y-m-d H:i'),
+                        'end'      => $endObj->format('Y-m-d H:i'),
+                        'tutor_id' => $tid,
                     ];
                 }
             }
