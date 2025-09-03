@@ -62,8 +62,8 @@ class CalendarService {
         return $available;
     }
 
-    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date) {
-        $events = self::get_calendar_events($tutor_id, $start_date, $end_date);
+    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date, $query = '') {
+        $events = self::get_calendar_events($tutor_id, $start_date, $end_date, $query);
         $busy = [];
         foreach ($events as $event) {
             if (!isset($event->summary) || trim(strtoupper($event->summary)) !== 'DISPONIBLE') {
