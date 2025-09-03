@@ -102,6 +102,10 @@ class AjaxHandlers {
                         'start'   => $startObj->format('Y-m-d H:i'),
                         'end'     => $endObj->format('Y-m-d H:i'),
                         'tutor_id'=> $tid,
+                        'hangoutLink' => isset($ev->hangoutLink) ? $ev->hangoutLink : '',
+                        'attendees'   => isset($ev->attendees) ? array_map(function($a){
+                            return isset($a->email) ? $a->email : '';
+                        }, $ev->attendees) : [],
                     ];
                 }
             }
