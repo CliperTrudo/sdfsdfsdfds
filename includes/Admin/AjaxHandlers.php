@@ -41,29 +41,72 @@ class AjaxHandlers {
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permisos insuficientes.');
         }
+        global $wpdb;
         $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $start = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $end   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
-        if (!$tutor_id || empty($start) || empty($end)) {
-            wp_send_json_error('Datos incompletos.');
-        }
-        $events = CalendarService::get_calendar_events($tutor_id, $start, $end);
-        $madridTz = new \DateTimeZone('Europe/Madrid');
+        $user_q = isset($_POST['user_id']) ? sanitize_text_field($_POST['user_id']) : '';
+
+        $tutor_ids = $tutor_id > 0
+            ? [$tutor_id]
+            : $wpdb->get_col("SELECT id FROM {$wpdb->prefix}tutores");
+
         $data = [];
-        foreach ($events as $ev) {
-            if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
-                $startObj = new \DateTime($ev->start->dateTime);
-                $startObj->setTimezone($madridTz);
-                $endObj   = new \DateTime($ev->end->dateTime);
-                $endObj->setTimezone($madridTz);
-                $data[] = [
-                    'id'      => $ev->id,
-                    'summary' => $ev->summary,
-                    'start'   => $startObj->format('Y-m-d H:i'),
-                    'end'     => $endObj->format('Y-m-d H:i'),
-                ];
+        $madridTz = new \DateTimeZone('Europe/Madrid');
+        $utcTz    = new \DateTimeZone('UTC');
+
+        foreach ($tutor_ids as $tid) {
+            $service = CalendarService::get_calendar_service($tid);
+            $calendar_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id=%d",
+                $tid
+            ));
+            if (!$service || empty($calendar_id)) {
+                continue;
+            }
+
+            $opts = ['singleEvents' => true, 'orderBy' => 'startTime'];
+
+            if (!empty($start) && !empty($end)) {
+                try {
+                    $startObj = new \DateTime($start . ' 00:00:00', $madridTz);
+                    $endObj   = new \DateTime($end   . ' 23:59:59', $madridTz);
+                    $startObj->setTimezone($utcTz);
+                    $endObj->setTimezone($utcTz);
+                    $opts['timeMin'] = $startObj->format('c');
+                    $opts['timeMax'] = $endObj->format('c');
+                } catch (\Exception $e) {
+                    // Si las fechas no son válidas, omitimos este tutor
+                    continue;
+                }
+            }
+
+            if (!empty($user_q)) {
+                $opts['q'] = $user_q;
+            }
+
+            try {
+                $events = $service->events->listEvents($calendar_id, $opts);
+            } catch (\Exception $e) {
+                continue;
+            }
+
+            foreach ($events->getItems() as $ev) {
+                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                    $startObj = new \DateTime($ev->start->dateTime);
+                    $startObj->setTimezone($madridTz);
+                    $endObj   = new \DateTime($ev->end->dateTime);
+                    $endObj->setTimezone($madridTz);
+                    $data[] = [
+                        'id'      => $ev->id,
+                        'summary' => $ev->summary,
+                        'start'   => $startObj->format('Y-m-d H:i'),
+                        'end'     => $endObj->format('Y-m-d H:i'),
+                    ];
+                }
             }
         }
+
         wp_send_json_success($data);
     }
 
