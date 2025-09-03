@@ -1,4 +1,25 @@
 jQuery(function($){
+    $('#tb-create-event-form').on('submit', function(e){
+        e.preventDefault();
+        var data = {
+            action: 'tb_create_event',
+            tutor_id: $('#tb_create_tutor').val(),
+            alumno_id: $('#tb_create_alumno').val(),
+            start: $('#tb_create_start').val(),
+            end: $('#tb_create_end').val(),
+            summary: $('#tb_create_title').val(),
+            description: $('#tb_create_desc').val(),
+            nonce: tbEventsData.nonce
+        };
+        $.post(ajaxurl, data, function(res){
+            if(res.success){
+                alert('Cita creada');
+            } else {
+                alert(res.data || 'Error al crear la cita');
+            }
+        });
+    });
+
     $('#tb-events-form').on('submit', function(e){
         e.preventDefault();
         var tutor   = $('#tb_events_tutor').val();
