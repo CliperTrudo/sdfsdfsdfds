@@ -18,7 +18,7 @@ class CalendarService {
         return new \Google_Service_Calendar($client);
     }
 
-    public static function get_calendar_events($tutor_id, $start_date, $end_date) {
+    public static function get_calendar_events($tutor_id, $start_date, $end_date, $query = '') {
         global $wpdb;
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
         if (!$tutor || empty($tutor->calendar_id)) { return []; }
@@ -40,6 +40,9 @@ class CalendarService {
             'singleEvents' => true,
             'orderBy' => 'startTime'
         ];
+        if (!empty($query)) {
+            $opt['q'] = $query;
+        }
         try {
             $events = $service->events->listEvents($calendarId, $opt);
             return $events->getItems();
@@ -68,6 +71,19 @@ class CalendarService {
             }
         }
         return $busy;
+    }
+
+    /**
+     * Retrieve calendar events for all tutors.
+     */
+    public static function get_calendar_events_all_tutors($start_date, $end_date, $query = '') {
+        global $wpdb;
+        $tutors = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}tutores");
+        $all_events = [];
+        foreach ($tutors as $tutor) {
+            $all_events[$tutor->id] = self::get_calendar_events($tutor->id, $start_date, $end_date, $query);
+        }
+        return $all_events;
     }
 
     public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[]) {
