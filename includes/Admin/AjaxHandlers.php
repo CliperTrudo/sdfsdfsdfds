@@ -7,6 +7,7 @@ class AjaxHandlers {
     public static function init() {
         add_action('wp_ajax_tb_get_day_availability', [self::class, 'ajax_get_day_availability']);
         add_action('wp_ajax_tb_list_events', [self::class, 'ajax_list_events']);
+        add_action('wp_ajax_tb_create_event', [self::class, 'ajax_create_event']);
         add_action('wp_ajax_tb_update_event', [self::class, 'ajax_update_event']);
         add_action('wp_ajax_tb_delete_event', [self::class, 'ajax_delete_event']);
     }
@@ -107,6 +108,44 @@ class AjaxHandlers {
         }
 
         wp_send_json_success($data);
+    }
+
+    public static function ajax_create_event() {
+        check_ajax_referer('tb_events_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permisos insuficientes.');
+        }
+        global $wpdb;
+        $tutor_id  = isset($_POST['tutor_id']) ? intval(sanitize_text_field($_POST['tutor_id'])) : 0;
+        $alumno_id = isset($_POST['alumno_id']) ? intval(sanitize_text_field($_POST['alumno_id'])) : 0;
+        $summary   = isset($_POST['summary']) ? sanitize_text_field($_POST['summary']) : '';
+        $description = isset($_POST['description']) ? sanitize_text_field($_POST['description']) : '';
+        $start     = isset($_POST['start']) ? sanitize_text_field($_POST['start']) : '';
+        $end       = isset($_POST['end']) ? sanitize_text_field($_POST['end']) : '';
+        if (!$tutor_id || !$alumno_id || empty($summary) || empty($start) || empty($end)) {
+            wp_send_json_error('Datos incompletos.');
+        }
+        $alumnos_table = $wpdb->prefix . 'alumnos_reserva';
+        $alumno = $wpdb->get_row($wpdb->prepare("SELECT email FROM {$alumnos_table} WHERE id = %d", $alumno_id));
+        if (!$alumno) {
+            wp_send_json_error('Alumno no encontrado.');
+        }
+        $madrid = new \DateTimeZone('Europe/Madrid');
+        $utc    = new \DateTimeZone('UTC');
+        try {
+            $startObj = new \DateTime($start, $madrid);
+            $endObj   = new \DateTime($end, $madrid);
+            $startUtc = $startObj->setTimezone($utc)->format('c');
+            $endUtc   = $endObj->setTimezone($utc)->format('c');
+        } catch (\Exception $e) {
+            wp_send_json_error('Formato de fecha inválido.');
+        }
+        $res = CalendarService::create_calendar_event($tutor_id, $summary, $description, $startUtc, $endUtc, [$alumno->email]);
+        if (is_wp_error($res)) {
+            wp_send_json_error($res->get_error_message());
+        }
+        $wpdb->update($alumnos_table, ['tiene_cita' => 1], ['id' => $alumno_id], ['%d'], ['%d']);
+        wp_send_json_success();
     }
 
     public static function ajax_update_event() {

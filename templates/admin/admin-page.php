@@ -141,6 +141,26 @@
     <h1 class="tb-title">Gestión de Citas</h1>
 
     <section class="tb-section">
+        <form id="tb-create-event-form" class="tb-form">
+            <select id="tb_create_tutor" required>
+                <option value="">Seleccione tutor</option>
+                <?php foreach ($tutores as $t): ?>
+                    <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select id="tb_create_alumno" required>
+                <option value="">Seleccione alumno</option>
+                <?php foreach ($alumnos_reserva as $alumno): ?>
+                    <option value="<?php echo esc_attr($alumno->id); ?>"><?php echo esc_html($alumno->nombre . ' ' . $alumno->apellido); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <input type="datetime-local" id="tb_create_start" required>
+            <input type="datetime-local" id="tb_create_end" required>
+            <input type="text" id="tb_create_title" placeholder="Título" required>
+            <input type="text" id="tb_create_desc" placeholder="Descripción">
+            <button type="submit" class="tb-button">Crear Cita</button>
+        </form>
+
         <form id="tb-events-form" class="tb-form">
             <select id="tb_events_tutor">
                 <option value="">Todos los tutores</option>
