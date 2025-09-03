@@ -2,16 +2,26 @@ jQuery(function($){
     $('#tb-events-form').on('submit', function(e){
         e.preventDefault();
         var tutor = $('#tb_events_tutor').val();
+        var user  = $('#tb_events_user').val();
         var start = $('#tb_events_start').val();
         var end   = $('#tb_events_end').val();
-        $('#tb-events-table tbody').empty();
-        $.post(ajaxurl, {
+
+        if(!tutor && !user && !start && !end){
+            alert('Debe indicar al menos un filtro');
+            return;
+        }
+
+        var data = {
             action: 'tb_list_events',
-            tutor_id: tutor,
-            start_date: start,
-            end_date: end,
             nonce: tbEventsData.nonce
-        }, function(res){
+        };
+        if(tutor) data.tutor_id = tutor;
+        if(user)  data.user_id  = user;
+        if(start) data.start_date = start;
+        if(end)   data.end_date   = end;
+
+        $('#tb-events-table tbody').empty();
+        $.post(ajaxurl, data, function(res){
             if(res.success){
                 res.data.forEach(function(ev){
                     var row = '<tr data-event-id="'+ev.id+'">';
