@@ -168,6 +168,12 @@ class AdminController {
         include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
     }
 
+    /**
+     * Handle availability assignment for a tutor.
+     *
+     * @param int $tutor_id Tutor identifier.
+     * @return void
+     */
     private static function handle_assign_availability($tutor_id) {
         global $wpdb;
 
@@ -263,193 +269,45 @@ class AdminController {
                     wp_safe_redirect($redirect);
                     exit;
                 }
-            } elseif (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
-                $today      = date('Y-m-d');
-                $date_valid = true;
-                foreach ($dates as $date) {
-                    if ($date < $today) {
-                        $date_valid = false;
-                        break;
-                    }
-                }
-                if ($date_valid) {
-                    $ranges = [];
-                    $valid  = true;
-                    foreach ($starts as $idx => $start) {
-                        $end = $ends[$idx] ?? '';
-                        if (!$start || !$end) {
-                            continue;
-                        }
-                        $startTs = strtotime($start);
-                        $endTs   = strtotime($end);
-                        if ($startTs === false || $endTs === false) {
-                            $valid = false;
+                } elseif (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
+                    $today      = date('Y-m-d');
+                    $date_valid = true;
+                    foreach ($dates as $date) {
+                        if ($date < $today) {
+                            $date_valid = false;
                             break;
                         }
-                        if ($endTs <= $startTs || ($endTs - $startTs) >= DAY_IN_SECONDS) {
-                            $valid = false;
-                            break;
-                        }
-                        $ranges[] = ['start' => $start, 'end' => $end];
                     }
-                    if ($valid) {
-                        usort($ranges, function ($a, $b) {
-                            return strcmp($a['start'], $b['start']);
-                        });
-                        for ($i = 1; $i < count($ranges); $i++) {
-                            if ($ranges[$i]['start'] < $ranges[$i - 1]['end']) {
-                                $valid = false;
-                                break;
-                            }
-                        }
-                    }
-                    if ($valid) {
-                        $madridTz = new \DateTimeZone('Europe/Madrid');
-                        $conflict_msgs = [];
-                        foreach ($dates as $date) {
-                            $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $date, $date);
-                            foreach ($busy_events as $ev) {
-                                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
-                                    $start = new \DateTime($ev->start->dateTime);
-                                    $start->setTimezone($madridTz);
-                                    $end = new \DateTime($ev->end->dateTime);
-                                    $end->setTimezone($madridTz);
-                                    $inRange = false;
-                                    foreach ($ranges as $range) {
-                                        if ($range['start'] <= $start->format('H:i') && $range['end'] >= $end->format('H:i')) {
-                                            $inRange = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!$inRange) {
-                                        $conflict_msgs[] = sprintf(
-                                            'La cita "%s" el %s de %s a %s queda fuera de los tramos seleccionados.',
-                                            $ev->summary ?? '',
-                                            $start->format('Y-m-d'),
-                                            $start->format('H:i'),
-                                            $end->format('H:i')
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                        if (!empty($conflict_msgs)) {
-                            foreach ($conflict_msgs as $cmsg) {
-                                $messages[] = ['type' => 'error', 'text' => $cmsg];
-                            }
+                    if ($date_valid) {
+                        $ranges = self::validate_ranges($starts, $ends);
+                        if (is_wp_error($ranges)) {
+                            $messages[] = ['type' => 'error', 'text' => $ranges->get_error_message()];
                         } else {
-                            $utcTz    = new \DateTimeZone('UTC');
-                            $creation_failed = false;
-                            $any_created = false;
-                            if ($editing_date) {
-                                CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
-                            }
-                            foreach ($dates as $date) {
-                                foreach ($ranges as $range) {
-                                    $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
-                                    $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
-
-                                $dayStart = new \DateTime($date . 'T00:00:00', $madridTz);
-                                $dayEnd   = new \DateTime($date . 'T23:59:59', $madridTz);
-                                $hasDSTChange = count($madridTz->getTransitions($dayStart->getTimestamp(), $dayEnd->getTimestamp())) > 1;
-
-                                $busy = CalendarService::get_busy_calendar_events($tutor_id, $startObj->format('Y-m-d'), $endObj->format('Y-m-d'));
-                                $overlap = false;
-                                foreach ($busy as $ev) {
-                                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
-                                        $busyStart = new \DateTime($ev->start->dateTime);
-                                        $busyStart->setTimezone($madridTz);
-                                        $busyEnd   = new \DateTime($ev->end->dateTime);
-                                        $busyEnd->setTimezone($madridTz);
-                                        if ($busyStart < $endObj && $busyEnd > $startObj) {
-                                            // Allow busy events entirely within the availability range
-                                            if (!($busyStart >= $startObj && $busyEnd <= $endObj)) {
-                                                $overlap = true;
-                                                break;
-                                            }
-                                        }
+                            $conflicts = self::check_conflicts($tutor_id, $dates, $ranges, $madridTz);
+                            if (!empty($conflicts)) {
+                                foreach ($conflicts as $cmsg) {
+                                    $messages[] = ['type' => 'error', 'text' => $cmsg];
+                                }
+                            } else {
+                                $result = self::create_availability_events($tutor_id, $dates, $ranges, $editing_date, $original_events, $madridTz);
+                                if (is_wp_error($result)) {
+                                    $messages[] = ['type' => 'error', 'text' => $result->get_error_message()];
+                                } elseif ($result) {
+                                    $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
+                                    if ($editing_date) {
+                                        $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
+                                        wp_safe_redirect($redirect);
+                                        exit;
                                     }
                                 }
-                                if ($overlap) {
-                                    $messages[] = [
-                                        'type' => 'error',
-                                        'text' => sprintf('No se creó la disponibilidad para %s de %s a %s por solaparse con otro evento.', $date, $range['start'], $range['end'])
-                                    ];
-                                    continue;
-                                }
-
-                                if ($hasDSTChange) {
-                                    $duration   = $endObj->getTimestamp() - $startObj->getTimestamp();
-                                    $startUtcObj = clone $startObj;
-                                    $startUtcObj->setTimezone($utcTz);
-                                    $endUtcObj   = (clone $startUtcObj)->modify('+' . $duration . ' seconds');
-                                    $start_dt    = $startUtcObj->format('Y-m-d\\TH:i:s');
-                                    $end_dt      = $endUtcObj->format('Y-m-d\\TH:i:s');
-                                } else {
-                                    $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
-                                    $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
-                                }
-
-                                $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
-                                if (is_wp_error($created)) {
-                                    error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
-                                    $messages[] = [
-                                        'type' => 'error',
-                                        'text' => sprintf('Error al crear la disponibilidad para %s de %s a %s: %s', $date, $range['start'], $range['end'], $created->get_error_message())
-                                    ];
-                                    $creation_failed = true;
-                                    break 2;
-                                }
-                                error_log('TutoriasBooking: handle_assign_availability - Evento creado correctamente: ' . ($created->id ?? 'sin ID'));
-                                $any_created = true;
                             }
                         }
-                        if ($creation_failed) {
-                            foreach ($dates as $date) {
-                                CalendarService::delete_available_events_for_date($tutor_id, $date);
-                            }
-                            if ($editing_date) {
-                                foreach ($original_events as $ev) {
-                                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
-                                        $start_dt = (new \DateTime($ev->start->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
-                                        $end_dt   = (new \DateTime($ev->end->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
-                                        $summary = $ev->summary ?? 'DISPONIBLE';
-                                        $description = $ev->description ?? '';
-                                        $restored = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_dt, $end_dt);
-                                        if (is_wp_error($restored)) {
-                                            error_log('TutoriasBooking: handle_assign_availability - Error al restaurar evento: ' . $restored->get_error_message());
-                                        } else {
-                                            error_log('TutoriasBooking: handle_assign_availability - Evento restaurado: ' . ($restored->id ?? 'sin ID'));
-                                        }
-                                    }
-                                }
-                            }
-                            $msg = 'Error al crear los eventos de disponibilidad.';
-                            if ($editing_date) {
-                                $msg .= ' Se restauró la disponibilidad original.';
-                            }
-                            $messages[] = ['type' => 'error', 'text' => $msg];
-                        } else {
-                            if ($any_created) {
-                                $messages[] = ['type' => 'success', 'text' => 'Disponibilidad asignada correctamente.'];
-                                if ($editing_date) {
-                                    $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' .
-                                    $tutor_id);
-                                    wp_safe_redirect($redirect);
-                                    exit;
-                                }
-                            }
-                          }
-                      }
                     } else {
-                      $messages[] = ['type' => 'error', 'text' => 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.'];
+                        $messages[] = ['type' => 'error', 'text' => 'No se pueden asignar fechas anteriores a hoy.'];
                     }
                 } else {
-                    $messages[] = ['type' => 'error', 'text' => 'No se pueden asignar fechas anteriores a hoy.'];
+                    $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
                 }
-            } else {
-                $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios.'];
-            }
             }
 
             $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
@@ -484,6 +342,189 @@ class AdminController {
         }
 
         self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash);
+    }
+
+    /**
+     * Validate time ranges ensuring correct order and no overlaps.
+     *
+     * @param string[] $starts Array of start times (H:i).
+     * @param string[] $ends   Array of end times (H:i).
+     * @return array|\WP_Error Array of valid ranges or WP_Error on failure.
+     */
+    private static function validate_ranges($starts, $ends) {
+        $ranges = [];
+        foreach ($starts as $idx => $start) {
+            $end = $ends[$idx] ?? '';
+            if (!$start || !$end) {
+                continue;
+            }
+            $startTs = strtotime($start);
+            $endTs   = strtotime($end);
+            if ($startTs === false || $endTs === false) {
+                return new \WP_Error('tb_invalid_time', 'Formato de hora inválido.');
+            }
+            if ($endTs <= $startTs || ($endTs - $startTs) >= DAY_IN_SECONDS) {
+                return new \WP_Error('tb_invalid_range', 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.');
+            }
+            $ranges[] = ['start' => $start, 'end' => $end];
+        }
+        usort($ranges, function ($a, $b) {
+            return strcmp($a['start'], $b['start']);
+        });
+        for ($i = 1; $i < count($ranges); $i++) {
+            if ($ranges[$i]['start'] < $ranges[$i - 1]['end']) {
+                return new \WP_Error('tb_overlap', 'Los rangos de tiempo son inválidos o se solapan. Verifica que la hora final sea mayor que la inicial y que el rango no exceda las 24 horas.');
+            }
+        }
+        return $ranges;
+    }
+
+    /**
+     * Check conflicts of selected ranges against busy events.
+     *
+     * @param int           $tutor_id Tutor identifier.
+     * @param array         $dates    Selected dates (Y-m-d).
+     * @param array         $ranges   Validated ranges.
+     * @param \DateTimeZone $tz       Timezone for calculations.
+     * @return string[] List of conflict messages.
+     */
+    private static function check_conflicts($tutor_id, $dates, $ranges, $tz) {
+        $conflicts = [];
+        foreach ($dates as $date) {
+            $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $date, $date);
+            foreach ($busy_events as $ev) {
+                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                    $start = new \DateTime($ev->start->dateTime);
+                    $start->setTimezone($tz);
+                    $end = new \DateTime($ev->end->dateTime);
+                    $end->setTimezone($tz);
+                    $inRange = false;
+                    foreach ($ranges as $range) {
+                        if ($range['start'] <= $start->format('H:i') && $range['end'] >= $end->format('H:i')) {
+                            $inRange = true;
+                            break;
+                        }
+                    }
+                    if (!$inRange) {
+                        $conflicts[] = sprintf(
+                            'La cita "%s" el %s de %s a %s queda fuera de los tramos seleccionados.',
+                            $ev->summary ?? '',
+                            $start->format('Y-m-d'),
+                            $start->format('H:i'),
+                            $end->format('H:i')
+                        );
+                    }
+                }
+            }
+        }
+        return $conflicts;
+    }
+
+    /**
+     * Create availability events and optionally restore originals on failure.
+     *
+     * @param int           $tutor_id        Tutor identifier.
+     * @param array         $dates           Selected dates.
+     * @param array         $ranges          Validated ranges.
+     * @param string        $editing_date    Date being edited.
+     * @param array         $original_events Original events to restore if needed.
+     * @param \DateTimeZone $madridTz        Madrid timezone.
+     * @return bool|\WP_Error True if events created, WP_Error otherwise.
+     */
+    private static function create_availability_events($tutor_id, $dates, $ranges, $editing_date, $original_events, $madridTz) {
+        $utcTz = new \DateTimeZone('UTC');
+        $creation_failed = false;
+        $any_created = false;
+        if ($editing_date) {
+            CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
+        }
+        foreach ($dates as $date) {
+            foreach ($ranges as $range) {
+                $startObj = new \DateTime($date . 'T' . $range['start'] . ':00', $madridTz);
+                $endObj   = new \DateTime($date . 'T' . $range['end']   . ':00', $madridTz);
+
+                $dayStart = new \DateTime($date . 'T00:00:00', $madridTz);
+                $dayEnd   = new \DateTime($date . 'T23:59:59', $madridTz);
+                $hasDSTChange = count($madridTz->getTransitions($dayStart->getTimestamp(), $dayEnd->getTimestamp())) > 1;
+
+                $busy = CalendarService::get_busy_calendar_events($tutor_id, $startObj->format('Y-m-d'), $endObj->format('Y-m-d'));
+                $overlap = false;
+                foreach ($busy as $ev) {
+                    if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                        $busyStart = new \DateTime($ev->start->dateTime);
+                        $busyStart->setTimezone($madridTz);
+                        $busyEnd   = new \DateTime($ev->end->dateTime);
+                        $busyEnd->setTimezone($madridTz);
+                        if ($busyStart < $endObj && $busyEnd > $startObj) {
+                            if (!($busyStart >= $startObj && $busyEnd <= $endObj)) {
+                                $overlap = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if ($overlap) {
+                    return new \WP_Error('tb_overlap_busy', sprintf('No se creó la disponibilidad para %s de %s a %s por solaparse con otro evento.', $date, $range['start'], $range['end']));
+                }
+
+                if ($hasDSTChange) {
+                    $duration   = $endObj->getTimestamp() - $startObj->getTimestamp();
+                    $startUtcObj = clone $startObj;
+                    $startUtcObj->setTimezone($utcTz);
+                    $endUtcObj   = (clone $startUtcObj)->modify('+' . $duration . ' seconds');
+                    $start_dt    = $startUtcObj->format('Y-m-d\\TH:i:s');
+                    $end_dt      = $endUtcObj->format('Y-m-d\\TH:i:s');
+                } else {
+                    $start_dt = $startObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                    $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                }
+
+                $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                if (is_wp_error($created)) {
+                    error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
+                    $creation_failed = true;
+                    break 2;
+                }
+                error_log('TutoriasBooking: handle_assign_availability - Evento creado correctamente: ' . ($created->id ?? 'sin ID'));
+                $any_created = true;
+            }
+        }
+        if ($creation_failed) {
+            foreach ($dates as $date) {
+                CalendarService::delete_available_events_for_date($tutor_id, $date);
+            }
+            if ($editing_date) {
+                self::restore_original_events($tutor_id, $original_events, $utcTz);
+                return new \WP_Error('tb_creation_failed', 'Error al crear los eventos de disponibilidad. Se restauró la disponibilidad original.');
+            }
+            return new \WP_Error('tb_creation_failed', 'Error al crear los eventos de disponibilidad.');
+        }
+        return $any_created;
+    }
+
+    /**
+     * Restore original events when creation fails.
+     *
+     * @param int           $tutor_id        Tutor identifier.
+     * @param array         $original_events Events to restore.
+     * @param \DateTimeZone $utcTz           UTC timezone.
+     * @return void
+     */
+    private static function restore_original_events($tutor_id, $original_events, $utcTz) {
+        foreach ($original_events as $ev) {
+            if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                $start_dt = (new \DateTime($ev->start->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                $end_dt   = (new \DateTime($ev->end->dateTime))->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
+                $summary = $ev->summary ?? 'DISPONIBLE';
+                $description = $ev->description ?? '';
+                $restored = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_dt, $end_dt);
+                if (is_wp_error($restored)) {
+                    error_log('TutoriasBooking: handle_assign_availability - Error al restaurar evento: ' . $restored->get_error_message());
+                } else {
+                    error_log('TutoriasBooking: handle_assign_availability - Evento restaurado: ' . ($restored->id ?? 'sin ID'));
+                }
+            }
+        }
     }
 
     private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '') {
