@@ -62,6 +62,13 @@ jQuery(function($){
                     row += '<td><input type="text" class="tb-event-summary" value="'+(ev.summary||'')+'"></td>';
                     row += '<td><input type="datetime-local" class="tb-event-start" value="'+ev.start.replace(' ','T')+'"></td>';
                     row += '<td><input type="datetime-local" class="tb-event-end" value="'+ev.end.replace(' ','T')+'"></td>';
+                    row += '<td>';
+                    if(ev.hangoutLink){
+                        row += '<a href="'+ev.hangoutLink+'" target="_blank" class="tb-hangout-link">🔗</a> ';
+                        row += '<button type="button" class="tb-button tb-copy-link" data-link="'+ev.hangoutLink+'">Copiar</button>';
+                    }
+                    row += '</td>';
+                    row += '<td>' + (Array.isArray(ev.attendees) ? ev.attendees.join('<br>') : '') + '</td>';
                     row += '<td><button type="button" class="tb-button tb-save-event">Guardar</button>';
                     row += ' <button type="button" class="tb-button tb-button-danger tb-delete-event">Eliminar</button></td>';
                     row += '</tr>';
@@ -107,6 +114,18 @@ jQuery(function($){
             } else {
                 alert(res.data || 'Error al eliminar');
             }
+        });
+    });
+
+    $('#tb-events-table').on('click', '.tb-copy-link', function(){
+        var link = $(this).data('link');
+        if(!link){
+            return;
+        }
+        navigator.clipboard.writeText(link).then(function(){
+            tbShowNotice('Enlace copiado', 'success');
+        }).catch(function(){
+            alert('No se pudo copiar el enlace');
         });
     });
 });

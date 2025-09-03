@@ -183,7 +183,7 @@
 
         <table id="tb-events-table" class="tb-table">
             <thead>
-                <tr><th>Título</th><th>Inicio</th><th>Fin</th><th>Acciones</th></tr>
+                <tr><th>Título</th><th>Inicio</th><th>Fin</th><th>Enlace</th><th>Asistentes</th><th>Acciones</th></tr>
             </thead>
             <tbody></tbody>
         </table>
