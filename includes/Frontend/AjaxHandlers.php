@@ -310,6 +310,16 @@ class AjaxHandlers {
         if ($event) {
             error_log('TutoriasBooking: ajax_process_booking() - Evento de Google Calendar creado con éxito. Event ID: ' . $event->id . ', Meet Link: ' . $event->hangoutLink);
 
+            // Marcar en la base de datos que el alumno ya tiene una cita
+            $updated = $wpdb->update(
+                "{$wpdb->prefix}alumnos_reserva",
+                ['tiene_cita' => 1],
+                ['dni' => $dni]
+            );
+            if ($updated === false) {
+                error_log('TutoriasBooking: ajax_process_booking() - ERROR: No se pudo actualizar tiene_cita para el DNI ' . $dni . '. ' . $wpdb->last_error);
+            }
+
             // Calcular el día de la semana de la fecha del examen
             $day_of_week = date_i18n('l', strtotime($exam_date));
 
