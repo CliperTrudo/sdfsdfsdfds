@@ -151,7 +151,7 @@
             <select id="tb_events_user">
                 <option value="">Todos los alumnos</option>
                 <?php foreach ($alumnos_reserva as $alumno): ?>
-                    <option value="<?php echo esc_attr($alumno->id); ?>">
+                    <option value="<?php echo esc_attr($alumno->dni); ?>">
                         <?php echo esc_html($alumno->nombre . ' ' . $alumno->apellido); ?>
                     </option>
                 <?php endforeach; ?>
