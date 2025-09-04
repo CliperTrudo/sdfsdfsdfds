@@ -1,4 +1,4 @@
-<div class="tb-container" <?php echo $container_style; ?>>
+<div class="tb-container" style="<?php echo esc_attr($container_style); ?>">
     <h3>Conectar Tutor</h3>
     <?php if (!empty($message)): ?>
         <p class="tb-message tb-message-<?php echo esc_attr($message_type); ?>"><?php echo esc_html($message); ?></p>
