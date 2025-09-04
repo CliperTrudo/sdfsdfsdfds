@@ -33,6 +33,10 @@ if ( ! defined( 'TB_MAX_MONTHS' ) ) {
     define( 'TB_MAX_MONTHS', 6 );
 }
 
+if ( ! defined( 'TB_DEBUG' ) ) {
+    define( 'TB_DEBUG', false );
+}
+
 // Load environment variables from .env file if present
 $env_file = TB_PLUGIN_DIR . '.env';
 if (file_exists($env_file)) {
