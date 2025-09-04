@@ -6,6 +6,9 @@ function enqueue_assets()
     $css_rel = 'assets/css/frontend.css';
     $js_rel  = 'assets/js/frontend.js';
 
+    $css_path = TB_PLUGIN_DIR . $css_rel;
+    $js_path  = TB_PLUGIN_DIR . $js_rel;
+
     // Ensure our stylesheet loads after Elementor's if present
     $style_deps = [];
     if (wp_style_is('elementor-frontend', 'enqueued')) {
@@ -15,11 +18,12 @@ function enqueue_assets()
         $style_deps[] = 'elementor-pro';
     }
 
+    $css_version = file_exists($css_path) ? filemtime($css_path) : false;
     wp_enqueue_style(
         'tb-frontend',
         plugins_url($css_rel, TB_PLUGIN_FILE),
         $style_deps,
-        filemtime(TB_PLUGIN_DIR . $css_rel)
+        $css_version
     );
 
     $deps = ['jquery'];
@@ -35,11 +39,12 @@ function enqueue_assets()
         $deps[] = 'google-recaptcha';
     }
 
+    $js_version = file_exists($js_path) ? filemtime($js_path) : false;
     wp_enqueue_script(
         'tb-frontend',
         plugins_url($js_rel, TB_PLUGIN_FILE),
         $deps,
-        filemtime(TB_PLUGIN_DIR . $js_rel),
+        $js_version,
         true
     );
     wp_localize_script('tb-frontend', 'tbBooking', [
