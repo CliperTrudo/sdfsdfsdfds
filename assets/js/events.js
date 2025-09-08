@@ -30,7 +30,8 @@ jQuery(function($){
                     row += '<td>'+ev.start+' - '+ev.end+'</td>';
                     var link = ev.url ? '<a href="'+ev.url+'" target="_blank">'+ev.url+'</a>' : '';
                     row += '<td>'+link+'</td>';
-                    row += '<td><button type="button" class="tb-button tb-button-danger tb-delete-event">Eliminar</button></td>';
+                    row += '<td><button type="button" class="tb-button tb-edit-event">Editar</button> ';
+                    row += '<button type="button" class="tb-button tb-button-danger tb-delete-event">Eliminar</button></td>';
                     row += '</tr>';
                     $('#tb-events-table tbody').append(row);
                 });

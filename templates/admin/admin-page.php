@@ -168,4 +168,15 @@
             <tbody></tbody>
         </table>
     </section>
+    <div id="tb_edit_modal" class="tb-slots-overlay" style="display:none">
+        <div class="tb-slots-content">
+            <div id="tb_calendar"></div>
+            <p id="tb_selected_slot"></p>
+            <button type="button" id="tb_edit_save" class="tb-button" disabled>Guardar</button>
+            <button type="button" id="tb_edit_cancel" class="tb-button tb-button-danger">Cancelar</button>
+        </div>
+    </div>
+    <div id="tb_slots_overlay" class="tb-slots-overlay" style="display:none">
+        <div id="tb_slots_container" class="tb-slots-content"></div>
+    </div>
 </div>
