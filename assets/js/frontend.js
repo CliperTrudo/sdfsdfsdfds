@@ -1,21 +1,15 @@
 jQuery(document).ready(function($) {
   var ajaxurl = tbBooking.ajaxUrl;
-  var slotsByDate = {};           // Franjas horarias agrupadas por fecha
-  var allSortedDates = [];        // Todas las fechas ordenadas
-  var calendarStartDate, calendarEndDate, currentMonthDate, selectedDate;
+  window.slotsByDate = {};           // Franjas horarias agrupadas por fecha
+  window.allSortedDates = [];        // Todas las fechas ordenadas
+  window.calendarStartDate = null;
+  window.calendarEndDate = null;
+  window.currentMonthDate = null;
+  window.selectedDate = null;
 
-  // Formatea fecha a YYYY-MM-DD
-  function formatDate(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
-  }
+  var formatDate = tbCalendarUtils.formatDate;
+  var renderSlotsForDate = tbCalendarUtils.renderSlotsForDate;
+  var renderCalendar = tbCalendarUtils.renderCalendar;
 
   // Paso 1: verificación de DNI y correo
   $('#tb_dni_form').submit(function(e) {
@@ -105,132 +99,6 @@ jQuery(document).ready(function($) {
     });
   });
 
-  // Renderiza las franjas horarias para una fecha en un modal flotante
-  function renderSlotsForDate(date) {
-    var overlay = $('#tb_slots_overlay');
-    var slotsContainer = $('#tb_slots_container');
-    slotsContainer.empty();
-    var slotsForThisDate = slotsByDate[date];
-
-    if (slotsForThisDate && slotsForThisDate.length > 0) {
-      var dayHtml = '<button type="button" id="tb_close_slots" class="tb-close-btn">&times;</button>';
-      dayHtml += '<div class="tb-day-card">';
-      dayHtml += '<h4>' + date + '</h4>';
-      dayHtml += '<div class="tb-time-slots-list">';
-
-      $.each(slotsForThisDate, function(idx, slot) {
-        dayHtml += '<label class="tb-time-slot-label">';
-        dayHtml += '<input type="radio" name="selected_slot" value="' + slot.start_time + '-' + slot.end_time + '" data-start="' + slot.start_time + '" data-end="' + slot.end_time + '" data-date="' + slot.date + '">';
-        dayHtml += slot.start_time + ' - ' + slot.end_time;
-        dayHtml += '</label>';
-      });
-
-      dayHtml += '</div>';
-      dayHtml += '</div>';
-      slotsContainer.html(dayHtml);
-    } else {
-      slotsContainer.html('<button type="button" id="tb_close_slots" class="tb-close-btn">&times;</button><p class="tb-message tb-message-info">No hay disponibilidad para la fecha seleccionada.</p>');
-    }
-
-    overlay.show().css('display', 'flex');
-
-    // Cerrar al hacer click fuera del contenido
-    overlay.off('click').on('click', function(e) {
-      if (e.target.id === 'tb_slots_overlay') overlay.hide();
-    });
-
-    // Botón cerrar
-    $('#tb_close_slots').on('click', function() {
-      overlay.hide();
-    });
-
-    // Selección de franja
-    $('input[name="selected_slot"]').change(function() {
-      $('#tb_submit_booking').prop('disabled', false);
-      $('#tb_selected_slot').text('Seleccionado: ' + $(this).data('date') + ' ' + $(this).data('start') + ' - ' + $(this).data('end'));
-      overlay.hide();
-    });
-  }
-
-  // Calendario con navegación por mes
-  function renderCalendar(monthDate) {
-    var calendar = $('#tb_calendar');
-    var monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    var dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    var month = monthDate.getMonth();
-    var year = monthDate.getFullYear();
-
-    var calendarHtml = '<div class="tb-calendar-month">';
-    calendarHtml += '<div class="tb-calendar-nav">';
-    calendarHtml += '<button id="tb_prev_month" class="tb-nav-btn">&lt;</button>';
-    calendarHtml += '<span class="tb-calendar-month-name">' + monthNames[month] + ' ' + year + '</span>';
-    calendarHtml += '<button id="tb_next_month" class="tb-nav-btn">&gt;</button>';
-    calendarHtml += '</div>';
-
-    // Nombres de días
-    calendarHtml += '<div class="tb-calendar-week-day-names">';
-    $.each(dayNames, function(_, dn) {
-      calendarHtml += '<div class="tb-calendar-week-day">' + dn + '</div>';
-    });
-    calendarHtml += '</div>';
-
-    // Días del mes
-    calendarHtml += '<div class="tb-calendar-days">';
-    var firstDayIndex = new Date(year, month, 1).getDay();
-    for (var i = 0; i < firstDayIndex; i++) {
-      calendarHtml += '<div class="tb-calendar-day tb-empty"></div>';
-    }
-    var daysInMonth = new Date(year, month + 1, 0).getDate();
-    for (var d = 1; d <= daysInMonth; d++) {
-      var dateObj = new Date(year, month, d);
-      var dateStr = formatDate(dateObj);
-      if (dateObj < calendarStartDate || dateObj > calendarEndDate) {
-        calendarHtml += '<div class="tb-calendar-day tb-out-of-range">' + d + '</div>';
-      } else {
-        var available = !!slotsByDate[dateStr];
-        var classes = 'tb-calendar-day' + (available ? ' tb-day-available' : ' tb-day-unavailable');
-        if (selectedDate === dateStr) classes += ' tb-selected';
-        calendarHtml += '<div class="' + classes + '" data-date="' + dateStr + '">' + d + '</div>';
-      }
-    }
-    calendarHtml += '</div></div>';
-
-    calendar.html(calendarHtml);
-
-    // Click en días disponibles -> abre modal de slots
-    $('.tb-day-available').on('click', function() {
-      selectedDate = $(this).data('date');
-      $('.tb-calendar-day').removeClass('tb-selected');
-      $(this).addClass('tb-selected');
-      $('#tb_submit_booking').prop('disabled', true);
-      renderSlotsForDate(selectedDate);
-    });
-
-    // Navegación de meses
-    $('#tb_prev_month').on('click', function() {
-      if (!$(this).prop('disabled')) {
-        currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
-        renderCalendar(currentMonthDate);
-      }
-    });
-
-    $('#tb_next_month').on('click', function() {
-      if (!$(this).prop('disabled')) {
-        currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
-        renderCalendar(currentMonthDate);
-      }
-    });
-
-    // Deshabilitar navegación fuera de rango (comparando por mes)
-    var prevMonthDate = new Date(year, month - 1, 1);
-    if (prevMonthDate < new Date(calendarStartDate.getFullYear(), calendarStartDate.getMonth(), 1)) {
-      $('#tb_prev_month').prop('disabled', true);
-    }
-    var nextMonthDate = new Date(year, month + 1, 1);
-    if (nextMonthDate > new Date(calendarEndDate.getFullYear(), calendarEndDate.getMonth(), 1)) {
-      $('#tb_next_month').prop('disabled', true);
-    }
-  }
 
   // Cambio de tutor
   $('#tb_tutor_select').change(function() {
@@ -267,27 +135,27 @@ jQuery(document).ready(function($) {
           if (response.success) {
             if (response.data && response.data.length > 0) {
               // Mapear por fecha
-              slotsByDate = {};
+              window.slotsByDate = {};
               $.each(response.data, function(index, slot) {
-                if (!slotsByDate[slot.date]) {
-                  slotsByDate[slot.date] = [];
+                if (!window.slotsByDate[slot.date]) {
+                  window.slotsByDate[slot.date] = [];
                 }
-                slotsByDate[slot.date].push(slot);
+                window.slotsByDate[slot.date].push(slot);
               });
 
-              allSortedDates = Object.keys(slotsByDate).sort();
+              window.allSortedDates = Object.keys(window.slotsByDate).sort();
 
               // Definir rango del calendario y mes inicial
-              calendarStartDate = new Date(current_date_for_query + 'T00:00:00');
-              calendarEndDate   = new Date(end_date_for_query + 'T00:00:00');
+              window.calendarStartDate = new Date(current_date_for_query + 'T00:00:00');
+              window.calendarEndDate   = new Date(end_date_for_query + 'T00:00:00');
 
-              if (allSortedDates.length > 0) {
-                currentMonthDate = new Date(allSortedDates[0] + 'T00:00:00');
+              if (window.allSortedDates.length > 0) {
+                window.currentMonthDate = new Date(window.allSortedDates[0] + 'T00:00:00');
               } else {
-                currentMonthDate = new Date(calendarStartDate);
+                window.currentMonthDate = new Date(window.calendarStartDate);
               }
 
-              selectedDate = null; // No preseleccionar fecha
+              window.selectedDate = null; // No preseleccionar fecha
 
               // Pintar calendario + texto del slot seleccionado
               calendarContainer.html('<div id="tb_calendar"></div>');
@@ -298,7 +166,17 @@ jQuery(document).ready(function($) {
                 $('body').append('<div id="tb_slots_overlay" class="tb-slots-overlay" style="display:none"><div id="tb_slots_container" class="tb-slots-content"></div></div>');
               }
 
-              renderCalendar(currentMonthDate);
+              window.tbCalendarSelector = '#tb_calendar';
+              window.tbOnDaySelected = function(date){
+                $('#tb_submit_booking').prop('disabled', true);
+                renderSlotsForDate(date);
+              };
+              window.tbOnSlotSelected = function(slotInput){
+                $('#tb_submit_booking').prop('disabled', false);
+                $('#tb_selected_slot').text('Seleccionado: ' + slotInput.data('date') + ' ' + slotInput.data('start') + ' - ' + slotInput.data('end'));
+              };
+
+              renderCalendar(window.currentMonthDate);
             } else {
               calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron franjas de tiempo disponibles para este tutor en el rango de fechas seleccionado.</p>');
             }
