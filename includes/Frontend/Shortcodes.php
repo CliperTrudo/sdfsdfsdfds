@@ -3,11 +3,13 @@ namespace TutoriasBooking\Frontend;
 
 function enqueue_assets()
 {
-    $css_rel = 'assets/css/frontend.css';
-    $js_rel  = 'assets/js/frontend.js';
+    $css_rel      = 'assets/css/frontend.css';
+    $js_rel       = 'assets/js/frontend.js';
+    $calendar_rel = 'assets/js/calendar.js';
 
-    $css_path = TB_PLUGIN_DIR . $css_rel;
-    $js_path  = TB_PLUGIN_DIR . $js_rel;
+    $css_path      = TB_PLUGIN_DIR . $css_rel;
+    $js_path       = TB_PLUGIN_DIR . $js_rel;
+    $calendar_path = TB_PLUGIN_DIR . $calendar_rel;
 
     // Ensure our stylesheet loads after Elementor's if present
     $style_deps = [];
@@ -26,7 +28,7 @@ function enqueue_assets()
         $css_version
     );
 
-    $deps = ['jquery'];
+    $deps = ['jquery', 'tb-calendar'];
     if (TB_RECAPTCHA_SITE_KEY) {
         $recaptcha_src = 'https://www.google.com/recaptcha/api.js';
         $lang = getenv('TB_RECAPTCHA_LANGUAGE');
@@ -38,6 +40,15 @@ function enqueue_assets()
         wp_script_add_data('google-recaptcha', 'defer', true);
         $deps[] = 'google-recaptcha';
     }
+
+    $calendar_version = file_exists($calendar_path) ? filemtime($calendar_path) : false;
+    wp_enqueue_script(
+        'tb-calendar',
+        plugins_url($calendar_rel, TB_PLUGIN_FILE),
+        ['jquery'],
+        $calendar_version,
+        true
+    );
 
     $js_version = file_exists($js_path) ? filemtime($js_path) : false;
     wp_enqueue_script(
