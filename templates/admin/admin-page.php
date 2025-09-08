@@ -168,4 +168,8 @@
             <tbody></tbody>
         </table>
     </section>
+
+    <div id="tb-edit-event-modal" class="tb-slots-overlay" style="display:none">
+        <div id="tb-edit-event-calendar"></div>
+    </div>
 </div>

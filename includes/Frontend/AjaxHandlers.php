@@ -42,7 +42,13 @@ class AjaxHandlers {
         self::debug_log('TutoriasBooking: ajax_get_available_slots() - Solicitud recibida.');
 
         // Verificar el nonce de seguridad para prevenir ataques CSRF
-        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tb_booking_nonce')) {
+        if (
+            !isset($_POST['nonce']) ||
+            (
+                !wp_verify_nonce($_POST['nonce'], 'tb_booking_nonce') &&
+                !wp_verify_nonce($_POST['nonce'], 'tb_events_nonce')
+            )
+        ) {
             self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Nonce inválido.');
             wp_send_json_error('Error de seguridad. Nonce inválido.');
             return;

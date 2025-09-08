@@ -24,6 +24,7 @@ class AdminMenu {
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
         $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
         $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
+        $calendar_js  = TB_PLUGIN_DIR . 'assets/js/calendar.js';
         $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
 
         wp_enqueue_style(
@@ -33,14 +34,12 @@ class AdminMenu {
             file_exists($admin_css) ? filemtime($admin_css) : false
         );
 
-        if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
-            wp_enqueue_style(
-                'tb-frontend',
-                TB_PLUGIN_URL . 'assets/css/frontend.css',
-                [],
-                file_exists($frontend_css) ? filemtime($frontend_css) : false
-            );
-        }
+        wp_enqueue_style(
+            'tb-frontend',
+            TB_PLUGIN_URL . 'assets/css/frontend.css',
+            [],
+            file_exists($frontend_css) ? filemtime($frontend_css) : false
+        );
 
         wp_enqueue_script(
             'tb-admin',
@@ -60,9 +59,17 @@ class AdminMenu {
         );
 
         wp_enqueue_script(
+            'tb-calendar',
+            TB_PLUGIN_URL . 'assets/js/calendar.js',
+            ['jquery'],
+            file_exists($calendar_js) ? filemtime($calendar_js) : false,
+            true
+        );
+
+        wp_enqueue_script(
             'tb-events',
             TB_PLUGIN_URL . 'assets/js/events.js',
-            ['jquery'],
+            ['jquery', 'tb-calendar'],
             file_exists($events_js) ? filemtime($events_js) : false,
             true
         );
