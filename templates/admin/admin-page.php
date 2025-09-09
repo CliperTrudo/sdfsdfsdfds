@@ -7,7 +7,8 @@
         </div>
     <?php endforeach; ?>
 
-    <h1 class="tb-title">Gestión de Tutores</h1>
+    <details class="tb-dropdown" open>
+        <summary class="tb-title">Gestión de Tutores</summary>
 
     <section class="tb-section">
         <h2 class="tb-subtitle">Tutores Registrados</h2>
@@ -59,10 +60,10 @@
             <button type="submit" name="tb_delete_all_tutores" class="tb-button tb-button-danger">Eliminar Todos los Tutores</button>
         </form>
     </section>
+    </details>
 
-    <hr>
-
-    <h1 class="tb-title">Gestión de Alumnos de Reserva</h1>
+    <details class="tb-dropdown">
+        <summary class="tb-title">Gestión de Alumnos de Reserva</summary>
 
     <section class="tb-section">
         <h2 class="tb-subtitle">Añadir Alumno a Reserva</h2>
@@ -135,10 +136,10 @@
             <p><em>La tabla de alumnos no está disponible. Activa el plugin nuevamente.</em></p>
         <?php endif; ?>
     </section>
+    </details>
 
-    <hr>
-
-    <h1 class="tb-title">Gestión de Citas</h1>
+    <details class="tb-dropdown">
+        <summary class="tb-title">Gestión de Citas</summary>
 
     <section class="tb-section">
         <form id="tb-events-form" class="tb-form">
@@ -168,6 +169,7 @@
             <tbody></tbody>
         </table>
     </section>
+    </details>
     <div id="tb_edit_modal" class="tb-slots-overlay" style="display:none">
         <div class="tb-slots-content">
             <div id="tb_calendar"></div>
