@@ -47,15 +47,15 @@ class AdminController {
 
             $updated = $wpdb->update(
                 $alumnos_reserva_table,
-                ['tiene_cita' => 0],
+                ['online' => 0, 'presencial' => 0],
                 ['id' => $alumno_id],
-                ['%d'],
+                ['%d', '%d'],
                 ['%d']
             );
             if ($updated !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'La reserva del alumno con ID ' . esc_html($alumno_id) . ' ha sido eliminada y el campo "Tiene Cita" se ha establecido en 0.'];
+                $messages[] = ['type' => 'success', 'text' => 'La reserva del alumno con ID ' . esc_html($alumno_id) . ' ha sido eliminada y los campos "Online" y "Presencial" se han establecido en 0.'];
             } else {
-                $messages[] = ['type' => 'error', 'text' => 'Error al actualizar el campo "Tiene Cita".'];
+                $messages[] = ['type' => 'error', 'text' => 'Error al actualizar los campos de cita.'];
             }
         }
 
@@ -101,7 +101,8 @@ class AdminController {
                             'email'      => $email_alumno,
                             'nombre'     => $nombre_alumno,
                             'apellido'   => $apellido_alumno,
-                            'tiene_cita' => 0
+                            'online'     => 0,
+                            'presencial' => 0
                         ]
                     );
                     if ($inserted) {
@@ -162,7 +163,7 @@ class AdminController {
         $tutores = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}tutores");
         $alumnos_reserva = [];
         if ($table_exists) {
-            $alumnos_reserva = $wpdb->get_results("SELECT id, dni, nombre, apellido, email, tiene_cita FROM {$alumnos_reserva_table}");
+            $alumnos_reserva = $wpdb->get_results("SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table}");
         }
 
         include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
@@ -583,7 +584,8 @@ class AdminController {
                     'email'      => $email,
                     'nombre'     => $nombre,
                     'apellido'   => $apellido,
-                    'tiene_cita' => 0
+                    'online'     => 0,
+                    'presencial' => 0
                 ]
             );
             $count++;

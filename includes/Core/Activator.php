@@ -32,10 +32,44 @@ class Activator {
             email VARCHAR(100) NOT NULL,
             nombre VARCHAR(100),
             apellido VARCHAR(100),
-            tiene_cita TINYINT(1) DEFAULT 0,
+            online TINYINT(1) DEFAULT 0,
+            presencial TINYINT(1) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY unique_dni (dni)
         ) {$charset_collate};";
         dbDelta($sql_reserva);
+    }
+
+    /**
+     * Upgrade routine to replace `tiene_cita` with `online` and `presencial` columns.
+     * Preserves existing data by mapping previous `tiene_cita` values to `presencial`.
+     */
+    public static function maybe_upgrade() {
+        global $wpdb;
+
+        $installed = get_option('tutorias_booking_db_version', '1.0.0');
+        $target    = '1.1.0';
+
+        if (version_compare($installed, $target, '>=')) {
+            return;
+        }
+
+        $table = $wpdb->prefix . 'alumnos_reserva';
+
+        // Add new columns if they do not exist
+        if ($wpdb->get_var("SHOW COLUMNS FROM {$table} LIKE 'online'") === null) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN online TINYINT(1) DEFAULT 0");
+        }
+        if ($wpdb->get_var("SHOW COLUMNS FROM {$table} LIKE 'presencial'") === null) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN presencial TINYINT(1) DEFAULT 0");
+        }
+
+        // Migrate existing data from `tiene_cita` to `presencial`
+        if ($wpdb->get_var("SHOW COLUMNS FROM {$table} LIKE 'tiene_cita'") !== null) {
+            $wpdb->query("UPDATE {$table} SET presencial = tiene_cita");
+            $wpdb->query("ALTER TABLE {$table} DROP COLUMN tiene_cita");
+        }
+
+        update_option('tutorias_booking_db_version', $target);
     }
 }
