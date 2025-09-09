@@ -221,6 +221,35 @@ class CalendarService {
     }
 
     /**
+     * Delete "DISPONIBLE" events that overlap a given UTC datetime range.
+     */
+    public static function delete_available_events_for_range($tutor_id, $start_datetime_utc, $end_datetime_utc) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) { return 0; }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) { return 0; }
+
+        $start = new \DateTime($start_datetime_utc);
+        $end   = new \DateTime($end_datetime_utc);
+        $events = self::get_available_calendar_events($tutor_id, $start->format('Y-m-d'), $end->format('Y-m-d'));
+        $deleted = 0;
+        foreach ($events as $event) {
+            $event_start = new \DateTime($event->start->dateTime);
+            $event_end   = new \DateTime($event->end->dateTime);
+            if ($event_start < $end && $event_end > $start) {
+                try {
+                    $service->events->delete($tutor->calendar_id, $event->id, ['sendUpdates' => 'all']);
+                    $deleted++;
+                } catch (\Exception $e) {
+                    // Ignore individual deletion errors
+                }
+            }
+        }
+        return $deleted;
+    }
+
+    /**
      * Delete all calendar events containing the provided DNI.
      */
     public static function delete_events_by_dni($dni) {
