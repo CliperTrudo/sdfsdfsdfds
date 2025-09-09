@@ -116,3 +116,15 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
+.tb-dropdown {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.tb-dropdown summary {
+    cursor: pointer;
+}
