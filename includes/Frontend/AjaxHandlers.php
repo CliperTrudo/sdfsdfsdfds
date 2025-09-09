@@ -317,13 +317,8 @@ class AjaxHandlers {
         if ($event) {
             error_log('TutoriasBooking: ajax_process_booking() - Evento de Google Calendar creado con éxito. Event ID: ' . $event->id . ', Meet Link: ' . $event->hangoutLink);
 
-            // Eliminar el evento "DISPONIBLE" solapado en el calendario del tutor
-            $removed = CalendarService::delete_available_events_for_range($tutor_id, $start_datetime_utc, $end_datetime_utc);
-            if ($removed === 0) {
-                error_log('TutoriasBooking: ajax_process_booking() - WARNING: No se eliminó ningún evento DISPONIBLE solapado.');
-            } else {
-                error_log('TutoriasBooking: ajax_process_booking() - Evento(s) DISPONIBLE eliminado(s): ' . $removed);
-            }
+            // El evento "DISPONIBLE" original se mantiene en el calendario
+            error_log('TutoriasBooking: ajax_process_booking() - Nota: el evento DISPONIBLE no se elimina y permanece en el calendario.');
 
             // Marcar en la base de datos que el alumno ya tiene una cita
             $updated = $wpdb->update(
