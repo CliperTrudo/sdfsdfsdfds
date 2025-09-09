@@ -29,17 +29,17 @@ class AdminMenu {
         $edit_js      = TB_PLUGIN_DIR . 'assets/js/admin-edit.js';
 
         wp_enqueue_style(
-            'tb-admin',
-            TB_PLUGIN_URL . 'assets/css/admin.css',
-            [],
-            file_exists($admin_css) ? filemtime($admin_css) : false
-        );
-
-        wp_enqueue_style(
             'tb-frontend',
             TB_PLUGIN_URL . 'assets/css/frontend.css',
             [],
             file_exists($frontend_css) ? filemtime($frontend_css) : false
+        );
+
+        wp_enqueue_style(
+            'tb-admin',
+            TB_PLUGIN_URL . 'assets/css/admin.css',
+            [],
+            file_exists($admin_css) ? filemtime($admin_css) : false
         );
 
         wp_enqueue_script(
