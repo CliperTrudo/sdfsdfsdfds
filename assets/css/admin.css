@@ -46,11 +46,11 @@
     background-color: #1d5e94;
 }
 
-.tb-button-danger {
-    background-color: #d63638;
+.tb-button.tb-button-danger {
+    background-color: #d63638 !important;
 }
 
-.tb-button-danger:hover {
+.tb-button.tb-button-danger:hover {
     background-color: #a12a2a;
 }
 
