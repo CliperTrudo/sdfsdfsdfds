@@ -121,8 +121,9 @@ class AjaxHandlers {
             wp_send_json_error('Permisos insuficientes.');
         }
         $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
+        $original_tutor_id = isset($_POST['original_tutor_id']) ? intval($_POST['original_tutor_id']) : $tutor_id;
         $event_id = isset($_POST['event_id']) ? sanitize_text_field($_POST['event_id']) : '';
-        $summary  = isset($_POST['summary']) ? sanitize_text_field($_POST['summary']) : '';
+        $summary  = isset($_POST['summary']) ? sanitize_text_field($_POST['summary']) : null;
         $start    = isset($_POST['start']) ? sanitize_text_field($_POST['start']) : '';
         $end      = isset($_POST['end']) ? sanitize_text_field($_POST['end']) : '';
         if (!$tutor_id || empty($event_id) || empty($start) || empty($end)) {
@@ -138,11 +139,54 @@ class AjaxHandlers {
         } catch (\Exception $e) {
             wp_send_json_error('Formato de fecha inválido.');
         }
-        $res = CalendarService::update_calendar_event($tutor_id, $event_id, $summary, null, $startUtc, $endUtc);
-        if (is_wp_error($res)) {
-            wp_send_json_error($res->get_error_message());
+
+        if ($tutor_id !== $original_tutor_id) {
+            global $wpdb;
+            $old = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id=%d", $original_tutor_id));
+            if (!$old || empty($old->calendar_id)) {
+                wp_send_json_error('Tutor original inválido.');
+            }
+            $old_service = CalendarService::get_calendar_service($original_tutor_id);
+            if (!$old_service) {
+                wp_send_json_error('No se pudo acceder al calendario original.');
+            }
+            try {
+                $event = $old_service->events->get($old->calendar_id, $event_id);
+            } catch (\Exception $e) {
+                wp_send_json_error('No se pudo obtener la cita original.');
+            }
+            $summary      = $event->getSummary();
+            $description  = $event->getDescription();
+            $attendees    = [];
+            if ($event->getAttendees()) {
+                foreach ($event->getAttendees() as $a) {
+                    if ($a->getEmail()) {
+                        $attendees[] = $a->getEmail();
+                    }
+                }
+            }
+            $new_event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $startUtc, $endUtc, $attendees);
+            if (is_wp_error($new_event)) {
+                wp_send_json_error($new_event->get_error_message());
+            }
+            $del = CalendarService::delete_calendar_event($original_tutor_id, $event_id);
+            if (is_wp_error($del)) {
+                wp_send_json_error($del->get_error_message());
+            }
+            wp_send_json_success([
+                'event_id' => $new_event->id,
+                'url'      => $new_event->hangoutLink ?? '',
+            ]);
+        } else {
+            $res = CalendarService::update_calendar_event($tutor_id, $event_id, $summary, null, $startUtc, $endUtc);
+            if (is_wp_error($res)) {
+                wp_send_json_error($res->get_error_message());
+            }
+            wp_send_json_success([
+                'event_id' => $event_id,
+                'url'      => $res->hangoutLink ?? '',
+            ]);
         }
-        wp_send_json_success();
     }
 
     public static function ajax_delete_event() {

@@ -91,11 +91,15 @@ class AdminMenu {
             true
         );
 
+        global $wpdb;
+        $tutors = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores", ARRAY_A);
+
         wp_localize_script(
             'tb-admin-edit',
             'tbEditData',
             [
-                'nonce' => wp_create_nonce('tb_booking_nonce'),
+                'nonce'  => wp_create_nonce('tb_booking_nonce'),
+                'tutors' => $tutors,
             ]
         );
     }
