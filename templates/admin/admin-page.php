@@ -172,6 +172,7 @@
     </details>
     <div id="tb_edit_modal" class="tb-slots-overlay" style="display:none">
         <div class="tb-slots-content">
+            <select id="tb_edit_tutor"></select>
             <div id="tb_calendar"></div>
             <p id="tb_selected_slot"></p>
             <button type="button" id="tb_edit_save" class="tb-button" disabled>Guardar</button>
