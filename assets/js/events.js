@@ -25,33 +25,18 @@ jQuery(function($){
             if(res.success){
                 res.data.forEach(function(ev){
                     var row = '<tr data-event-id="'+ev.id+'" data-tutor-id="'+ev.tutor_id+'">';
-                    row += '<td><input type="text" class="tb-event-summary" value="'+(ev.summary||'')+'"></td>';
-                    row += '<td><input type="datetime-local" class="tb-event-start" value="'+ev.start.replace(' ','T')+'"></td>';
-                    row += '<td><input type="datetime-local" class="tb-event-end" value="'+ev.end.replace(' ','T')+'"></td>';
-                    row += '<td><button type="button" class="tb-button tb-save-event">Guardar</button>';
-                    row += ' <button type="button" class="tb-button tb-button-danger tb-delete-event">Eliminar</button></td>';
+                    row += '<td>'+(ev.user||'')+'</td>';
+                    row += '<td>'+(ev.tutor||'')+'</td>';
+                    row += '<td>'+ev.start+' - '+ev.end+'</td>';
+                    var link = ev.url ? '<a href="'+ev.url+'" target="_blank">'+ev.url+'</a>' : '';
+                    row += '<td>'+link+'</td>';
+                    row += '<td><button type="button" class="tb-button tb-edit-event">Editar</button> ';
+                    row += '<button type="button" class="tb-button tb-button-danger tb-delete-event">Eliminar</button></td>';
                     row += '</tr>';
                     $('#tb-events-table tbody').append(row);
                 });
             } else {
                 alert(res.data || 'Error al obtener eventos');
-            }
-        });
-    });
-
-    $('#tb-events-table').on('click', '.tb-save-event', function(){
-        var row = $(this).closest('tr');
-        $.post(ajaxurl, {
-            action: 'tb_update_event',
-            tutor_id: row.data('tutor-id'),
-            event_id: row.data('event-id'),
-            summary: row.find('.tb-event-summary').val(),
-            start: row.find('.tb-event-start').val(),
-            end: row.find('.tb-event-end').val(),
-            nonce: tbEventsData.nonce
-        }, function(res){
-            if(!res.success){
-                alert(res.data || 'Error al guardar');
             }
         });
     });

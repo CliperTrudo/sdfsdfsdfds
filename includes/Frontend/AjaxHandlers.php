@@ -12,6 +12,12 @@ use TutoriasBooking\Google\CalendarService;
  * class while keeping the original logic intact.
  */
 class AjaxHandlers {
+    private static function debug_log($message) {
+        if (defined('TB_DEBUG') && TB_DEBUG) {
+            error_log($message);
+        }
+    }
+
     /**
      * Register AJAX hooks.
      */
@@ -25,7 +31,7 @@ class AjaxHandlers {
         // Verificación de DNI y correo
         add_action('wp_ajax_tb_verify_dni', [self::class, 'ajax_verify_dni']);
         add_action('wp_ajax_nopriv_tb_verify_dni', [self::class, 'ajax_verify_dni']);
-        error_log('TutoriasBooking: AjaxHandlers::init() - Hooks AJAX registrados.');
+        self::debug_log('TutoriasBooking: AjaxHandlers::init() - Hooks AJAX registrados.');
     }
 
     /**
@@ -33,26 +39,26 @@ class AjaxHandlers {
      * This function is called via AJAX from the frontend.
      */
     public static function ajax_get_available_slots() {
-        error_log('TutoriasBooking: ajax_get_available_slots() - Solicitud recibida.');
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Solicitud recibida.');
 
         // Verificar el nonce de seguridad para prevenir ataques CSRF
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tb_booking_nonce')) {
-            error_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Nonce inválido.');
+            self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Nonce inválido.');
             wp_send_json_error('Error de seguridad. Nonce inválido.');
             return;
         }
-        error_log('TutoriasBooking: ajax_get_available_slots() - Nonce verificado correctamente.');
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Nonce verificado correctamente.');
 
         // Recoger y sanear los datos de la solicitud POST
         $tutor_id       = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $start_date_str = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $end_date_str   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
 
-        error_log("TutoriasBooking: ajax_get_available_slots() - Datos recibidos: tutor_id={$tutor_id}, start_date={$start_date_str}, end_date={$end_date_str}");
+        self::debug_log("TutoriasBooking: ajax_get_available_slots() - Datos recibidos: tutor_id={$tutor_id}, start_date={$start_date_str}, end_date={$end_date_str}");
 
         // Validar que los datos esenciales estén presentes
         if (!$tutor_id || empty($start_date_str) || empty($end_date_str)) {
-            error_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Datos incompletos para la consulta de disponibilidad.');
+            self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Datos incompletos para la consulta de disponibilidad.');
             wp_send_json_error('Datos incompletos para la consulta de disponibilidad.');
             return;
         }
@@ -65,9 +71,9 @@ class AjaxHandlers {
             // Para el end_date_obj, ajustamos la hora al final del día para incluir todo el día en el rango.
             // Si el end_date_str solo contiene la fecha, se asume 00:00:00, lo que excluiría el último día.
             $end_date_obj   = new \DateTime($end_date_str . ' 23:59:59', $madrid_timezone);
-            error_log("TutoriasBooking: ajax_get_available_slots() - Fechas parseadas (Europe/Madrid): start_date_obj={$start_date_obj->format('Y-m-d H:i:s')}, end_date_obj={$end_date_obj->format('Y-m-d H:i:s')}");
+            self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas parseadas (Europe/Madrid): start_date_obj={$start_date_obj->format('Y-m-d H:i:s')}, end_date_obj={$end_date_obj->format('Y-m-d H:i:s')}");
         } catch (\Exception $e) {
-            error_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Formato de fecha inválido - ' . $e->getMessage());
+            self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Formato de fecha inválido - ' . $e->getMessage());
             wp_send_json_error('Formato de fecha inválido en la consulta.');
             return;
         }
@@ -75,12 +81,12 @@ class AjaxHandlers {
         // Formatear las fechas para la consulta al servicio de calendario
         $start_date_for_query = $start_date_obj->format('Y-m-d');
         $end_date_for_query   = $end_date_obj->format('Y-m-d');
-        error_log("TutoriasBooking: ajax_get_available_slots() - Fechas para consulta: start={$start_date_for_query}, end={$end_date_for_query}");
+        self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas para consulta: start={$start_date_for_query}, end={$end_date_for_query}");
 
         // Obtener eventos marcados como "DISPONIBLE" del calendario del tutor
         $available_events = CalendarService::get_available_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query);
-        error_log('TutoriasBooking: ajax_get_available_slots() - Eventos DISPONIBLE obtenidos: ' . count($available_events) . ' eventos.');
-        error_log('TutoriasBooking: available_events: ' . print_r($available_events, true)); // Descomentar para ver el detalle de los eventos
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Eventos DISPONIBLE obtenidos: ' . count($available_events) . ' eventos.');
+        // self::debug_log('TutoriasBooking: available_events: ' . print_r($available_events, true)); // Descomentar para ver el detalle de los eventos
 
         $available_slots = [];
         // Generar franjas de 45 minutos a partir de los eventos "DISPONIBLE"
@@ -90,7 +96,7 @@ class AjaxHandlers {
             $event_start->setTimezone($madrid_timezone);
             $event_end   = new \DateTime($event->end->dateTime);
             $event_end->setTimezone($madrid_timezone);
-            error_log("TutoriasBooking: Processing available event from {$event_start->format('Y-m-d H:i')} to {$event_end->format('Y-m-d H:i')}");
+            self::debug_log("TutoriasBooking: Processing available event from {$event_start->format('Y-m-d H:i')} to {$event_end->format('Y-m-d H:i')}");
 
             $current_slot_start = clone $event_start;
             $interval = new \DateInterval('PT45M'); // Intervalo de 45 minutos
@@ -104,18 +110,18 @@ class AjaxHandlers {
                     'start_time' => $current_slot_start->format('H:i'),
                     'end_time'   => $slot_end->format('H:i')
                 ];
-                error_log("TutoriasBooking: Generated slot: {$current_slot_start->format('Y-m-d H:i')} - {$slot_end->format('H:i')}");
+                self::debug_log("TutoriasBooking: Generated slot: {$current_slot_start->format('Y-m-d H:i')} - {$slot_end->format('H:i')}");
                 $current_slot_start->add($interval); // Avanzar current_slot_start para el siguiente ciclo
             }
         }
-        error_log('TutoriasBooking: ajax_get_available_slots() - Total slots generados antes de filtrar: ' . count($available_slots));
-        error_log('TutoriasBooking: generated_available_slots: ' . print_r($available_slots, true)); // Descomentar para ver el detalle
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Total slots generados antes de filtrar: ' . count($available_slots));
+        // self::debug_log('TutoriasBooking: generated_available_slots: ' . print_r($available_slots, true)); // Descomentar para ver el detalle
 
         // Filtrar franjas que ya estén ocupadas en el calendario
         // OBTENER TODOS LOS EVENTOS QUE NO SON "DISPONIBLE". ESTOS SON LOS EVENTOS OCUPADOS/NO DISPONIBLES.
         $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query);
-        error_log('TutoriasBooking: ajax_get_available_slots() - Eventos OCUPADOS obtenidos: ' . count($busy_events) . ' eventos.');
-        error_log('TutoriasBooking: busy_events: ' . print_r($busy_events, true)); // Descomentar para ver el detalle
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Eventos OCUPADOS obtenidos: ' . count($busy_events) . ' eventos.');
+        // self::debug_log('TutoriasBooking: busy_events: ' . print_r($busy_events, true)); // Descomentar para ver el detalle
 
         $busy_intervals = [];
         // Convertir los eventos ocupados en intervalos de DateTime para facilitar la comparación
@@ -126,10 +132,10 @@ class AjaxHandlers {
             $end   = new \DateTime($event->end->dateTime);
             $end->setTimezone($madrid_timezone);
             $busy_intervals[] = ['start' => $start, 'end' => $end];
-            error_log("TutoriasBooking: Busy interval: from {$start->format('Y-m-d H:i')} to {$end->format('Y-m-d H:i')}");
+            self::debug_log("TutoriasBooking: Busy interval: from {$start->format('Y-m-d H:i')} to {$end->format('Y-m-d H:i')}");
         }
-        error_log('TutoriasBooking: ajax_get_available_slots() - Total busy intervals: ' . count($busy_intervals));
-        error_log('TutoriasBooking: busy_intervals: ' . print_r($busy_intervals, true)); // Descomentar para ver el detalle
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Total busy intervals: ' . count($busy_intervals));
+        // self::debug_log('TutoriasBooking: busy_intervals: ' . print_r($busy_intervals, true)); // Descomentar para ver el detalle
 
         $filtered_slots = [];
         // COMPARAR CADA SLOT DE 45 MINUTOS GENERADO CON LOS INTERVALOS OCUPADOS.
@@ -143,36 +149,36 @@ class AjaxHandlers {
                 $is_interval_start_before_slot_end = $interval['start'] < $slot_end;
                 $is_interval_end_after_slot_start = $interval['end'] > $slot_start;
 
-                error_log("TutoriasBooking: Comparing slot [{$slot_start->format('Y-m-d H:i')}-{$slot_end->format('Y-m-d H:i')}] with busy interval [{$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}].");
-                error_log("TutoriasBooking: Condition 1: ({$interval['start']->format('Y-m-d H:i')} < {$slot_end->format('Y-m-d H:i')}) is " . ($is_interval_start_before_slot_end ? 'TRUE' : 'FALSE'));
-                error_log("TutoriasBooking: Condition 2: ({$interval['end']->format('Y-m-d H:i')} > {$slot_start->format('Y-m-d H:i')}) is " . ($is_interval_end_after_slot_start ? 'TRUE' : 'FALSE'));
+                self::debug_log("TutoriasBooking: Comparing slot [{$slot_start->format('Y-m-d H:i')}-{$slot_end->format('Y-m-d H:i')}] with busy interval [{$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}].");
+                self::debug_log("TutoriasBooking: Condition 1: ({$interval['start']->format('Y-m-d H:i')} < {$slot_end->format('Y-m-d H:i')}) is " . ($is_interval_start_before_slot_end ? 'TRUE' : 'FALSE'));
+                self::debug_log("TutoriasBooking: Condition 2: ({$interval['end']->format('Y-m-d H:i')} > {$slot_start->format('Y-m-d H:i')}) is " . ($is_interval_end_after_slot_start ? 'TRUE' : 'FALSE'));
 
                 // Condición de solapamiento: (inicio_intervalo < fin_slot) AND (fin_intervalo > inicio_slot)
                 // Si esta condición es verdadera, significa que el slot se superpone con un evento ocupado.
                 if ($is_interval_start_before_slot_end && $is_interval_end_after_slot_start) {
                     $overlap = true;
-                    error_log("TutoriasBooking: OVERLAP CONFIRMED: Slot {$slot['date']} {$slot['start_time']}-{$slot['end_time']} overlaps with busy interval {$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}.");
+                    self::debug_log("TutoriasBooking: OVERLAP CONFIRMED: Slot {$slot['date']} {$slot['start_time']}-{$slot['end_time']} overlaps with busy interval {$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}.");
                     break; // Si hay solapamiento, no necesitamos comprobar más intervalos para este slot.
                 } else {
-                    error_log("TutoriasBooking: NO OVERLAP: Slot {$slot['date']} {$slot['start_time']}-{$slot['end_time']} does NOT overlap with busy interval {$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}.");
+                    self::debug_log("TutoriasBooking: NO OVERLAP: Slot {$slot['date']} {$slot['start_time']}-{$slot['end_time']} does NOT overlap with busy interval {$interval['start']->format('Y-m-d H:i')}-{$interval['end']->format('Y-m-d H:i')}.");
                 }
             }
             // Si no hay solapamiento, añadir el slot a las franjas filtradas que se enviarán al frontend.
             // ESTO ASEGURA QUE SOLO LAS FRANJAS REALMENTE LIBRES SE MUESTREN.
             if (!$overlap) {
                 $filtered_slots[] = $slot;
-                error_log("TutoriasBooking: Slot ADDED to filtered_slots: {$slot['date']} {$slot['start_time']}-{$slot['end_time']}. Final overlap status: " . ($overlap ? 'TRUE' : 'FALSE'));
+                self::debug_log("TutoriasBooking: Slot ADDED to filtered_slots: {$slot['date']} {$slot['start_time']}-{$slot['end_time']}. Final overlap status: " . ($overlap ? 'TRUE' : 'FALSE'));
             } else {
-                error_log("TutoriasBooking: Slot DISCARDED due to overlap: {$slot['date']} {$slot['start_time']}-{$slot['end_time']}. Final overlap status: " . ($overlap ? 'TRUE' : 'FALSE'));
+                self::debug_log("TutoriasBooking: Slot DISCARDED due to overlap: {$slot['date']} {$slot['start_time']}-{$slot['end_time']}. Final overlap status: " . ($overlap ? 'TRUE' : 'FALSE'));
             }
         }
 
-        error_log('TutoriasBooking: ajax_get_available_slots() - Total slots filtrados (disponibles): ' . count($filtered_slots));
-        error_log('TutoriasBooking: filtered_slots: ' . print_r($filtered_slots, true)); // Descomentar para ver el detalle final
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Total slots filtrados (disponibles): ' . count($filtered_slots));
+        // self::debug_log('TutoriasBooking: filtered_slots: ' . print_r($filtered_slots, true)); // Descomentar para ver el detalle final
 
         // Enviar las franjas horarias filtradas (disponibles) al frontend en formato JSON
         wp_send_json_success($filtered_slots);
-        error_log('TutoriasBooking: ajax_get_available_slots() - Respuesta JSON enviada.');
+        self::debug_log('TutoriasBooking: ajax_get_available_slots() - Respuesta JSON enviada.');
     }
 
     /**
@@ -234,15 +240,15 @@ class AjaxHandlers {
      */
     public static function ajax_process_booking() {
         global $wpdb; // Acceso a la clase global de la base de datos de WordPress
-        error_log('TutoriasBooking: ajax_process_booking() - Solicitud recibida.');
+        self::debug_log('TutoriasBooking: ajax_process_booking() - Solicitud recibida.');
 
         // Verificar el nonce de seguridad
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tb_booking_nonce')) {
-            error_log('TutoriasBooking: ajax_process_booking() - ERROR: Nonce inválido.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Nonce inválido.');
             wp_send_json_error('Error de seguridad. Nonce inválido.');
             return;
         }
-        error_log('TutoriasBooking: ajax_process_booking() - Nonce verificado correctamente.');
+        self::debug_log('TutoriasBooking: ajax_process_booking() - Nonce verificado correctamente.');
 
         // Recoger y sanear los datos de la reserva
         $dni    = sanitize_text_field($_POST['dni']);
@@ -253,7 +259,7 @@ class AjaxHandlers {
         $apellidoAlumno = $alumno_data ? $alumno_data->apellido : '';
         $email_db       = $alumno_data ? $alumno_data->email : '';
         if (!$alumno_data || strcasecmp($email_db, $email) !== 0) {
-            error_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado para el DNI.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado para el DNI.');
             wp_send_json_error('El correo electrónico no coincide con el registrado.');
             return;
         }
@@ -262,11 +268,11 @@ class AjaxHandlers {
         $start_time = sanitize_text_field($_POST['start_time']);
         $end_time   = sanitize_text_field($_POST['end_time']);
 
-        error_log("TutoriasBooking: ajax_process_booking() - Datos recibidos: DNI={$dni}, Email Alumno={$email}, Tutor ID={$tutor_id}, Fecha Examen={$exam_date}, Hora Inicio={$start_time}, Hora Fin={$end_time}");
+        self::debug_log("TutoriasBooking: ajax_process_booking() - Datos recibidos: DNI={$dni}, Email Alumno={$email}, Tutor ID={$tutor_id}, Fecha Examen={$exam_date}, Hora Inicio={$start_time}, Hora Fin={$end_time}");
 
         // Validar que todos los datos esenciales para la reserva estén presentes
         if (empty($dni) || empty($email) || !$tutor_id || empty($exam_date) || empty($start_time) || empty($end_time)) {
-            error_log('TutoriasBooking: ajax_process_booking() - ERROR: Faltan datos esenciales para la reserva.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Faltan datos esenciales para la reserva.');
             wp_send_json_error('Faltan datos esenciales para la reserva.');
             return;
         }
@@ -280,31 +286,32 @@ class AjaxHandlers {
         $end_dt_obj   = new \DateTime($end_datetime_iso,   $madrid_timezone);
         $start_datetime_utc = $start_dt_obj->setTimezone($utc_timezone)->format('c');
         $end_datetime_utc   = $end_dt_obj->setTimezone($utc_timezone)->format('c');
-        error_log("TutoriasBooking: ajax_process_booking() - Datetime ISO UTC: Start={$start_datetime_utc}, End={$end_datetime_utc}");
+        self::debug_log("TutoriasBooking: ajax_process_booking() - Datetime ISO UTC: Start={$start_datetime_utc}, End={$end_datetime_utc}");
 
         // Obtener los datos del tutor de la base de datos
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT nombre, email FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
         if (!$tutor) {
-            error_log('TutoriasBooking: ajax_process_booking() - ERROR: Tutor no encontrado con ID: ' . $tutor_id);
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Tutor no encontrado con ID: ' . $tutor_id);
             wp_send_json_error('Tutor no encontrado.');
             return;
         }
-        error_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
+        self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
         // Preparar los detalles del evento para Google Calendar
         $summary     = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
         $description = "DNI: {$dni}\nNombre: {$nombreAlumno} {$apellidoAlumno}\nEmail Alumno: {$email}\nFecha: {$exam_date}\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre} ({$tutor->email})";
         $attendees   = [$email, $tutor->email]; // Asistentes del evento
-        error_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
+        self::debug_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
         $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees);
 
         if (is_wp_error($event)) {
-            error_log('TutoriasBooking: ajax_process_booking() - Error al crear evento de Google Calendar: ' . $event->get_error_message());
+            self::debug_log('TutoriasBooking: ajax_process_booking() - Error al crear evento de Google Calendar: ' . $event->get_error_message());
             wp_send_json_error('Error al crear el evento de Google Calendar: ' . $event->get_error_message());
             return;
         }
+
 
         // Si el evento se creó con éxito en Google Calendar
         if ($event) {
@@ -331,6 +338,7 @@ class AjaxHandlers {
             // Calcular el día de la semana de la fecha del examen
             $day_of_week = date_i18n('l', strtotime($exam_date));
 
+
             // Enviar correos electrónicos a alumno y tutor con los datos de la cita
             $student_subject = 'Confirmación de tutoría';
             $student_message = "Hola {$nombreAlumno},\n\nTu cita de tutoría ha sido confirmada.\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}\n\nGracias.";
@@ -354,10 +362,10 @@ class AjaxHandlers {
                 'student_first_name' => $nombreAlumno,
                 'student_last_name'  => $apellidoAlumno
             ]);
-            error_log('TutoriasBooking: ajax_process_booking() - Respuesta JSON de éxito enviada.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - Respuesta JSON de éxito enviada.');
         } else {
             // Si hubo un error al crear el evento en Google Calendar
-            error_log('TutoriasBooking: ajax_process_booking() - ERROR: Fallo al crear el evento en Google Calendar.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Fallo al crear el evento en Google Calendar.');
             wp_send_json_error('Error al crear el evento en Google Calendar. Por favor, inténtalo de nuevo.');
         }
     }

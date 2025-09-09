@@ -25,6 +25,8 @@ class AdminMenu {
         $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
         $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
         $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
+        $utils_js     = TB_PLUGIN_DIR . 'assets/js/calendar-utils.js';
+        $edit_js      = TB_PLUGIN_DIR . 'assets/js/admin-edit.js';
 
         wp_enqueue_style(
             'tb-admin',
@@ -33,14 +35,12 @@ class AdminMenu {
             file_exists($admin_css) ? filemtime($admin_css) : false
         );
 
-        if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
-            wp_enqueue_style(
-                'tb-frontend',
-                TB_PLUGIN_URL . 'assets/css/frontend.css',
-                [],
-                file_exists($frontend_css) ? filemtime($frontend_css) : false
-            );
-        }
+        wp_enqueue_style(
+            'tb-frontend',
+            TB_PLUGIN_URL . 'assets/css/frontend.css',
+            [],
+            file_exists($frontend_css) ? filemtime($frontend_css) : false
+        );
 
         wp_enqueue_script(
             'tb-admin',
@@ -60,9 +60,17 @@ class AdminMenu {
         );
 
         wp_enqueue_script(
+            'tb-calendar-utils',
+            TB_PLUGIN_URL . 'assets/js/calendar-utils.js',
+            ['jquery'],
+            file_exists($utils_js) ? filemtime($utils_js) : false,
+            true
+        );
+
+        wp_enqueue_script(
             'tb-events',
             TB_PLUGIN_URL . 'assets/js/events.js',
-            ['jquery'],
+            ['jquery','tb-calendar-utils'],
             file_exists($events_js) ? filemtime($events_js) : false,
             true
         );
@@ -72,6 +80,22 @@ class AdminMenu {
             'tbEventsData',
             [
                 'nonce' => wp_create_nonce('tb_events_nonce'),
+            ]
+        );
+
+        wp_enqueue_script(
+            'tb-admin-edit',
+            TB_PLUGIN_URL . 'assets/js/admin-edit.js',
+            ['jquery','tb-calendar-utils'],
+            file_exists($edit_js) ? filemtime($edit_js) : false,
+            true
+        );
+
+        wp_localize_script(
+            'tb-admin-edit',
+            'tbEditData',
+            [
+                'nonce' => wp_create_nonce('tb_booking_nonce'),
             ]
         );
     }

@@ -5,9 +5,11 @@ function enqueue_assets()
 {
     $css_rel = 'assets/css/frontend.css';
     $js_rel  = 'assets/js/frontend.js';
+    $utils_rel = 'assets/js/calendar-utils.js';
 
     $css_path = TB_PLUGIN_DIR . $css_rel;
     $js_path  = TB_PLUGIN_DIR . $js_rel;
+    $utils_path = TB_PLUGIN_DIR . $utils_rel;
 
     // Ensure our stylesheet loads after Elementor's if present
     $style_deps = [];
@@ -39,7 +41,17 @@ function enqueue_assets()
         $deps[] = 'google-recaptcha';
     }
 
+    $utils_version = file_exists($utils_path) ? filemtime($utils_path) : false;
+    wp_enqueue_script(
+        'tb-calendar-utils',
+        plugins_url($utils_rel, TB_PLUGIN_FILE),
+        ['jquery'],
+        $utils_version,
+        true
+    );
+
     $js_version = file_exists($js_path) ? filemtime($js_path) : false;
+    $deps[] = 'tb-calendar-utils';
     wp_enqueue_script(
         'tb-frontend',
         plugins_url($js_rel, TB_PLUGIN_FILE),

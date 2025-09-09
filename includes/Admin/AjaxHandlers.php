@@ -82,6 +82,8 @@ class AjaxHandlers {
         foreach ($tutor_ids as $tid) {
             $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $user_q);
 
+            $tutor_name = $wpdb->get_var($wpdb->prepare("SELECT nombre FROM {$wpdb->prefix}tutores WHERE id=%d", $tid));
+
             foreach ($events as $ev) {
                 if (isset($ev->summary) && strtoupper(trim($ev->summary)) === 'DISPONIBLE') {
                     continue; // omitir slots de disponibilidad
@@ -91,11 +93,19 @@ class AjaxHandlers {
                     $startObj->setTimezone($madridTz);
                     $endObj   = new \DateTime($ev->end->dateTime);
                     $endObj->setTimezone($madridTz);
+
+                    $user_name = '';
+                    if (!empty($ev->description) && preg_match('/Nombre:\s*(.*)\n/', $ev->description, $m)) {
+                        $user_name = trim($m[1]);
+                    }
+
                     $data[] = [
                         'id'       => $ev->id,
-                        'summary'  => $ev->summary,
+                        'user'     => $user_name,
+                        'tutor'    => $tutor_name,
                         'start'    => $startObj->format('Y-m-d H:i'),
                         'end'      => $endObj->format('Y-m-d H:i'),
+                        'url'      => $ev->hangoutLink ?? '',
                         'tutor_id' => $tid,
                     ];
                 }
