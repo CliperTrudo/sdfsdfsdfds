@@ -320,14 +320,14 @@ class AjaxHandlers {
             // El evento "DISPONIBLE" original se mantiene en el calendario
             error_log('TutoriasBooking: ajax_process_booking() - Nota: el evento DISPONIBLE no se elimina y permanece en el calendario.');
 
-            // Marcar en la base de datos que el alumno ya tiene una cita
+            // Marcar en la base de datos que el alumno ya tiene una cita online
             $updated = $wpdb->update(
                 "{$wpdb->prefix}alumnos_reserva",
-                ['tiene_cita' => 1],
+                ['online' => 1],
                 ['dni' => $dni]
             );
             if ($updated === false) {
-                error_log('TutoriasBooking: ajax_process_booking() - ERROR: No se pudo actualizar tiene_cita para el DNI ' . $dni . '. ' . $wpdb->last_error);
+                error_log('TutoriasBooking: ajax_process_booking() - ERROR: No se pudo actualizar el estado de cita para el DNI ' . $dni . '. ' . $wpdb->last_error);
             }
 
             // Calcular el día de la semana de la fecha del examen

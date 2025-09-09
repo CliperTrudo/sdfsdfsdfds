@@ -95,7 +95,7 @@
             <?php if (!empty($alumnos_reserva)): ?>
                 <table class="tb-table">
                     <thead>
-                        <tr><th>ID</th><th>DNI</th><th>Nombre</th><th>Apellido</th><th>Email</th><th>Tiene Cita</th><th>Acciones</th></tr>
+                        <tr><th>ID</th><th>DNI</th><th>Nombre</th><th>Apellido</th><th>Email</th><th>Online</th><th>Presencial</th><th>Acciones</th></tr>
                     </thead>
                     <tbody>
                         <?php foreach ($alumnos_reserva as $alumno): ?>
@@ -104,22 +104,23 @@
                                 <td><?php echo esc_html($alumno->dni); ?></td>
                                 <td><?php echo esc_html($alumno->nombre); ?></td>
                                 <td><?php echo esc_html($alumno->apellido); ?></td>
-                                <td><?php echo esc_html($alumno->email); ?></td>
-                                <td><?php echo $alumno->tiene_cita ? 'Sí' : '<span class="tb-alert">No</span>'; ?></td>
-                                <td>
-                                    <?php if ($alumno->tiene_cita): ?>
-                                        <form method="POST" class="tb-inline-form">
-                                            <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                            <input type="hidden" name="tb_reset_cita_id" value="<?php echo esc_attr($alumno->id); ?>">
-                                            <button type="submit" class="tb-button">Poner en 0</button>
-                                        </form>
-                                    <?php endif; ?>
-                                    <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
-                                        <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                        <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
-                                        <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
-                                    </form>
-                                </td>
+                                  <td><?php echo esc_html($alumno->email); ?></td>
+                                  <td><?php echo $alumno->online ? 'Sí' : '<span class="tb-alert">No</span>'; ?></td>
+                                  <td><?php echo $alumno->presencial ? 'Sí' : '<span class="tb-alert">No</span>'; ?></td>
+                                  <td>
+                                      <?php if ($alumno->online || $alumno->presencial): ?>
+                                          <form method="POST" class="tb-inline-form">
+                                              <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
+                                              <input type="hidden" name="tb_reset_cita_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                              <button type="submit" class="tb-button">Poner en 0</button>
+                                          </form>
+                                      <?php endif; ?>
+                                      <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
+                                          <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
+                                          <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                          <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
+                                      </form>
+                                  </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

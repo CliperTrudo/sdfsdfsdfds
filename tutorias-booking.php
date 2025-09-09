@@ -79,5 +79,8 @@ require_once TB_PLUGIN_DIR . 'includes/Core/Loader.php';
 // Registra la función de activación del plugin.
 register_activation_hook(__FILE__, ['TutoriasBooking\\Core\\Activator', 'activate']);
 
+// Ejecuta rutinas de actualización si es necesario.
+TutoriasBooking\Core\Activator::maybe_upgrade();
+
 // Inicia la carga de todos los componentes del plugin.
 TutoriasBooking\Core\Loader::init();
