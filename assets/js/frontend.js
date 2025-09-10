@@ -291,15 +291,15 @@ jQuery(document).ready(function($) {
     var exam_date = selectedSlot.data('date');
     var start_time = selectedSlot.data('start');
     $('#tb_confirm_booking_message').text('¿Está seguro que desea reservar cita el día ' + exam_date + ' a la hora ' + start_time + '? La cita no podrá ser cancelada después de ser confirmada.');
-    $('#tb_confirm_booking_card').removeClass('tb-hidden');
+    $('#tb_confirm_overlay').removeClass('tb-hidden');
 
     $('#tb_confirm_booking_yes').off('click').one('click', function() {
-      $('#tb_confirm_booking_card').addClass('tb-hidden');
+      $('#tb_confirm_overlay').addClass('tb-hidden');
       processBooking(selectedSlot);
     });
 
     $('#tb_confirm_booking_no').off('click').one('click', function() {
-      $('#tb_confirm_booking_card').addClass('tb-hidden');
+      $('#tb_confirm_overlay').addClass('tb-hidden');
       $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
     });
 
