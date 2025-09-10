@@ -194,10 +194,23 @@ class AdminController {
         $madridTz    = new \DateTimeZone('Europe/Madrid');
         $existing_dates = [];
         foreach (array_merge($events, $busy_events) as $ev) {
-            if (isset($ev->start->dateTime)) {
+            if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
                 $start = new \DateTime($ev->start->dateTime);
                 $start->setTimezone($madridTz);
-                $existing_dates[] = $start->format('Y-m-d');
+                $end = new \DateTime($ev->end->dateTime);
+                $end->setTimezone($madridTz);
+            } elseif (isset($ev->start->date) && isset($ev->end->date)) {
+                $start = new \DateTime($ev->start->date, $madridTz);
+                $end   = new \DateTime($ev->end->date, $madridTz);
+                $end->modify('-1 day');
+            } else {
+                continue;
+            }
+
+            $current = clone $start;
+            while ($current <= $end) {
+                $existing_dates[] = $current->format('Y-m-d');
+                $current->modify('+1 day');
             }
         }
         $existing_dates = array_values(array_unique($existing_dates));
@@ -487,10 +500,23 @@ class AdminController {
             $availability_hash = md5(json_encode($events));
             $existing_dates = [];
             foreach (array_merge($events, $busy_events) as $ev) {
-                if (isset($ev->start->dateTime)) {
+                if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
                     $start = new \DateTime($ev->start->dateTime);
                     $start->setTimezone($madridTz);
-                    $existing_dates[] = $start->format('Y-m-d');
+                    $end = new \DateTime($ev->end->dateTime);
+                    $end->setTimezone($madridTz);
+                } elseif (isset($ev->start->date) && isset($ev->end->date)) {
+                    $start = new \DateTime($ev->start->date, $madridTz);
+                    $end   = new \DateTime($ev->end->date, $madridTz);
+                    $end->modify('-1 day');
+                } else {
+                    continue;
+                }
+
+                $current = clone $start;
+                while ($current <= $end) {
+                    $existing_dates[] = $current->format('Y-m-d');
+                    $current->modify('+1 day');
                 }
             }
             $existing_dates = array_values(array_unique($existing_dates));
