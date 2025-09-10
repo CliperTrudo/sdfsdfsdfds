@@ -7,6 +7,7 @@ jQuery(function($){
     $('#tb-time-ranges').on('click', '.tb-add-range', function(){
         var $clone = $(this).closest('.tb-time-range').clone();
         $clone.find('input').val('');
+        $clone.find('select').val('online');
         $('#tb-time-ranges').append($clone);
         updateRangeButtons();
     });
@@ -216,12 +217,17 @@ jQuery(function($){
     // Prefill ranges when editing
     if (Array.isArray(window.tbEditingRanges) && window.tbEditingRanges.length > 0) {
         $('#tb-time-ranges').empty();
-        window.tbEditingRanges.forEach(function(r, idx){
+        window.tbEditingRanges.forEach(function(r){
             var html = '<div class="tb-time-range">';
             html += '<label>Inicio</label>';
             html += '<input type="time" name="tb_start_time[]" value="' + r.start + '" required>';
             html += '<label>Fin</label>';
             html += '<input type="time" name="tb_end_time[]" value="' + r.end + '" required>';
+            html += '<label>Modalidad</label>';
+            html += '<select name="tb_modality[]" required>';
+            html += '<option value="online"' + (r.modality === 'online' ? ' selected' : '') + '>Online</option>';
+            html += '<option value="presencial"' + (r.modality === 'presencial' ? ' selected' : '') + '>Presencial</option>';
+            html += '</select>';
             html += '</div>';
             $('#tb-time-ranges').append(html);
         });
@@ -232,24 +238,19 @@ jQuery(function($){
     refreshSelected();
 
     var $form = $('#tb-time-ranges').closest('form');
-    var $modalitySelect = $('#tb_modality');
     $form.on('submit', function(e){
-        if (!$modalitySelect.val()) {
-            e.preventDefault();
-            alert('Seleccione una modalidad.');
-            return;
-        }
         var ranges = [];
         var valid = true;
         $('#tb-time-ranges .tb-time-range').each(function(){
             var start = $(this).find('input[name="tb_start_time[]"]').val();
             var end   = $(this).find('input[name="tb_end_time[]"]').val();
-            if (!start || !end) return;
+            var modality = $(this).find('select[name="tb_modality[]"]').val();
+            if (!start || !end || !modality) return;
             if (start >= end) {
                 valid = false;
                 return false; // break
             }
-            ranges.push({start:start, end:end});
+            ranges.push({start:start, end:end, modality:modality});
         });
         if (valid) {
             ranges.sort(function(a,b){ return a.start.localeCompare(b.start); });

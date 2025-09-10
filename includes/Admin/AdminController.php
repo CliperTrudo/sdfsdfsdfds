@@ -177,12 +177,11 @@ class AdminController {
         global $wpdb;
 
         $messages = [];
-        $modality = isset($_POST['tb_modality']) ? sanitize_text_field($_POST['tb_modality']) : '';
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
         if (!$tutor) {
             $messages[] = ['type' => 'error', 'text' => 'Tutor no encontrado.'];
             $existing_dates = [];
-            self::render_assign_availability($tutor, $messages, $existing_dates, '', [], '', $modality);
+            self::render_assign_availability($tutor, $messages, $existing_dates);
             return;
         }
 
@@ -211,29 +210,21 @@ class AdminController {
                     $start->setTimezone($madridTz);
                     $end = new \DateTime($ev->end->dateTime);
                     $end->setTimezone($madridTz);
+                    $summary = $ev->summary ?? '';
+                    $mod = 'online';
+                    if (stripos($summary, 'PRESENCIAL') !== false) {
+                        $mod = 'presencial';
+                    } elseif (stripos($summary, 'ONLINE') !== false) {
+                        $mod = 'online';
+                    }
                     $edit_ranges[] = [
-                        'start' => $start->format('H:i'),
-                        'end'   => $end->format('H:i'),
+                        'start'     => $start->format('H:i'),
+                        'end'       => $end->format('H:i'),
+                        'modality'  => $mod,
                     ];
                 }
             }
-            if (!$modality) {
-                foreach ($day_events as $ev) {
-                    $summary = $ev->summary ?? '';
-                    if (stripos($summary, 'ONLINE') !== false) {
-                        $modality = 'online';
-                        break;
-                    } elseif (stripos($summary, 'PRESENCIAL') !== false) {
-                        $modality = 'presencial';
-                        break;
-                    }
-                }
-            }
             $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
-        }
-
-        if (!$modality) {
-            $modality = 'online';
         }
 
         $availability_hash = md5(json_encode($events));
@@ -248,6 +239,7 @@ class AdminController {
 
             $starts = isset($_POST['tb_start_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_start_time']) : [];
             $ends   = isset($_POST['tb_end_time']) ? array_map('sanitize_text_field', (array) $_POST['tb_end_time']) : [];
+            $modalities = isset($_POST['tb_modality']) ? array_map('sanitize_text_field', (array) $_POST['tb_modality']) : [];
             $dates  = isset($_POST['tb_dates']) ? array_map('sanitize_text_field', (array) $_POST['tb_dates']) : [];
             $editing_date = isset($_POST['tb_editing_date']) ? sanitize_text_field($_POST['tb_editing_date']) : '';
             $original_events = [];
@@ -299,6 +291,7 @@ class AdminController {
                     $valid  = true;
                     foreach ($starts as $idx => $start) {
                         $end = $ends[$idx] ?? '';
+                        $mod = $modalities[$idx] ?? 'online';
                         if (!$start || !$end) {
                             continue;
                         }
@@ -312,7 +305,7 @@ class AdminController {
                             $valid = false;
                             break;
                         }
-                        $ranges[] = ['start' => $start, 'end' => $end];
+                        $ranges[] = ['start' => $start, 'end' => $end, 'modality' => $mod];
                     }
                     if ($valid) {
                         usort($ranges, function ($a, $b) {
@@ -361,12 +354,6 @@ class AdminController {
                             }
                         } else {
                             $utcTz    = new \DateTimeZone('UTC');
-                            $summary  = 'DISPONIBLE';
-                            if ($modality === 'online') {
-                                $summary .= ' ONLINE';
-                            } elseif ($modality === 'presencial') {
-                                $summary .= ' PRESENCIAL';
-                            }
                             $creation_failed = false;
                             $any_created = false;
                             if ($editing_date) {
@@ -418,6 +405,12 @@ class AdminController {
                                     $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
                                 }
 
+                                $summary  = 'DISPONIBLE';
+                                if ($range['modality'] === 'online') {
+                                    $summary .= ' ONLINE';
+                                } elseif ($range['modality'] === 'presencial') {
+                                    $summary .= ' PRESENCIAL';
+                                }
                                 $created = CalendarService::create_calendar_event($tutor_id, $summary, '', $start_dt, $end_dt);
                                 if (is_wp_error($created)) {
                                     error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
@@ -511,10 +504,10 @@ class AdminController {
             }
         }
 
-        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash, $modality);
+        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash);
     }
 
-    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '', $modality = 'online') {
+    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '') {
         ?>
         <div class="tb-admin-wrapper">
             <?php foreach ($messages as $msg): ?>
@@ -534,17 +527,17 @@ class AdminController {
                             <input type="time" name="tb_start_time[]" required>
                             <label>Fin</label>
                             <input type="time" name="tb_end_time[]" required>
+                            <label>Modalidad</label>
+                            <select name="tb_modality[]" required>
+                                <option value="online">Online</option>
+                                <option value="presencial">Presencial</option>
+                            </select>
                             <button type="button" class="tb-button tb-add-range">+</button>
                         </div>
                     </div>
                     <div id="tb-calendar"></div>
                     <ul id="tb-selected-dates"></ul>
                     <div id="tb-hidden-dates"></div>
-                    <label for="tb_modality">Modalidad</label>
-                    <select id="tb_modality" name="tb_modality" required>
-                        <option value="online" <?php selected($modality, 'online'); ?>>Online</option>
-                        <option value="presencial" <?php selected($modality, 'presencial'); ?>>Presencial</option>
-                    </select>
                     <?php if ($edit_date): ?>
                         <input type="hidden" name="tb_editing_date" value="<?php echo esc_attr($edit_date); ?>">
                     <?php endif; ?>
