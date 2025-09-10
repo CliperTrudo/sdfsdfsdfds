@@ -30,6 +30,7 @@ jQuery(function($){
                     row += '<td>'+(ev.user||'')+'</td>';
                     row += '<td>'+(ev.tutor||'')+'</td>';
                     row += '<td>'+ev.start+' - '+ev.end+'</td>';
+                    row += '<td>'+(ev.modalidad||'')+'</td>';
                     var link = ev.url ? '<a href="'+ev.url+'" target="_blank">'+ev.url+'</a>' : '';
                     row += '<td>'+link+'</td>';
                     row += '<td><button type="button" class="tb-button tb-edit-event">Editar</button> ';

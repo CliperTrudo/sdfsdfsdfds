@@ -163,7 +163,7 @@
 
         <table id="tb-events-table" class="tb-table">
             <thead>
-                <tr><th>Usuario</th><th>Tutor</th><th>Tramo</th><th>Cita</th><th>Acciones</th></tr>
+                <tr><th>Usuario</th><th>Tutor</th><th>Tramo</th><th>Modalidad</th><th>Cita</th><th>Acciones</th></tr>
             </thead>
             <tbody></tbody>
         </table>

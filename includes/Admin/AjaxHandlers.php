@@ -100,15 +100,18 @@ class AjaxHandlers {
                 if (isset($ev->summary) && strtoupper(trim($ev->summary)) === 'DISPONIBLE') {
                     continue; // omitir slots de disponibilidad
                 }
-                if (!empty($modalidad)) {
-                    $desc_modalidad = '';
-                    if (!empty($ev->description) && preg_match('/Modalidad:\s*(.+)/i', $ev->description, $m)) {
-                        $desc_modalidad = strtolower(trim($m[1]));
-                    }
-                    if ($desc_modalidad !== strtolower($modalidad)) {
-                        continue;
-                    }
+
+                $modality = '';
+                if (!empty($ev->description) && preg_match('/Modalidad:\s*(.+)/i', $ev->description, $m)) {
+                    $modality = ucfirst(strtolower(trim($m[1])));
+                } elseif (!empty($ev->summary) && preg_match('/Modalidad:\s*(.+)/i', $ev->summary, $m)) {
+                    $modality = ucfirst(strtolower(trim($m[1])));
                 }
+
+                if (!empty($modalidad) && strtolower($modality) !== strtolower($modalidad)) {
+                    continue;
+                }
+
                 if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
                     $startObj = new \DateTime($ev->start->dateTime);
                     $startObj->setTimezone($madridTz);
@@ -116,18 +119,19 @@ class AjaxHandlers {
                     $endObj->setTimezone($madridTz);
 
                     $user_name = '';
-                    if (!empty($ev->description) && preg_match('/Nombre:\s*(.*)\n/', $ev->description, $m)) {
+                    if (!empty($ev->description) && preg_match('/Nombre:\s*(.*)\\n/', $ev->description, $m)) {
                         $user_name = trim($m[1]);
                     }
 
                     $data[] = [
-                        'id'       => $ev->id,
-                        'user'     => $user_name,
-                        'tutor'    => $tutor_name,
-                        'start'    => $startObj->format('Y-m-d H:i'),
-                        'end'      => $endObj->format('Y-m-d H:i'),
-                        'url'      => $ev->hangoutLink ?? '',
-                        'tutor_id' => $tid,
+                        'id'        => $ev->id,
+                        'user'      => $user_name,
+                        'tutor'     => $tutor_name,
+                        'start'     => $startObj->format('Y-m-d H:i'),
+                        'end'       => $endObj->format('Y-m-d H:i'),
+                        'url'       => $ev->hangoutLink ?? '',
+                        'tutor_id'  => $tid,
+                        'modalidad' => $modality,
                     ];
                 }
             }
