@@ -411,7 +411,15 @@ class AdminController {
                                 } elseif ($range['modality'] === 'presencial') {
                                     $summary .= ' PRESENCIAL';
                                 }
-                                $created = CalendarService::create_calendar_event($tutor_id, $summary, '', $start_dt, $end_dt);
+                                $created = CalendarService::create_calendar_event(
+                                    $tutor_id,
+                                    $summary,
+                                    '',
+                                    $start_dt,
+                                    $end_dt,
+                                    [],
+                                    $range['modality']
+                                );
                                 if (is_wp_error($created)) {
                                     error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
                                     $messages[] = [
