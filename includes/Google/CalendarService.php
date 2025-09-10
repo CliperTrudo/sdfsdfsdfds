@@ -174,6 +174,26 @@ class CalendarService {
     }
 
     /**
+     * Retrieve a calendar event.
+     */
+    public static function get_event($tutor_id, $event_id) {
+        global $wpdb;
+        $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
+        if (!$tutor || empty($tutor->calendar_id)) {
+            return new \WP_Error('missing_calendar_id', 'El tutor no tiene un calendar_id válido.');
+        }
+        $service = self::get_calendar_service($tutor_id);
+        if (!$service) {
+            return new \WP_Error('service_unavailable', 'No se pudo obtener el servicio de Google Calendar.');
+        }
+        try {
+            return $service->events->get($tutor->calendar_id, $event_id);
+        } catch (\Exception $e) {
+            return new \WP_Error('event_get_failed', $e->getMessage());
+        }
+    }
+
+    /**
      * Delete a calendar event.
      */
     public static function delete_calendar_event($tutor_id, $event_id) {

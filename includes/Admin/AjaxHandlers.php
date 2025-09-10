@@ -194,15 +194,50 @@ class AjaxHandlers {
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permisos insuficientes.');
         }
+        global $wpdb;
         $tutor_id = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $event_id = isset($_POST['event_id']) ? sanitize_text_field($_POST['event_id']) : '';
         if (!$tutor_id || empty($event_id)) {
             wp_send_json_error('Datos incompletos.');
         }
+
+        $event = CalendarService::get_event($tutor_id, $event_id);
+        if (is_wp_error($event)) {
+            wp_send_json_error($event->get_error_message());
+        }
+
+        $description = $event->getDescription();
+        $summary     = $event->getSummary();
+        $dni = null;
+        $modalidad = null;
+
+        if (!empty($description)) {
+            if (preg_match('/DNI:\s*([A-Z0-9]+)/i', $description, $m)) {
+                $dni = trim($m[1]);
+            }
+            if (preg_match('/Modalidad:\s*(Online|Presencial)/i', $description, $m)) {
+                $modalidad = strtolower($m[1]);
+            }
+        }
+        if (!$dni && !empty($summary) && preg_match('/-\s*([A-Z0-9]+)$/i', $summary, $m)) {
+            $dni = trim($m[1]);
+        }
+        if (!$modalidad && !empty($summary) && preg_match('/\b(ONLINE|PRESENCIAL)\b/i', $summary, $m)) {
+            $modalidad = strtolower($m[1]);
+        }
+
+        if (!$dni || !$modalidad) {
+            wp_send_json_error('No se pudo extraer el DNI o la modalidad del evento.');
+        }
+
         $res = CalendarService::delete_calendar_event($tutor_id, $event_id);
         if (is_wp_error($res)) {
             wp_send_json_error($res->get_error_message());
         }
+
+        $field = $modalidad === 'online' ? 'online' : 'presencial';
+        $wpdb->update("{$wpdb->prefix}alumnos_reserva", [$field => 1], ['dni' => $dni]);
+
         wp_send_json_success();
     }
 }
