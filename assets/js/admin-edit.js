@@ -6,9 +6,8 @@ jQuery(function($){
     var originalTutorId = row.data('tutor-id');
     var eventId = row.data('event-id');
     var selectedTutorId = originalTutorId;
-    var tramoText = row.find('td').eq(2).text();
-    var examDate = tramoText ? tramoText.split(' ')[0] : '';
-    var modalidad = row.find('td').eq(3).text().trim().toLowerCase();
+    var examDate = row.data('exam-date');
+    var modalidad = (row.data('modalidad') || '').toLowerCase();
 
     function populateTutorSelect(){
       if(!$('#tb_edit_modal').length){
