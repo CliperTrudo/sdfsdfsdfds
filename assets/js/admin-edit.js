@@ -6,8 +6,6 @@ jQuery(function($){
     var originalTutorId = row.data('tutor-id');
     var eventId = row.data('event-id');
     var selectedTutorId = originalTutorId;
-    var tramoText = row.find('td').eq(2).text();
-    var examDate = tramoText ? tramoText.split(' ')[0] : '';
     var modalidad = row.find('td').eq(3).text().trim().toLowerCase();
 
     function populateTutorSelect(){
@@ -33,15 +31,9 @@ jQuery(function($){
       var today = new Date();
       today.setHours(0,0,0,0);
 
-      var examDateObj = new Date(examDate + 'T00:00:00');
-      var startDateObj = new Date(examDateObj);
-      startDateObj.setDate(startDateObj.getDate() - 7);
-      if(startDateObj < today){
-        startDateObj = today;
-      }
-
-      var endDateObj = new Date(examDateObj);
-      endDateObj.setDate(endDateObj.getDate() - 1);
+      var startDateObj = new Date(today);
+      var endDateObj = new Date(today);
+      endDateObj.setDate(endDateObj.getDate() + 60);
 
       var startDate = tbCalendarUtils.formatDate(startDateObj);
       var endDate   = tbCalendarUtils.formatDate(endDateObj);
@@ -52,7 +44,6 @@ jQuery(function($){
         modalidad: modalidad,
         start_date: startDate,
         end_date: endDate,
-        exam_date: examDate,
         nonce: tbEditData.nonce
       }, function(res){
         if(res.success){
