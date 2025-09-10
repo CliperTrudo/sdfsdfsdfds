@@ -150,13 +150,11 @@
                     <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
                 <?php endforeach; ?>
             </select>
-            <select id="tb_events_user">
-                <option value="">Todos los alumnos</option>
-                <?php foreach ($alumnos_reserva as $alumno): ?>
-                    <option value="<?php echo esc_attr($alumno->dni); ?>">
-                        <?php echo esc_html($alumno->nombre . ' ' . $alumno->apellido); ?>
-                    </option>
-                <?php endforeach; ?>
+            <input type="text" id="tb_events_dni" placeholder="DNI del alumno (opcional)">
+            <select id="tb_events_modalidad">
+                <option value="">Todos</option>
+                <option value="online">online</option>
+                <option value="presencial">presencial</option>
             </select>
             <input type="date" id="tb_events_start" placeholder="Fecha inicio (opcional)">
             <input type="date" id="tb_events_end" placeholder="Fecha fin (opcional)">
