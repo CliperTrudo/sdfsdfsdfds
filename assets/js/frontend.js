@@ -123,11 +123,21 @@ jQuery(document).ready(function($) {
     if (tutor_id && modalidad) {
       calendarContainer.html('<p class="tb-message tb-message-info">Cargando franjas horarias...</p>');
       var today = new Date();
-      var current_date_for_query = formatDate(today);
+      today.setHours(0,0,0,0);
 
       var exam_date_obj = new Date(exam_date + 'T00:00:00');
-      exam_date_obj.setDate(exam_date_obj.getDate() - 5);
-      var end_date_for_query = formatDate(exam_date_obj);
+
+      var start_date_obj = new Date(exam_date_obj);
+      start_date_obj.setDate(start_date_obj.getDate() - 7);
+      if (start_date_obj < today) {
+        start_date_obj = today;
+      }
+
+      var end_date_obj = new Date(exam_date_obj);
+      end_date_obj.setDate(end_date_obj.getDate() - 1);
+
+      var start_date_for_query = formatDate(start_date_obj);
+      var end_date_for_query = formatDate(end_date_obj);
 
       var nonce = $('#tb_booking_nonce_field').val();
 
@@ -138,7 +148,7 @@ jQuery(document).ready(function($) {
           action: 'tb_get_available_slots',
           tutor_id: tutor_id,
           modalidad: modalidad,
-          start_date: current_date_for_query,
+          start_date: start_date_for_query,
           end_date: end_date_for_query,
           nonce: nonce
         },
@@ -154,7 +164,7 @@ jQuery(document).ready(function($) {
               });
 
               window.allSortedDates = Object.keys(window.slotsByDate).sort();
-              window.calendarStartDate = new Date(current_date_for_query + 'T00:00:00');
+              window.calendarStartDate = new Date(start_date_for_query + 'T00:00:00');
               window.calendarEndDate   = new Date(end_date_for_query + 'T00:00:00');
 
               if (window.allSortedDates.length > 0) {
