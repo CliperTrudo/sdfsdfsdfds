@@ -272,7 +272,7 @@ class AjaxHandlers {
             return;
         }
         if (($modalidad === 'online' && !$alumno_data->online) || ($modalidad === 'presencial' && !$alumno_data->presencial)) {
-            wp_send_json_error('No tienes permisos para reservar en modalidad ' . $modalidad . '.');
+            wp_send_json_error('Ya has consumido tu permiso para la modalidad ' . $modalidad . '.');
             return;
         }
         $tutor_id   = intval($_POST['tutor_id']);
@@ -335,7 +335,7 @@ class AjaxHandlers {
             // Marcar en la base de datos que el alumno ya tiene una cita en esta modalidad
             $updated = $wpdb->update(
                 "{$wpdb->prefix}alumnos_reserva",
-                [$modalidad => 1],
+                [$modalidad => 0],
                 ['dni' => $dni]
             );
             if ($updated === false) {
@@ -357,7 +357,7 @@ class AjaxHandlers {
 
             // Enviar respuesta de éxito al frontend con los detalles de la reserva
             wp_send_json_success([
-                'message'            => 'Reserva ' . $modalidad . ' confirmada con éxito. Se ha enviado una invitación por correo electrónico.',
+                'message'            => 'Reserva ' . $modalidad . ' confirmada con éxito. Tu permiso ha sido consumido. Se ha enviado una invitación por correo electrónico.',
                 'meet_link'          => $event->hangoutLink,
                 'event_id'           => $event->id,
                 'exam_date'          => $exam_date,
