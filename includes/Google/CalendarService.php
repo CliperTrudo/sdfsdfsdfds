@@ -82,8 +82,19 @@ class CalendarService {
             $target .= ' ' . strtoupper(trim($modalidad));
         }
         foreach ($events as $event) {
-            if (!isset($event->summary) || strtoupper(trim($event->summary)) !== $target) {
+            if (!isset($event->summary)) {
                 $busy[] = $event;
+                continue;
+            }
+            $summary = strtoupper(trim($event->summary));
+            if (!empty($modalidad)) {
+                if ($summary !== $target) {
+                    $busy[] = $event;
+                }
+            } else {
+                if (stripos($summary, $target) !== 0) {
+                    $busy[] = $event;
+                }
             }
         }
         return $busy;
