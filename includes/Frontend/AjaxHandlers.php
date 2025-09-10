@@ -56,10 +56,10 @@ class AjaxHandlers {
         $exam_date_str  = isset($_POST['exam_date']) ? sanitize_text_field($_POST['exam_date']) : '';
         $modalidad      = isset($_POST['modalidad']) ? sanitize_text_field($_POST['modalidad']) : '';
 
-        self::debug_log("TutoriasBooking: ajax_get_available_slots() - Datos recibidos: tutor_id={$tutor_id}, start_date={$start_date_str}, end_date={$end_date_str}, exam_date={$exam_date_str}");
+        self::debug_log("TutoriasBooking: ajax_get_available_slots() - Datos recibidos: tutor_id={$tutor_id}, start_date={$start_date_str}, end_date={$end_date_str}, exam_date=" . ($exam_date_str ?: 'N/A'));
 
         // Validar que los datos esenciales estén presentes
-        if (!$tutor_id || empty($start_date_str) || empty($end_date_str) || empty($exam_date_str)) {
+        if (!$tutor_id || empty($start_date_str) || empty($end_date_str)) {
             self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Datos incompletos para la consulta de disponibilidad.');
             wp_send_json_error('Datos incompletos para la consulta de disponibilidad.');
             return;
@@ -69,42 +69,55 @@ class AjaxHandlers {
         // Aseguramos que todas las fechas se manejen en la misma zona horaria para comparaciones consistentes.
         try {
             $madrid_timezone = new \DateTimeZone('Europe/Madrid');
-            $exam_date_obj  = new \DateTime($exam_date_str, $madrid_timezone);
             $start_date_obj = new \DateTime($start_date_str, $madrid_timezone);
             // Para el end_date_obj, ajustamos la hora al final del día para incluir todo el día en el rango.
             // Si el end_date_str solo contiene la fecha, se asume 00:00:00, lo que excluiría el último día.
             $end_date_obj   = new \DateTime($end_date_str . ' 23:59:59', $madrid_timezone);
-            self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas parseadas (Europe/Madrid): start_date_obj={$start_date_obj->format('Y-m-d H:i:s')}, end_date_obj={$end_date_obj->format('Y-m-d H:i:s')}, exam_date_obj={$exam_date_obj->format('Y-m-d H:i:s')}");
+            if (!empty($exam_date_str)) {
+                $exam_date_obj  = new \DateTime($exam_date_str, $madrid_timezone);
+                self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas parseadas (Europe/Madrid): start_date_obj={$start_date_obj->format('Y-m-d H:i:s')}, end_date_obj={$end_date_obj->format('Y-m-d H:i:s')}, exam_date_obj={$exam_date_obj->format('Y-m-d H:i:s')}");
+            } else {
+                self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas parseadas (Europe/Madrid): start_date_obj={$start_date_obj->format('Y-m-d H:i:s')}, end_date_obj={$end_date_obj->format('Y-m-d H:i:s')}, sin exam_date");
+            }
         } catch (\Exception $e) {
             self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Formato de fecha inválido - ' . $e->getMessage());
             wp_send_json_error('Formato de fecha inválido en la consulta.');
             return;
         }
+        if (!empty($exam_date_str)) {
+            // Restringir el rango de búsqueda a [exam_date - 7 días, exam_date - 1 día]
+            $range_start = (clone $exam_date_obj)->sub(new \DateInterval('P7D'))->setTime(0, 0, 0);
+            $range_end   = (clone $exam_date_obj)->sub(new \DateInterval('P1D'))->setTime(23, 59, 59);
 
-        // Restringir el rango de búsqueda a [exam_date - 7 días, exam_date - 1 día]
-        $range_start = (clone $exam_date_obj)->sub(new \DateInterval('P7D'))->setTime(0, 0, 0);
-        $range_end   = (clone $exam_date_obj)->sub(new \DateInterval('P1D'))->setTime(23, 59, 59);
+            if ($start_date_obj < $range_start) {
+                $start_date_obj = clone $range_start;
+            }
+            if ($start_date_obj > $range_end) {
+                $start_date_obj = clone $range_end;
+            }
+            if ($end_date_obj > $range_end) {
+                $end_date_obj = clone $range_end;
+            }
+            if ($end_date_obj < $range_start) {
+                $end_date_obj = clone $range_start;
+            }
 
-        if ($start_date_obj < $range_start) {
-            $start_date_obj = clone $range_start;
-        }
-        if ($start_date_obj > $range_end) {
-            $start_date_obj = clone $range_end;
-        }
-        if ($end_date_obj > $range_end) {
-            $end_date_obj = clone $range_end;
-        }
-        if ($end_date_obj < $range_start) {
-            $end_date_obj = clone $range_start;
-        }
+            if ($start_date_obj > $end_date_obj) {
+                self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Rango de fechas fuera de los límites permitidos por la fecha de examen.');
+                wp_send_json_error('Rango de fechas inválido para la consulta de disponibilidad.');
+                return;
+            }
 
-        if ($start_date_obj > $end_date_obj) {
-            self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: Rango de fechas fuera de los límites permitidos por la fecha de examen.');
-            wp_send_json_error('Rango de fechas inválido para la consulta de disponibilidad.');
-            return;
-        }
+            self::debug_log("TutoriasBooking: ajax_get_available_slots() - Rango ajustado por fecha de examen: {$start_date_obj->format('Y-m-d H:i:s')} a {$end_date_obj->format('Y-m-d H:i:s')}");
+        } else {
+            if ($start_date_obj > $end_date_obj) {
+                self::debug_log('TutoriasBooking: ajax_get_available_slots() - ERROR: start_date posterior a end_date.');
+                wp_send_json_error('Rango de fechas inválido para la consulta de disponibilidad.');
+                return;
+            }
 
-        self::debug_log("TutoriasBooking: ajax_get_available_slots() - Rango ajustado: {$start_date_obj->format('Y-m-d H:i:s')} a {$end_date_obj->format('Y-m-d H:i:s')}");
+            self::debug_log("TutoriasBooking: ajax_get_available_slots() - Rango utilizado sin fecha de examen: {$start_date_obj->format('Y-m-d H:i:s')} a {$end_date_obj->format('Y-m-d H:i:s')}");
+        }
 
         // Formatear las fechas para la consulta al servicio de calendario
         $start_date_for_query = $start_date_obj->format('Y-m-d');
