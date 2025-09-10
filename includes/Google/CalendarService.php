@@ -51,22 +51,30 @@ class CalendarService {
         }
     }
 
-    public static function get_available_calendar_events($tutor_id, $start_date, $end_date) {
+    public static function get_available_calendar_events($tutor_id, $start_date, $end_date, $modalidad = '') {
         $events = self::get_calendar_events($tutor_id, $start_date, $end_date);
         $available = [];
+        $target = 'DISPONIBLE';
+        if (!empty($modalidad)) {
+            $target .= ' ' . strtoupper(trim($modalidad));
+        }
         foreach ($events as $event) {
-            if (isset($event->summary) && trim(strtoupper($event->summary)) === 'DISPONIBLE') {
+            if (isset($event->summary) && strtoupper(trim($event->summary)) === $target) {
                 $available[] = $event;
             }
         }
         return $available;
     }
 
-    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date, $query = '') {
+    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date, $query = '', $modalidad = '') {
         $events = self::get_calendar_events($tutor_id, $start_date, $end_date, $query);
         $busy = [];
+        $target = 'DISPONIBLE';
+        if (!empty($modalidad)) {
+            $target .= ' ' . strtoupper(trim($modalidad));
+        }
         foreach ($events as $event) {
-            if (!isset($event->summary) || trim(strtoupper($event->summary)) !== 'DISPONIBLE') {
+            if (!isset($event->summary) || strtoupper(trim($event->summary)) !== $target) {
                 $busy[] = $event;
             }
         }
@@ -86,7 +94,7 @@ class CalendarService {
         return $all_events;
     }
 
-    public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[]) {
+    public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[], $modalidad = 'online') {
         global $wpdb;
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
         if (!$tutor || empty($tutor->calendar_id)) {
@@ -98,23 +106,25 @@ class CalendarService {
         }
         $calendarId = $tutor->calendar_id;
         // $start_datetime and $end_datetime are expected to be in UTC
-        $event = new \Google_Service_Calendar_Event([
+        $event_data = [
             'summary' => $summary,
             'description' => $description,
             'start' => ['dateTime' => $start_datetime, 'timeZone' => 'UTC'],
             'end'   => ['dateTime' => $end_datetime,   'timeZone' => 'UTC'],
             'attendees' => array_map(fn($e)=>['email'=>$e], $attendees),
             'reminders' => ['useDefault'=>false,'overrides'=>[['method'=>'email','minutes'=>60],['method'=>'popup','minutes'=>10]]],
-            'conferenceData' => ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]]
-        ]);
+        ];
+        $options = ['sendUpdates' => 'all'];
+        if ($modalidad === 'online') {
+            $event_data['conferenceData'] = ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]];
+            $options['conferenceDataVersion'] = 1;
+        }
+        $event = new \Google_Service_Calendar_Event($event_data);
         try {
             return $service->events->insert(
                 $calendarId,
                 $event,
-                [
-                    'conferenceDataVersion' => 1,
-                    'sendUpdates' => 'all',
-                ]
+                $options
             );
         } catch (\Exception $e) {
             return new \WP_Error('event_creation_failed', $e->getMessage());

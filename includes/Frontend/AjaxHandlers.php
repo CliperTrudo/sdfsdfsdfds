@@ -53,6 +53,7 @@ class AjaxHandlers {
         $tutor_id       = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $start_date_str = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $end_date_str   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
+        $modalidad      = isset($_POST['modalidad']) ? sanitize_text_field($_POST['modalidad']) : '';
 
         self::debug_log("TutoriasBooking: ajax_get_available_slots() - Datos recibidos: tutor_id={$tutor_id}, start_date={$start_date_str}, end_date={$end_date_str}");
 
@@ -84,7 +85,7 @@ class AjaxHandlers {
         self::debug_log("TutoriasBooking: ajax_get_available_slots() - Fechas para consulta: start={$start_date_for_query}, end={$end_date_for_query}");
 
         // Obtener eventos marcados como "DISPONIBLE" del calendario del tutor
-        $available_events = CalendarService::get_available_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query);
+        $available_events = CalendarService::get_available_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query, $modalidad);
         self::debug_log('TutoriasBooking: ajax_get_available_slots() - Eventos DISPONIBLE obtenidos: ' . count($available_events) . ' eventos.');
         // self::debug_log('TutoriasBooking: available_events: ' . print_r($available_events, true)); // Descomentar para ver el detalle de los eventos
 
@@ -119,7 +120,7 @@ class AjaxHandlers {
 
         // Filtrar franjas que ya estén ocupadas en el calendario
         // OBTENER TODOS LOS EVENTOS QUE NO SON "DISPONIBLE". ESTOS SON LOS EVENTOS OCUPADOS/NO DISPONIBLES.
-        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query);
+        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query, '', $modalidad);
         self::debug_log('TutoriasBooking: ajax_get_available_slots() - Eventos OCUPADOS obtenidos: ' . count($busy_events) . ' eventos.');
         // self::debug_log('TutoriasBooking: busy_events: ' . print_r($busy_events, true)); // Descomentar para ver el detalle
 
