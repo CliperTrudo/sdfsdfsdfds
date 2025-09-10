@@ -38,27 +38,6 @@ class AdminController {
             $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' alumnos de reserva.'];
         }
 
-        if ($table_exists && isset($_POST['tb_reset_cita_id'])) {
-            $alumno_id   = intval($_POST['tb_reset_cita_id']);
-            $alumno_data = $wpdb->get_row($wpdb->prepare("SELECT dni FROM {$alumnos_reserva_table} WHERE id = %d", $alumno_id));
-            if ($alumno_data) {
-                CalendarService::delete_events_by_dni($alumno_data->dni);
-            }
-
-            $updated = $wpdb->update(
-                $alumnos_reserva_table,
-                ['online' => 0, 'presencial' => 0],
-                ['id' => $alumno_id],
-                ['%d', '%d'],
-                ['%d']
-            );
-            if ($updated !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'La reserva del alumno con ID ' . esc_html($alumno_id) . ' ha sido eliminada y los campos "Online" y "Presencial" se han establecido en 0.'];
-            } else {
-                $messages[] = ['type' => 'error', 'text' => 'Error al actualizar los campos de cita.'];
-            }
-        }
-
         if (!$table_exists) {
             $messages[] = [
                 'type' => 'error',
@@ -83,6 +62,8 @@ class AdminController {
             $email_alumno    = sanitize_email($_POST['tb_alumno_email']);
             $nombre_alumno   = sanitize_text_field($_POST['tb_alumno_nombre']);
             $apellido_alumno = sanitize_text_field($_POST['tb_alumno_apellido']);
+            $online_alumno   = isset($_POST['tb_alumno_online']) ? 1 : 0;
+            $presencial_alumno = isset($_POST['tb_alumno_presencial']) ? 1 : 0;
 
             if (!empty($dni_alumno) && !empty($email_alumno) && !empty($nombre_alumno) && !empty($apellido_alumno)) {
                 $existing_alumno = $wpdb->get_var($wpdb->prepare(
@@ -101,8 +82,8 @@ class AdminController {
                             'email'      => $email_alumno,
                             'nombre'     => $nombre_alumno,
                             'apellido'   => $apellido_alumno,
-                            'online'     => 0,
-                            'presencial' => 0
+                            'online'     => $online_alumno,
+                            'presencial' => $presencial_alumno
                         ]
                     );
                     if ($inserted) {
@@ -158,6 +139,29 @@ class AdminController {
         if ($table_exists && isset($_POST['tb_delete_all_alumnos'])) {
             $wpdb->query("DELETE FROM {$alumnos_reserva_table}");
             $messages[] = ['type' => 'success', 'text' => 'Todos los alumnos de reserva han sido eliminados.'];
+        }
+
+        if ($table_exists && isset($_POST['tb_update_alumno_id'])) {
+            $alumno_id  = intval($_POST['tb_update_alumno_id']);
+            $online     = isset($_POST['tb_online']) ? 1 : 0;
+            $presencial = isset($_POST['tb_presencial']) ? 1 : 0;
+
+            $updated = $wpdb->update(
+                $alumnos_reserva_table,
+                [
+                    'online'     => $online,
+                    'presencial' => $presencial,
+                ],
+                ['id' => $alumno_id],
+                ['%d', '%d'],
+                ['%d']
+            );
+
+            if ($updated !== false) {
+                $messages[] = ['type' => 'success', 'text' => 'Valores actualizados para el alumno con ID ' . esc_html($alumno_id) . '.'];
+            } else {
+                $messages[] = ['type' => 'error', 'text' => 'Error al actualizar los valores del alumno.'];
+            }
         }
 
         $tutores = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}tutores");
@@ -566,10 +570,14 @@ class AdminController {
         $count = 0;
         array_shift($rows); // skip header
         foreach ($rows as $data) {
-            $dni      = isset($data[0]) ? sanitize_text_field($data[0]) : '';
-            $nombre   = isset($data[1]) ? sanitize_text_field($data[1]) : '';
-            $apellido = isset($data[2]) ? sanitize_text_field($data[2]) : '';
-            $email    = isset($data[3]) ? sanitize_email($data[3]) : '';
+            $dni        = isset($data[0]) ? sanitize_text_field($data[0]) : '';
+            $nombre     = isset($data[1]) ? sanitize_text_field($data[1]) : '';
+            $apellido   = isset($data[2]) ? sanitize_text_field($data[2]) : '';
+            $email      = isset($data[3]) ? sanitize_email($data[3]) : '';
+            $online     = isset($data[4]) ? intval($data[4]) : 0;
+            $presencial = isset($data[5]) ? intval($data[5]) : 0;
+            $online     = $online ? 1 : 0;
+            $presencial = $presencial ? 1 : 0;
             if (empty($dni) || empty($nombre) || empty($apellido) || empty($email)) {
                 continue;
             }
@@ -584,8 +592,8 @@ class AdminController {
                     'email'      => $email,
                     'nombre'     => $nombre,
                     'apellido'   => $apellido,
-                    'online'     => 0,
-                    'presencial' => 0
+                    'online'     => $online,
+                    'presencial' => $presencial
                 ]
             );
             $count++;

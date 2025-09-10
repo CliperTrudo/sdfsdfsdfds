@@ -75,6 +75,8 @@
                 <input type="text" name="tb_alumno_nombre" placeholder="Nombre" required>
                 <input type="text" name="tb_alumno_apellido" placeholder="Apellido" required>
                 <input type="email" name="tb_alumno_email" placeholder="Email del Alumno" required>
+                <label><input type="checkbox" name="tb_alumno_online" value="1"> Online</label>
+                <label><input type="checkbox" name="tb_alumno_presencial" value="1"> Presencial</label>
                 <button type="submit" name="tb_add_alumno_reserva" class="tb-button">Añadir Alumno</button>
             </form>
 
@@ -104,23 +106,21 @@
                                 <td><?php echo esc_html($alumno->dni); ?></td>
                                 <td><?php echo esc_html($alumno->nombre); ?></td>
                                 <td><?php echo esc_html($alumno->apellido); ?></td>
-                                  <td><?php echo esc_html($alumno->email); ?></td>
-                                  <td><?php echo $alumno->online ? 'Sí' : '<span class="tb-alert">No</span>'; ?></td>
-                                  <td><?php echo $alumno->presencial ? 'Sí' : '<span class="tb-alert">No</span>'; ?></td>
-                                  <td>
-                                      <?php if ($alumno->online || $alumno->presencial): ?>
-                                          <form method="POST" class="tb-inline-form">
-                                              <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                              <input type="hidden" name="tb_reset_cita_id" value="<?php echo esc_attr($alumno->id); ?>">
-                                              <button type="submit" class="tb-button">Poner en 0</button>
-                                          </form>
-                                      <?php endif; ?>
-                                      <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
-                                          <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                          <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
-                                          <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
-                                      </form>
-                                  </td>
+                                <td><?php echo esc_html($alumno->email); ?></td>
+                                <td><input type="checkbox" name="tb_online" value="1" form="tb_update_<?php echo esc_attr($alumno->id); ?>" <?php checked($alumno->online); ?>></td>
+                                <td><input type="checkbox" name="tb_presencial" value="1" form="tb_update_<?php echo esc_attr($alumno->id); ?>" <?php checked($alumno->presencial); ?>></td>
+                                <td>
+                                    <form method="POST" id="tb_update_<?php echo esc_attr($alumno->id); ?>" class="tb-inline-form">
+                                        <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
+                                        <input type="hidden" name="tb_update_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                        <button type="submit" class="tb-button">Actualizar</button>
+                                    </form>
+                                    <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
+                                        <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
+                                        <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                        <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
