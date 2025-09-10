@@ -204,15 +204,7 @@ jQuery(document).ready(function($) {
   $('#tb_modalidad').change(loadSlots);
 
   // Envío del formulario de reserva
-  $('#tb_booking_form').submit(function(e) {
-    e.preventDefault();
-
-    var selectedSlot = $('input[name="selected_slot"]:checked');
-    if (selectedSlot.length === 0) {
-      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona una franja horaria.</p>').show();
-      return;
-    }
-
+  function processBooking(selectedSlot) {
       var tutor_id   = $('#tb_tutor_select').val();
       var modalidad  = $('#tb_modalidad').val();
       var dni        = $('#tb_dni_final').val();
@@ -285,5 +277,32 @@ jQuery(document).ready(function($) {
         $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
       }
     });
+  }
+
+  $('#tb_booking_form').submit(function(e) {
+    e.preventDefault();
+
+    var selectedSlot = $('input[name="selected_slot"]:checked');
+    if (selectedSlot.length === 0) {
+      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona una franja horaria.</p>').show();
+      return;
+    }
+
+    var exam_date = selectedSlot.data('date');
+    var start_time = selectedSlot.data('start');
+    $('#tb_confirm_booking_message').text('¿Está seguro que desea reservar cita el día ' + exam_date + ' a la hora ' + start_time + '? La cita no podrá ser cancelada después de ser confirmada.');
+    $('#tb_confirm_booking_card').removeClass('tb-hidden');
+
+    $('#tb_confirm_booking_yes').off('click').one('click', function() {
+      $('#tb_confirm_booking_card').addClass('tb-hidden');
+      processBooking(selectedSlot);
+    });
+
+    $('#tb_confirm_booking_no').off('click').one('click', function() {
+      $('#tb_confirm_booking_card').addClass('tb-hidden');
+      $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
+    });
+
+    $('#tb_submit_booking').prop('disabled', true);
   });
 });
