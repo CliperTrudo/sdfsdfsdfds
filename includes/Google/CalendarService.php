@@ -209,6 +209,37 @@ class CalendarService {
     }
 
     /**
+     * Check if any tutor has an event for the given DNI and modality.
+     */
+    public static function has_event_by_dni_and_modality($dni, $modalidad) {
+        global $wpdb;
+        $tutors = $wpdb->get_results("SELECT id, calendar_id FROM {$wpdb->prefix}tutores");
+        foreach ($tutors as $tutor) {
+            if (empty($tutor->calendar_id)) { continue; }
+            $service = self::get_calendar_service($tutor->id);
+            if (!$service) { continue; }
+            $opt = [
+                'q' => $dni,
+                'singleEvents' => true,
+            ];
+            try {
+                $events = $service->events->listEvents($tutor->calendar_id, $opt);
+                foreach ($events->getItems() as $event) {
+                    $description = $event->getDescription();
+                    $summary = $event->getSummary();
+                    if (($description && stripos($description, 'Modalidad: ' . ucfirst($modalidad)) !== false) ||
+                        ($summary && stripos($summary, strtoupper($modalidad)) !== false)) {
+                        return true;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore listing errors
+            }
+        }
+        return false;
+    }
+
+    /**
      * Delete all "DISPONIBLE" events for a specific date.
      */
     public static function delete_available_events_for_date($tutor_id, $date) {

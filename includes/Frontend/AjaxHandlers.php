@@ -225,14 +225,28 @@ class AjaxHandlers {
         $alumno = $wpdb->get_row($wpdb->prepare("SELECT online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
 
         if ($alumno) {
-            if (CalendarService::has_events_by_dni($dni)) {
-                wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
-            } else {
-                wp_send_json_success([
-                    'online'     => (bool) $alumno->online,
-                    'presencial' => (bool) $alumno->presencial
-                ]);
+            // Verificar incoherencias con eventos existentes en Google Calendar
+            $updated_fields = [];
+            if ($alumno->online && CalendarService::has_event_by_dni_and_modality($dni, 'online')) {
+                $alumno->online = 0;
+                $updated_fields['online'] = 0;
             }
+            if ($alumno->presencial && CalendarService::has_event_by_dni_and_modality($dni, 'presencial')) {
+                $alumno->presencial = 0;
+                $updated_fields['presencial'] = 0;
+            }
+            if (!empty($updated_fields)) {
+                $wpdb->update($alumnos_reserva_table, $updated_fields, ['dni' => $dni, 'email' => $email]);
+            }
+
+            if (!$alumno->online && !$alumno->presencial) {
+                wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
+            }
+
+            wp_send_json_success([
+                'online'     => (bool) $alumno->online,
+                'presencial' => (bool) $alumno->presencial
+            ]);
         } else {
             wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.');
         }
