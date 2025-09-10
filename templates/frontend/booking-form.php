@@ -79,5 +79,12 @@
         </div>
         <div id="tb_response_message" class="tb-message tb-hidden"></div>
     </form>
+    <div id="tb_confirm_booking_card" class="tb-booking-card tb-hidden">
+        <p id="tb_confirm_booking_message"></p>
+        <div class="tb-confirm-buttons">
+            <button type="button" id="tb_confirm_booking_yes" class="tb-button">Confirmar</button>
+            <button type="button" id="tb_confirm_booking_no" class="tb-button">Cancelar</button>
+        </div>
+    </div>
     <div id="tb_booking_details_container"></div>
 </div>
