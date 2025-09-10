@@ -54,27 +54,28 @@ class CalendarService {
     public static function get_available_calendar_events($tutor_id, $start_date, $end_date, $modalidad = '') {
         $events = self::get_calendar_events($tutor_id, $start_date, $end_date);
         $available = [];
-        $target = 'DISPONIBLE';
-        if (!empty($modalidad)) {
-            $target .= ' ' . strtoupper(trim($modalidad));
-        }
+        $modalidad = strtoupper(trim($modalidad));
         foreach ($events as $event) {
-            if (isset($event->summary) && strtoupper(trim($event->summary)) === $target) {
-                $available[] = $event;
+            if (!isset($event->summary)) { continue; }
+            $summary = strtoupper(trim($event->summary));
+            if ($modalidad !== '') {
+                if ($summary === 'DISPONIBLE ' . $modalidad) {
+                    $available[] = $event;
+                }
+            } else {
+                if (strpos($summary, 'DISPONIBLE') === 0) {
+                    $available[] = $event;
+                }
             }
         }
         return $available;
     }
 
-    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date, $query = '', $modalidad = '') {
+    public static function get_busy_calendar_events($tutor_id, $start_date, $end_date, $query = '') {
         $events = self::get_calendar_events($tutor_id, $start_date, $end_date, $query);
         $busy = [];
-        $target = 'DISPONIBLE';
-        if (!empty($modalidad)) {
-            $target .= ' ' . strtoupper(trim($modalidad));
-        }
         foreach ($events as $event) {
-            if (!isset($event->summary) || strtoupper(trim($event->summary)) !== $target) {
+            if (!isset($event->summary) || stripos(trim($event->summary), 'DISPONIBLE') !== 0) {
                 $busy[] = $event;
             }
         }

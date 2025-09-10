@@ -147,7 +147,7 @@ class AjaxHandlers {
 
         // Filtrar franjas que ya estén ocupadas en el calendario
         // OBTENER TODOS LOS EVENTOS QUE NO SON "DISPONIBLE". ESTOS SON LOS EVENTOS OCUPADOS/NO DISPONIBLES.
-        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query, '', $modalidad);
+        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_date_for_query, $end_date_for_query);
         self::debug_log('TutoriasBooking: ajax_get_available_slots() - Eventos OCUPADOS obtenidos: ' . count($busy_events) . ' eventos.');
         // self::debug_log('TutoriasBooking: busy_events: ' . print_r($busy_events, true)); // Descomentar para ver el detalle
 
