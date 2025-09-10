@@ -324,9 +324,50 @@ class AjaxHandlers {
         self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
         // Preparar los detalles del evento para Google Calendar
-        $summary     = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
-        $description = "DNI: {$dni}\nNombre: {$nombreAlumno} {$apellidoAlumno}\nEmail Alumno: {$email}\nFecha: {$exam_date}\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre} ({$tutor->email})\nModalidad: " . ucfirst($modalidad);
-        $attendees   = [$email, $tutor->email]; // Asistentes del evento
+        $summary   = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
+
+        if ($modalidad === 'online') {
+            $description = <<<EOT
+Estimado alumno,
+Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid.
+• Es importante asistir a la videollamada vestido como lo harías el día de la entrevista real.
+• Deberás conectar tu cámara y micrófono, por lo que te recomendamos hacer una prueba previa con tu dispositivo para asegurarte de que todo funciona correctamente antes de la recreación.
+• Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
+• En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
+• La entrevista tendrá una duración aproximada de 45 minutos.
+• Gracias por confiar en Academia Prefortia.
+
+DNI: {$dni}
+Nombre: {$nombreAlumno} {$apellidoAlumno}
+Email Alumno: {$email}
+Fecha: {$exam_date}
+Hora: {$start_time} - {$end_time}
+Tutor: {$tutor->nombre} ({$tutor->email})
+Modalidad: Online
+EOT;
+        } else {
+            $description = <<<EOT
+Estimado alumno,
+Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid.
+• La entrevista se llevará a cabo en nuestras instalaciones ubicadas en: C. del Camino de los Vinateros, 51, Moratalaz, 28030 Madrid
+• Se ruega puntualidad: debes presentarte 15 minutos antes de la hora señalada para realizar la identificación y la preparación previa.
+• Acude con la misma vestimenta que utilizarías el día de la entrevista real.
+• Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
+• En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
+• La entrevista tendrá una duración aproximada de 45 minutos.
+• Gracias por confiar en Academia Prefortia.
+
+DNI: {$dni}
+Nombre: {$nombreAlumno} {$apellidoAlumno}
+Email Alumno: {$email}
+Fecha: {$exam_date}
+Hora: {$start_time} - {$end_time}
+Tutor: {$tutor->nombre} ({$tutor->email})
+Modalidad: Presencial
+EOT;
+        }
+
+        $attendees = [$email, $tutor->email]; // Asistentes del evento
         self::debug_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
