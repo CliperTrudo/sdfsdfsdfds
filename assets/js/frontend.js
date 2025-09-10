@@ -43,6 +43,16 @@ jQuery(document).ready(function($) {
         if (response.success) {
           $('#tb_dni_verified').val(dni);
           $('#tb_email_verified').val(email);
+          var modalidadSelect = $('#tb_modalidad');
+          modalidadSelect.prop('disabled', false).empty()
+            .append('<option value="">-- Selecciona modalidad --</option>');
+          if (response.data && response.data.online) {
+            modalidadSelect.append('<option value="online">Online</option>');
+          }
+          if (response.data && response.data.presencial) {
+            modalidadSelect.append('<option value="presencial">Presencial</option>');
+          }
+          modalidadSelect.val('');
           $('#tb_dni_step').fadeOut(function() {
             $('#tb_exam_date_step').removeClass('tb-hidden').hide().fadeIn();
           });
@@ -100,33 +110,34 @@ jQuery(document).ready(function($) {
   });
 
 
-  // Cambio de tutor
-  $('#tb_tutor_select').change(function() {
-    var tutor_id = $(this).val();
-    var exam_date = $('#tb_exam_date_final').val(); // Fecha de examen seleccionada por el usuario
-
-    var today = new Date();
-    var current_date_for_query = formatDate(today);
-
-    // Fin del rango = 5 días antes del examen
-    var exam_date_obj = new Date(exam_date + 'T00:00:00');
-    exam_date_obj.setDate(exam_date_obj.getDate() - 5);
-    var end_date_for_query = formatDate(exam_date_obj);
-
-    var nonce = $('#tb_booking_nonce_field').val(); // Nonce
+  function loadSlots() {
+    var tutor_id = $('#tb_tutor_select').val();
+    var modalidad = $('#tb_modalidad').val();
+    var exam_date = $('#tb_exam_date_final').val();
     var calendarContainer = $('#tb_calendar_container');
 
     $('#tb_submit_booking').prop('disabled', true);
+    $('#tb_selected_slot').text('');
     $('#tb_response_message').hide();
-    calendarContainer.html('<p class="tb-message tb-message-info">Cargando franjas horarias...</p>');
 
-    if (tutor_id) {
+    if (tutor_id && modalidad) {
+      calendarContainer.html('<p class="tb-message tb-message-info">Cargando franjas horarias...</p>');
+      var today = new Date();
+      var current_date_for_query = formatDate(today);
+
+      var exam_date_obj = new Date(exam_date + 'T00:00:00');
+      exam_date_obj.setDate(exam_date_obj.getDate() - 5);
+      var end_date_for_query = formatDate(exam_date_obj);
+
+      var nonce = $('#tb_booking_nonce_field').val();
+
       $.ajax({
         url: ajaxurl,
         type: 'POST',
         data: {
           action: 'tb_get_available_slots',
           tutor_id: tutor_id,
+          modalidad: modalidad,
           start_date: current_date_for_query,
           end_date: end_date_for_query,
           nonce: nonce
@@ -134,7 +145,6 @@ jQuery(document).ready(function($) {
         success: function(response) {
           if (response.success) {
             if (response.data && response.data.length > 0) {
-              // Mapear por fecha
               window.slotsByDate = {};
               $.each(response.data, function(index, slot) {
                 if (!window.slotsByDate[slot.date]) {
@@ -144,8 +154,6 @@ jQuery(document).ready(function($) {
               });
 
               window.allSortedDates = Object.keys(window.slotsByDate).sort();
-
-              // Definir rango del calendario y mes inicial
               window.calendarStartDate = new Date(current_date_for_query + 'T00:00:00');
               window.calendarEndDate   = new Date(end_date_for_query + 'T00:00:00');
 
@@ -155,13 +163,9 @@ jQuery(document).ready(function($) {
                 window.currentMonthDate = new Date(window.calendarStartDate);
               }
 
-              window.selectedDate = null; // No preseleccionar fecha
-
-              // Pintar calendario + texto del slot seleccionado
+              window.selectedDate = null;
               calendarContainer.html('<div id="tb_calendar"></div>');
-              $('#tb_selected_slot').text('');
 
-              // Crear overlay si no existe
               if (!$('#tb_slots_overlay').length) {
                 $('body').append('<div id="tb_slots_overlay" class="tb-slots-overlay" style="display:none"><div id="tb_slots_container" class="tb-slots-content"></div></div>');
               }
@@ -182,20 +186,22 @@ jQuery(document).ready(function($) {
             }
           } else {
             $('#tb_response_message').html('<p class="tb-message tb-message-error">Error al obtener la disponibilidad: ' + (response.data || 'Error desconocido') + '</p>').show();
-            calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
+            calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
           console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
           $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').show();
-          calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
+          calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
         }
       });
     } else {
-      calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor para ver las franjas horarias disponibles.</p>');
-      $('#tb_response_message').hide();
+      calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
     }
-  });
+  }
+
+  $('#tb_tutor_select').change(loadSlots);
+  $('#tb_modalidad').change(loadSlots);
 
   // Envío del formulario de reserva
   $('#tb_booking_form').submit(function(e) {
@@ -207,13 +213,14 @@ jQuery(document).ready(function($) {
       return;
     }
 
-    var tutor_id   = $('#tb_tutor_select').val();
-    var dni        = $('#tb_dni_final').val();
-    var email      = $('#tb_email_final').val();
-    var exam_date  = selectedSlot.data('date');
-    var start_time = selectedSlot.data('start');
-    var end_time   = selectedSlot.data('end');
-    var nonce      = $('#tb_booking_nonce_field').val();
+      var tutor_id   = $('#tb_tutor_select').val();
+      var modalidad  = $('#tb_modalidad').val();
+      var dni        = $('#tb_dni_final').val();
+      var email      = $('#tb_email_final').val();
+      var exam_date  = selectedSlot.data('date');
+      var start_time = selectedSlot.data('start');
+      var end_time   = selectedSlot.data('end');
+      var nonce      = $('#tb_booking_nonce_field').val();
 
     $('#tb_submit_booking').prop('disabled', true).val('Procesando...');
     $('#tb_response_message').html('<p class="tb-message tb-message-info">Procesando tu reserva, por favor espera...</p>').show();
@@ -221,16 +228,17 @@ jQuery(document).ready(function($) {
     $.ajax({
       url: ajaxurl,
       type: 'POST',
-      data: {
-        action: 'tb_process_booking',
-        dni: dni,
-        email: email,
-        tutor_id: tutor_id,
-        exam_date: exam_date,
-        start_time: start_time,
-        end_time: end_time,
-        nonce: nonce
-      },
+        data: {
+          action: 'tb_process_booking',
+          dni: dni,
+          email: email,
+          tutor_id: tutor_id,
+          modalidad: modalidad,
+          exam_date: exam_date,
+          start_time: start_time,
+          end_time: end_time,
+          nonce: nonce
+        },
       success: function(response) {
         if (response.success) {
           var messageHtml = '<p class="tb-message tb-message-success">' + response.data.message + '</p>';

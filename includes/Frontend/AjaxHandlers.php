@@ -222,13 +222,16 @@ class AjaxHandlers {
         }
 
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
-        $alumno = $wpdb->get_row($wpdb->prepare("SELECT 1 FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
+        $alumno = $wpdb->get_row($wpdb->prepare("SELECT online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s AND email = %s", $dni, $email));
 
         if ($alumno) {
             if (CalendarService::has_events_by_dni($dni)) {
                 wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
             } else {
-                wp_send_json_success('Datos verificados.');
+                wp_send_json_success([
+                    'online'     => (bool) $alumno->online,
+                    'presencial' => (bool) $alumno->presencial
+                ]);
             }
         } else {
             wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.');
@@ -252,16 +255,24 @@ class AjaxHandlers {
         self::debug_log('TutoriasBooking: ajax_process_booking() - Nonce verificado correctamente.');
 
         // Recoger y sanear los datos de la reserva
-        $dni    = sanitize_text_field($_POST['dni']);
-        $email  = sanitize_email($_POST['email']);
-        // Obtener los datos del alumno de la base de datos usando el DNI
-        $alumno_data = $wpdb->get_row($wpdb->prepare("SELECT email, nombre, apellido FROM {$wpdb->prefix}alumnos_reserva WHERE dni = %s", $dni));
+        $dni       = sanitize_text_field($_POST['dni']);
+        $email     = sanitize_email($_POST['email']);
+        $modalidad = sanitize_text_field($_POST['modalidad'] ?? '');
+        $alumno_data = $wpdb->get_row($wpdb->prepare("SELECT email, nombre, apellido, online, presencial FROM {$wpdb->prefix}alumnos_reserva WHERE dni = %s", $dni));
         $nombreAlumno   = $alumno_data ? $alumno_data->nombre : '';
         $apellidoAlumno = $alumno_data ? $alumno_data->apellido : '';
         $email_db       = $alumno_data ? $alumno_data->email : '';
         if (!$alumno_data || strcasecmp($email_db, $email) !== 0) {
             self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado para el DNI.');
             wp_send_json_error('El correo electrónico no coincide con el registrado.');
+            return;
+        }
+        if (!in_array($modalidad, ['online', 'presencial'], true)) {
+            wp_send_json_error('Modalidad inválida.');
+            return;
+        }
+        if (($modalidad === 'online' && !$alumno_data->online) || ($modalidad === 'presencial' && !$alumno_data->presencial)) {
+            wp_send_json_error('No tienes permisos para reservar en modalidad ' . $modalidad . '.');
             return;
         }
         $tutor_id   = intval($_POST['tutor_id']);
@@ -300,12 +311,12 @@ class AjaxHandlers {
 
         // Preparar los detalles del evento para Google Calendar
         $summary     = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
-        $description = "DNI: {$dni}\nNombre: {$nombreAlumno} {$apellidoAlumno}\nEmail Alumno: {$email}\nFecha: {$exam_date}\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre} ({$tutor->email})";
+        $description = "DNI: {$dni}\nNombre: {$nombreAlumno} {$apellidoAlumno}\nEmail Alumno: {$email}\nFecha: {$exam_date}\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre} ({$tutor->email})\nModalidad: " . ucfirst($modalidad);
         $attendees   = [$email, $tutor->email]; // Asistentes del evento
         self::debug_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
-        $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees);
+        $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees, $modalidad);
 
         if (is_wp_error($event)) {
             self::debug_log('TutoriasBooking: ajax_process_booking() - Error al crear evento de Google Calendar: ' . $event->get_error_message());
@@ -321,10 +332,10 @@ class AjaxHandlers {
             // El evento "DISPONIBLE" original se mantiene en el calendario
             error_log('TutoriasBooking: ajax_process_booking() - Nota: el evento DISPONIBLE no se elimina y permanece en el calendario.');
 
-            // Marcar en la base de datos que el alumno ya tiene una cita online
+            // Marcar en la base de datos que el alumno ya tiene una cita en esta modalidad
             $updated = $wpdb->update(
                 "{$wpdb->prefix}alumnos_reserva",
-                ['online' => 1],
+                [$modalidad => 1],
                 ['dni' => $dni]
             );
             if ($updated === false) {
@@ -337,16 +348,16 @@ class AjaxHandlers {
 
             // Enviar correos electrónicos a alumno y tutor con los datos de la cita
             $student_subject = 'Confirmación de tutoría';
-            $student_message = "Hola {$nombreAlumno},\n\nTu cita de tutoría ha sido confirmada.\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}\n\nGracias.";
+            $student_message = "Hola {$nombreAlumno},\n\nTu cita de tutoría ({$modalidad}) ha sido confirmada.\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}\n\nGracias.";
             wp_mail($email, $student_subject, $student_message);
 
             $tutor_subject = 'Nueva tutoría reservada';
-            $tutor_message = "Se ha reservado una tutoría con {$nombreAlumno} {$apellidoAlumno} ({$dni}).\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nEmail del alumno: {$email}\nEnlace de la reunión: {$event->hangoutLink}";
+            $tutor_message = "Se ha reservado una tutoría ({$modalidad}) con {$nombreAlumno} {$apellidoAlumno} ({$dni}).\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nEmail del alumno: {$email}\nEnlace de la reunión: {$event->hangoutLink}";
             wp_mail($tutor->email, $tutor_subject, $tutor_message);
 
             // Enviar respuesta de éxito al frontend con los detalles de la reserva
             wp_send_json_success([
-                'message'            => 'Reserva confirmada con éxito. Se ha enviado una invitación por correo electrónico.',
+                'message'            => 'Reserva ' . $modalidad . ' confirmada con éxito. Se ha enviado una invitación por correo electrónico.',
                 'meet_link'          => $event->hangoutLink,
                 'event_id'           => $event->id,
                 'exam_date'          => $exam_date,
@@ -356,7 +367,8 @@ class AjaxHandlers {
                 'end_datetime_utc'   => $end_datetime_utc,
                 'day_of_week'        => $day_of_week,
                 'student_first_name' => $nombreAlumno,
-                'student_last_name'  => $apellidoAlumno
+                'student_last_name'  => $apellidoAlumno,
+                'modalidad'          => $modalidad
             ]);
             self::debug_log('TutoriasBooking: ajax_process_booking() - Respuesta JSON de éxito enviada.');
         } else {
