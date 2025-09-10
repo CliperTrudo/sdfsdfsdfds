@@ -295,6 +295,32 @@
 }
 .tb-booking-card p { margin: 0 0 10px; }
 
+/* Modal de confirmación */
+.tb-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.tb-confirm-content {
+  text-align: center;
+  margin-top: 0;
+}
+
+.tb-confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
 /* ---- Estilos para tarjetas/labels de franjas (modal) ---- */
 .tb-day-card {
   width: 100%;
