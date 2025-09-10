@@ -26,7 +26,7 @@ jQuery(function($){
         $.post(ajaxurl, data, function(res){
             if(res.success){
                 res.data.forEach(function(ev){
-                    var row = '<tr data-event-id="'+ev.id+'" data-tutor-id="'+ev.tutor_id+'">';
+                    var row = '<tr data-event-id="'+ev.id+'" data-tutor-id="'+ev.tutor_id+'" data-exam-date="'+(ev.exam_date||'')+'" data-modalidad="'+(ev.modalidad||'')+'">';
                     row += '<td>'+(ev.user||'')+'</td>';
                     row += '<td>'+(ev.tutor||'')+'</td>';
                     row += '<td>'+ev.start+' - '+ev.end+'</td>';

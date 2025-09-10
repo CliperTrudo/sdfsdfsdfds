@@ -123,6 +123,13 @@ class AjaxHandlers {
                         $user_name = trim($m[1]);
                     }
 
+                    $exam_date = '';
+                    if (!empty($ev->description) && preg_match('/Fecha:\s*(.*)\n/i', $ev->description, $m)) {
+                        $exam_date = trim($m[1]);
+                    } elseif (!empty($ev->summary) && preg_match('/Fecha:\s*(.*)\n/i', $ev->summary, $m)) {
+                        $exam_date = trim($m[1]);
+                    }
+
                     $data[] = [
                         'id'        => $ev->id,
                         'user'      => $user_name,
@@ -132,6 +139,7 @@ class AjaxHandlers {
                         'url'       => $ev->hangoutLink ?? '',
                         'tutor_id'  => $tid,
                         'modalidad' => $modality,
+                        'exam_date' => $exam_date,
                     ];
                 }
             }
