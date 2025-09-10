@@ -177,11 +177,12 @@ class AdminController {
         global $wpdb;
 
         $messages = [];
+        $modality = isset($_POST['tb_modality']) ? sanitize_text_field($_POST['tb_modality']) : '';
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
         if (!$tutor) {
             $messages[] = ['type' => 'error', 'text' => 'Tutor no encontrado.'];
             $existing_dates = [];
-            self::render_assign_availability($tutor, $messages, $existing_dates, '', [], '');
+            self::render_assign_availability($tutor, $messages, $existing_dates, '', [], '', $modality);
             return;
         }
 
@@ -216,7 +217,23 @@ class AdminController {
                     ];
                 }
             }
+            if (!$modality) {
+                foreach ($day_events as $ev) {
+                    $summary = $ev->summary ?? '';
+                    if (stripos($summary, 'ONLINE') !== false) {
+                        $modality = 'online';
+                        break;
+                    } elseif (stripos($summary, 'PRESENCIAL') !== false) {
+                        $modality = 'presencial';
+                        break;
+                    }
+                }
+            }
             $existing_dates = array_values(array_diff($existing_dates, [$edit_date]));
+        }
+
+        if (!$modality) {
+            $modality = 'online';
         }
 
         $availability_hash = md5(json_encode($events));
@@ -344,6 +361,12 @@ class AdminController {
                             }
                         } else {
                             $utcTz    = new \DateTimeZone('UTC');
+                            $summary  = 'DISPONIBLE';
+                            if ($modality === 'online') {
+                                $summary .= ' ONLINE';
+                            } elseif ($modality === 'presencial') {
+                                $summary .= ' PRESENCIAL';
+                            }
                             $creation_failed = false;
                             $any_created = false;
                             if ($editing_date) {
@@ -395,7 +418,7 @@ class AdminController {
                                     $end_dt   = $endObj->setTimezone($utcTz)->format('Y-m-d\\TH:i:s');
                                 }
 
-                                $created = CalendarService::create_calendar_event($tutor_id, 'DISPONIBLE', '', $start_dt, $end_dt);
+                                $created = CalendarService::create_calendar_event($tutor_id, $summary, '', $start_dt, $end_dt);
                                 if (is_wp_error($created)) {
                                     error_log('TutoriasBooking: handle_assign_availability - Error al crear evento: ' . $created->get_error_message());
                                     $messages[] = [
@@ -488,10 +511,10 @@ class AdminController {
             }
         }
 
-        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash);
+        self::render_assign_availability($tutor, $messages, $existing_dates, $edit_date, $edit_ranges, $availability_hash, $modality);
     }
 
-    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '') {
+    private static function render_assign_availability($tutor, $messages, $existing_dates, $edit_date = '', $edit_ranges = [], $availability_hash = '', $modality = 'online') {
         ?>
         <div class="tb-admin-wrapper">
             <?php foreach ($messages as $msg): ?>
@@ -517,6 +540,11 @@ class AdminController {
                     <div id="tb-calendar"></div>
                     <ul id="tb-selected-dates"></ul>
                     <div id="tb-hidden-dates"></div>
+                    <label for="tb_modality">Modalidad</label>
+                    <select id="tb_modality" name="tb_modality" required>
+                        <option value="online" <?php selected($modality, 'online'); ?>>Online</option>
+                        <option value="presencial" <?php selected($modality, 'presencial'); ?>>Presencial</option>
+                    </select>
                     <?php if ($edit_date): ?>
                         <input type="hidden" name="tb_editing_date" value="<?php echo esc_attr($edit_date); ?>">
                     <?php endif; ?>
