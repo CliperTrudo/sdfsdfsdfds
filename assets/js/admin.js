@@ -232,7 +232,13 @@ jQuery(function($){
     refreshSelected();
 
     var $form = $('#tb-time-ranges').closest('form');
+    var $modalitySelect = $('#tb_modality');
     $form.on('submit', function(e){
+        if (!$modalitySelect.val()) {
+            e.preventDefault();
+            alert('Seleccione una modalidad.');
+            return;
+        }
         var ranges = [];
         var valid = true;
         $('#tb-time-ranges .tb-time-range').each(function(){
