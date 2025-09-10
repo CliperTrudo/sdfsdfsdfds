@@ -81,7 +81,7 @@ class AjaxHandlers {
         $data = [];
 
         foreach ($tutor_ids as $tid) {
-            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $dni, $modalidad);
+            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $dni);
 
             $tutor_name = $wpdb->get_var($wpdb->prepare("SELECT nombre FROM {$wpdb->prefix}tutores WHERE id=%d", $tid));
 
