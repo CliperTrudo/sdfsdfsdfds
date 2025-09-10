@@ -324,9 +324,23 @@ class AjaxHandlers {
         self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
         // Preparar los detalles del evento para Google Calendar
-        $summary     = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
-        $description = "DNI: {$dni}\nNombre: {$nombreAlumno} {$apellidoAlumno}\nEmail Alumno: {$email}\nFecha: {$exam_date}\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre} ({$tutor->email})\nModalidad: " . ucfirst($modalidad);
-        $attendees   = [$email, $tutor->email]; // Asistentes del evento
+        $summary          = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
+        $message_template = <<<'EOT'
+Estimado alumno,
+Le informamos que su simulacro de entrevista personal...
+
+👉 Modalidad Online
+...
+
+👉 Modalidad Presencial
+...
+
+Información común
+...
+Gracias por confiar en Academia Prefortia.
+EOT;
+        $description      = $message_template;
+        $attendees        = [$email, $tutor->email]; // Asistentes del evento
         self::debug_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
@@ -362,7 +376,7 @@ class AjaxHandlers {
 
             // Enviar correos electrónicos a alumno y tutor con los datos de la cita
             $student_subject = 'Confirmación de tutoría';
-            $student_message = "Hola {$nombreAlumno},\n\nTu cita de tutoría ({$modalidad}) ha sido confirmada.\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}\n\nGracias.";
+            $student_message = $message_template . "\n\nFecha: {$exam_date} ({$day_of_week})\nHora: {$start_time} - {$end_time}\nTutor: {$tutor->nombre}\nEnlace de la reunión: {$event->hangoutLink}";
             wp_mail($email, $student_subject, $student_message);
 
             $tutor_subject = 'Nueva tutoría reservada';
