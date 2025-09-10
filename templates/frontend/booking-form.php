@@ -63,6 +63,12 @@
                     <?php endforeach; ?>
                 </select>
             </div>
+            <div class="tb-modalidad-select-wrapper">
+                <label for="tb_modalidad">Modalidad:</label>
+                <select id="tb_modalidad" name="modalidad" disabled>
+                    <option value="">-- Selecciona modalidad --</option>
+                </select>
+            </div>
         </div>
         <div id="tb_calendar_container" class="tb-calendar-container">
             <p>Selecciona un tutor para ver las franjas horarias disponibles.</p>
