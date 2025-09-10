@@ -319,6 +319,8 @@
   z-index: 10000;
 }
 
+.tb-confirm-overlay.tb-hidden { display: none; }
+
 .tb-confirm-content {
   text-align: center;
   margin-top: 0;
