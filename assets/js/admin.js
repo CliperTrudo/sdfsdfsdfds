@@ -195,7 +195,11 @@ jQuery(function($){
         var date = $(this).parent().data('date');
         $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date, nonce: tbAdminData.ajax_nonce}, function(res){
             if (res.success) {
-                alert(res.data.join('\n'));
+                if (res.data && res.data.length) {
+                    alert(res.data.join('\n'));
+                } else {
+                    alert('No hay disponibilidad para este día');
+                }
             } else {
                 alert(res.data || 'Error al obtener la disponibilidad');
             }
