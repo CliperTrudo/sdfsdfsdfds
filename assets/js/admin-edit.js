@@ -84,6 +84,7 @@ jQuery(function($){
 
     $('#tb_edit_cancel').off('click').on('click', function(){
       $('#tb_edit_modal').hide();
+      $('#tb_slots_overlay').hide();
     });
 
     $('#tb_edit_save').off('click').on('click', function(){
@@ -107,6 +108,7 @@ jQuery(function($){
           var linkHtml = resp.data.url ? '<a href="'+resp.data.url+'" target="_blank">'+resp.data.url+'</a>' : '';
           row.find('td').eq(4).html(linkHtml);
           $('#tb_edit_modal').hide();
+          $('#tb_slots_overlay').hide();
         } else {
           alert(resp.data || 'Error al actualizar');
         }
