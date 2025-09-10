@@ -94,6 +94,14 @@ class CalendarService {
         return $all_events;
     }
 
+    /**
+     * Create a calendar event.
+     *
+     * When used to define availability slots, no attendees are provided and
+     * therefore no conference link is generated even if the modality is
+     * "online". Actual appointments should include attendees so that a
+     * Google Meet link is attached automatically.
+     */
     public static function create_calendar_event($tutor_id, $summary, $description, $start_datetime, $end_datetime, $attendees=[], $modalidad = 'online') {
         global $wpdb;
         $tutor = $wpdb->get_row($wpdb->prepare("SELECT calendar_id FROM {$wpdb->prefix}tutores WHERE id = %d", $tutor_id));
@@ -115,8 +123,13 @@ class CalendarService {
             'reminders' => ['useDefault'=>false,'overrides'=>[['method'=>'email','minutes'=>60],['method'=>'popup','minutes'=>10]]],
         ];
         $options = ['sendUpdates' => 'all'];
-        if ($modalidad === 'online') {
-            $event_data['conferenceData'] = ['createRequest'=>['requestId'=>uniqid(),'conferenceSolutionKey'=>['type'=>'hangoutsMeet']]];
+        if ($modalidad === 'online' && !empty($attendees)) {
+            $event_data['conferenceData'] = [
+                'createRequest' => [
+                    'requestId' => uniqid(),
+                    'conferenceSolutionKey' => ['type' => 'hangoutsMeet']
+                ]
+            ];
             $options['conferenceDataVersion'] = 1;
         }
         $event = new \Google_Service_Calendar_Event($event_data);
