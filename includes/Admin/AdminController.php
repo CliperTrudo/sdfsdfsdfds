@@ -631,8 +631,8 @@ class AdminController {
             $nombre     = isset($data[1]) ? sanitize_text_field($data[1]) : '';
             $apellido   = isset($data[2]) ? sanitize_text_field($data[2]) : '';
             $email      = isset($data[3]) ? sanitize_email($data[3]) : '';
-            $online     = isset($data[4]) ? intval($data[4]) : 0;
-            $presencial = isset($data[5]) ? intval($data[5]) : 0;
+            $online = isset($data[4]) && strcasecmp(trim($data[4]), 'si') === 0 ? 1 : 0;
+            $presencial = isset($data[5]) && strcasecmp(trim($data[5]), 'si') === 0 ? 1 : 0;
             $online     = $online ? 1 : 0;
             $presencial = $presencial ? 1 : 0;
             if (empty($dni) || empty($nombre) || empty($apellido) || empty($email)) {
@@ -688,4 +688,5 @@ class AdminController {
         $zip->close();
         return $rows;
     }
+
 }
