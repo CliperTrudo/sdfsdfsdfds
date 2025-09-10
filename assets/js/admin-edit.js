@@ -6,6 +6,9 @@ jQuery(function($){
     var originalTutorId = row.data('tutor-id');
     var eventId = row.data('event-id');
     var selectedTutorId = originalTutorId;
+    var tramoText = row.find('td').eq(2).text();
+    var examDate = tramoText ? tramoText.split(' ')[0] : '';
+    var modalidad = row.find('td').eq(3).text().trim().toLowerCase();
 
     function populateTutorSelect(){
       if(!$('#tb_edit_modal').length){
@@ -28,16 +31,28 @@ jQuery(function($){
 
     function loadSlots(tutorId){
       var today = new Date();
-      var startDate = tbCalendarUtils.formatDate(today);
-      var endDateObj = new Date(today);
-      endDateObj.setFullYear(endDateObj.getFullYear() + 1);
-      var endDate = tbCalendarUtils.formatDate(endDateObj);
+      today.setHours(0,0,0,0);
+
+      var examDateObj = new Date(examDate + 'T00:00:00');
+      var startDateObj = new Date(examDateObj);
+      startDateObj.setDate(startDateObj.getDate() - 7);
+      if(startDateObj < today){
+        startDateObj = today;
+      }
+
+      var endDateObj = new Date(examDateObj);
+      endDateObj.setDate(endDateObj.getDate() - 1);
+
+      var startDate = tbCalendarUtils.formatDate(startDateObj);
+      var endDate   = tbCalendarUtils.formatDate(endDateObj);
 
       $.post(ajaxurl, {
         action: 'tb_get_available_slots',
         tutor_id: tutorId,
+        modalidad: modalidad,
         start_date: startDate,
         end_date: endDate,
+        exam_date: examDate,
         nonce: tbEditData.nonce
       }, function(res){
         if(res.success){
@@ -99,7 +114,7 @@ jQuery(function($){
           row.find('td').eq(1).text($('#tb_edit_tutor option:selected').text());
           row.find('td').eq(2).text(start + ' - ' + end);
           var linkHtml = resp.data.url ? '<a href="'+resp.data.url+'" target="_blank">'+resp.data.url+'</a>' : '';
-          row.find('td').eq(3).html(linkHtml);
+          row.find('td').eq(4).html(linkHtml);
           $('#tb_edit_modal').hide();
         } else {
           alert(resp.data || 'Error al actualizar');
