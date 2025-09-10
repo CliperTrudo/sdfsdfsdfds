@@ -27,7 +27,7 @@
       dayHtml += '</div></div>';
       slotsContainer.html(dayHtml);
     } else {
-      slotsContainer.html('<button type="button" id="tb_close_slots" class="tb-close-btn">&times;</button><p class="tb-message tb-message-info">No hay disponibilidad para la fecha seleccionada.</p>');
+      slotsContainer.html('<button type="button" id="tb_close_slots" class="tb-close-btn">&times;</button><p class="tb-message tb-message-info">No hay disponibilidad para la fecha seleccionada. Las reservas deben realizarse con al menos 16 horas de antelación.</p>');
     }
 
     overlay.show().css('display','flex');
