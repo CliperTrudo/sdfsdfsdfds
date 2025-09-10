@@ -189,10 +189,11 @@ class AdminController {
 
         $start_range = date('Y-m-d');
         $end_range   = date('Y-m-d', strtotime('+' . TB_MAX_MONTHS . ' months'));
-        $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
-        $madridTz = new \DateTimeZone('Europe/Madrid');
+        $events      = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_range, $end_range);
+        $madridTz    = new \DateTimeZone('Europe/Madrid');
         $existing_dates = [];
-        foreach ($events as $ev) {
+        foreach (array_merge($events, $busy_events) as $ev) {
             if (isset($ev->start->dateTime)) {
                 $start = new \DateTime($ev->start->dateTime);
                 $start->setTimezone($madridTz);
@@ -481,10 +482,11 @@ class AdminController {
             }
             }
 
-            $events = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+            $events      = CalendarService::get_available_calendar_events($tutor_id, $start_range, $end_range);
+            $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $start_range, $end_range);
             $availability_hash = md5(json_encode($events));
             $existing_dates = [];
-            foreach ($events as $ev) {
+            foreach (array_merge($events, $busy_events) as $ev) {
                 if (isset($ev->start->dateTime)) {
                     $start = new \DateTime($ev->start->dateTime);
                     $start->setTimezone($madridTz);
