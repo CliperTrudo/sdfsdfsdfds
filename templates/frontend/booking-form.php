@@ -55,9 +55,9 @@
             value="<?php echo esc_attr($exam_date_selected); ?>">
         <div class="tb-tutor-selection-row">
             <div class="tb-tutor-select-wrapper">
-                <label for="tb_tutor_select">Selecciona un Tutor:</label>
+                <label for="tb_tutor_select">Tutor:</label>
                 <select id="tb_tutor_select" name="tutor_id" required>
-                    <option value="">-- Selecciona un tutor --</option>
+                    <option value="">-- Tutores --</option>
                     <?php foreach ($tutores as $tutor): ?>
                         <option value="<?php echo esc_attr($tutor->id); ?>"><?php echo esc_html($tutor->nombre); ?></option>
                     <?php endforeach; ?>
@@ -66,7 +66,7 @@
             <div class="tb-modalidad-select-wrapper">
                 <label for="tb_modalidad">Modalidad:</label>
                 <select id="tb_modalidad" name="modalidad" disabled>
-                    <option value="">-- Selecciona modalidad --</option>
+                    <option value="">-- Modalidades --</option>
                 </select>
             </div>
         </div>

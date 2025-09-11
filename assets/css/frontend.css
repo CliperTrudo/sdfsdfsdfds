@@ -411,7 +411,6 @@
   transform: translate(-50%, -50%);
 }
 
-/* Contenedor para el desplegable y el área de acción/feedback */
 .tb-tutor-selection-row {
   display: flex;
   flex-wrap: nowrap;
