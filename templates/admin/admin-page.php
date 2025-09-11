@@ -94,6 +94,15 @@
         <h2 class="tb-subtitle">Alumnos en la Tabla de Reserva</h2>
 
         <?php if ($table_exists): ?>
+            <form method="GET" class="tb-form">
+                <input type="hidden" name="page" value="tb-tutores">
+                <input type="text" name="tb_search_dni" placeholder="Buscar por DNI" value="<?php echo esc_attr($search_dni); ?>">
+                <button type="submit" class="tb-button">Buscar</button>
+                <?php if (!empty($search_dni)): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=tb-tutores')); ?>" class="tb-button">Limpiar</a>
+                <?php endif; ?>
+            </form>
+
             <?php if (!empty($alumnos_reserva)): ?>
                 <table class="tb-table">
                     <thead>
@@ -125,6 +134,14 @@
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <?php if (empty($search_dni) && $total_pages > 1): ?>
+                    <div class="tb-pagination">
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                            <a class="tb-button <?php echo ($i === $current_page) ? 'active' : ''; ?>" href="<?php echo esc_url('admin.php?page=tb-tutores&tb_page=' . $i); ?>"><?php echo esc_html($i); ?></a>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
 
                 <form method="POST" onsubmit="return confirm('¿Eliminar todos los alumnos?');" class="tb-form">
                     <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
