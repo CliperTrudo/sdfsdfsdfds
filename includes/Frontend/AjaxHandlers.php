@@ -213,19 +213,21 @@ class AjaxHandlers {
                 self::debug_log("TutoriasBooking: Slot DISCARDED due to overlap: {$slot['date']} {$slot['start_time']}-{$slot['end_time']}. Final overlap status: " . ($overlap ? 'TRUE' : 'FALSE'));
             }
         }
-        // Aplicar límite de 16 horas desde la hora actual de Madrid
-        $limit_datetime = new \DateTime('now', $madrid_timezone);
-        $limit_datetime->add(new \DateInterval('PT16H'));
-        $final_slots = [];
-        foreach ($filtered_slots as $slot) {
-            $slot_start_dt = new \DateTime($slot['date'] . ' ' . $slot['start_time'], $madrid_timezone);
-            if ($slot_start_dt >= $limit_datetime) {
-                $final_slots[] = $slot;
-            } else {
-                self::debug_log("TutoriasBooking: Slot discarded (<16h): {$slot['date']} {$slot['start_time']}-{$slot['end_time']}");
+        if ( ! current_user_can('manage_options') ) {
+            // Aplicar límite de 16 horas desde la hora actual de Madrid
+            $limit_datetime = new \DateTime('now', $madrid_timezone);
+            $limit_datetime->add(new \DateInterval('PT16H'));
+            $final_slots = [];
+            foreach ($filtered_slots as $slot) {
+                $slot_start_dt = new \DateTime($slot['date'] . ' ' . $slot['start_time'], $madrid_timezone);
+                if ($slot_start_dt >= $limit_datetime) {
+                    $final_slots[] = $slot;
+                } else {
+                    self::debug_log("TutoriasBooking: Slot discarded (<16h): {$slot['date']} {$slot['start_time']}-{$slot['end_time']}");
+                }
             }
+            $filtered_slots = $final_slots;
         }
-        $filtered_slots = $final_slots;
 
         self::debug_log('TutoriasBooking: ajax_get_available_slots() - Total slots filtrados (disponibles): ' . count($filtered_slots));
         // self::debug_log('TutoriasBooking: filtered_slots: ' . print_r($filtered_slots, true)); // Descomentar para ver el detalle final
@@ -364,13 +366,15 @@ class AjaxHandlers {
         $start_dt_obj = new \DateTime($start_datetime_iso, $madrid_timezone);
         $end_dt_obj   = new \DateTime($end_datetime_iso,   $madrid_timezone);
 
-        // Validar que la franja seleccionada esté al menos 16 horas en el futuro
-        $limit_datetime = new \DateTime('now', $madrid_timezone);
-        $limit_datetime->add(new \DateInterval('PT16H'));
-        if ($start_dt_obj < $limit_datetime) {
-            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Slot less than 16h ahead.');
-            wp_send_json_error('Las reservas deben realizarse con al menos 16 horas de antelación.');
-            return;
+        if ( ! current_user_can('manage_options') ) {
+            // Validar que la franja seleccionada esté al menos 16 horas en el futuro
+            $limit_datetime = new \DateTime('now', $madrid_timezone);
+            $limit_datetime->add(new \DateInterval('PT16H'));
+            if ($start_dt_obj < $limit_datetime) {
+                self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Slot less than 16h ahead.');
+                wp_send_json_error('Las reservas deben realizarse con al menos 16 horas de antelación.');
+                return;
+            }
         }
 
         $start_datetime_utc = $start_dt_obj->setTimezone($utc_timezone)->format('c');
