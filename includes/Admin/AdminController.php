@@ -166,8 +166,32 @@ class AdminController {
 
         $tutores = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}tutores");
         $alumnos_reserva = [];
+        $current_page    = 1;
+        $total_pages     = 1;
+        $search_dni      = isset($_GET['tb_search_dni']) ? sanitize_text_field($_GET['tb_search_dni']) : '';
+        $per_page        = 20;
+
         if ($table_exists) {
-            $alumnos_reserva = $wpdb->get_results("SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table}");
+            if ($search_dni !== '') {
+                $alumnos_reserva = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s",
+                        $search_dni
+                    )
+                );
+            } else {
+                $current_page = isset($_GET['tb_page']) ? max(1, intval($_GET['tb_page'])) : 1;
+                $offset       = ($current_page - 1) * $per_page;
+                $alumnos_reserva = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} ORDER BY id LIMIT %d OFFSET %d",
+                        $per_page,
+                        $offset
+                    )
+                );
+                $total_alumnos = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$alumnos_reserva_table}");
+                $total_pages   = (int) ceil($total_alumnos / $per_page);
+            }
         }
 
         include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
