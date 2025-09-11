@@ -193,7 +193,7 @@ jQuery(document).ready(function($) {
 
               renderCalendar(window.currentMonthDate);
             } else {
-              calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron franjas horarias disponibles con al menos 16 horas de antelación.</p>');
+              calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron franjas horarias disponibles con al menos 16 horas de antelación</p>');
             }
           } else {
             $('#tb_response_message').html('<p class="tb-message tb-message-error">Error al obtener la disponibilidad: ' + (response.data || 'Error desconocido') + '</p>').show();
