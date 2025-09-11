@@ -312,11 +312,12 @@ class AdminController {
                     CalendarService::delete_available_events_for_date($tutor_id, $editing_date);
                     $messages[] = ['type' => 'success', 'text' => 'Disponibilidad eliminada correctamente.'];
                     $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' . $tutor_id);
-                    if ( wp_safe_redirect( $redirect ) ) {
+                    if ( headers_sent() ) {
+                        echo '<script>window.location.href="' . esc_url( $redirect ) . '";</script>';
                         exit;
                     }
-                    echo '<script>window.location.href="' . esc_url( $redirect ) . '";</script>';
-                    return;
+                    wp_safe_redirect( $redirect );
+                    exit;
                 }
             } elseif (!empty($starts) && !empty($ends) && count($starts) === count($ends) && !empty($dates)) {
                 $today      = date('Y-m-d');
@@ -505,11 +506,12 @@ class AdminController {
                                 if ($editing_date) {
                                     $redirect = admin_url('admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id=' .
                                     $tutor_id);
-                                    if ( wp_safe_redirect( $redirect ) ) {
+                                    if ( headers_sent() ) {
+                                        echo '<script>window.location.href="' . esc_url( $redirect ) . '";</script>';
                                         exit;
                                     }
-                                    echo '<script>window.location.href="' . esc_url( $redirect ) . '";</script>';
-                                    return;
+                                    wp_safe_redirect( $redirect );
+                                    exit;
                                 }
                             }
                           }
