@@ -143,7 +143,7 @@ jQuery(document).ready(function($) {
 
       var nonce = $('#tb_booking_nonce_field').val();
 
-      $.ajax({
+      return $.ajax({
         url: ajaxurl,
         type: 'POST',
         data: {
@@ -210,6 +210,7 @@ jQuery(document).ready(function($) {
       });
     } else {
       calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver horarios disponibles.</p>');
+      return $.Deferred().resolve().promise();
     }
   }
 
@@ -284,8 +285,9 @@ jQuery(document).ready(function($) {
           selectedSlot = null;
           $('#tb_selected_slot').text('');
           var errorHtml = '<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>';
-          loadSlots(false);
-          $('#tb_response_message').html(errorHtml).show();
+          loadSlots(false).then(function () {
+            $('#tb_response_message').html(errorHtml).show();
+          });
           $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
         }
       },
