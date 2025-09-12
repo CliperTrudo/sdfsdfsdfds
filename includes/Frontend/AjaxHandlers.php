@@ -293,7 +293,7 @@ class AjaxHandlers {
             }
 
             if (!$alumno->online && !$alumno->presencial) {
-                wp_send_json_error('El DNI introducido ya tiene una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
+                wp_send_json_error('Los datos introducidos ya tienen una cita registrada. Si necesitas otra cita, por favor, contacta con la administración.');
             }
 
             wp_send_json_success([
@@ -301,7 +301,7 @@ class AjaxHandlers {
                 'presencial' => (bool) $alumno->presencial
             ]);
         } else {
-            wp_send_json_error('El DNI y el correo electrónico proporcionados no se encuentran en nuestra base de datos de alumnos de reserva. Por favor, contacta con la administración.');
+            wp_send_json_error('Los datos proporcionados no se encuentran en nuestra base de datos. Por favor, contacta con la administración.');
         }
     }
 
@@ -330,7 +330,7 @@ class AjaxHandlers {
         $apellidoAlumno = $alumno_data ? $alumno_data->apellido : '';
         $email_db       = $alumno_data ? $alumno_data->email : '';
         if (!$alumno_data || strcasecmp($email_db, $email) !== 0) {
-            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado para el DNI.');
+            self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado.');
             wp_send_json_error('El correo electrónico no coincide con el registrado.');
             return;
         }
@@ -386,47 +386,31 @@ class AjaxHandlers {
         }
         self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
-        // Preparar los detalles del evento para Google Calendar
-        $summary   = 'Tutoría de Examen - ' . $nombreAlumno . ' ' . $apellidoAlumno . ' - ' . $dni;
+        // Preparar los detalles del evento para Google Calendar utilizando un identificador
+        $dni_hash = hash('sha256', $dni);
+        $summary   = 'Tutoría de Examen - ' . $dni_hash;
 
         if ($modalidad === 'online') {
             $description = <<<EOT
 Estimado alumno,
-Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid.
-• Es importante asistir a la videollamada vestido como lo harías el día de la entrevista real.
-• Deberás conectar tu cámara y micrófono, por lo que te recomendamos hacer una prueba previa con tu dispositivo para asegurarte de que todo funciona correctamente antes de la recreación.
-• Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
-• En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
-• La entrevista tendrá una duración aproximada de 45 minutos.
-• Gracias por confiar en Academia Prefortia.
+Tu simulacro de entrevista personal ha sido agendado. Revisa la invitación del calendario para conocer fecha, hora y enlace.
+La sesión tendrá una duración aproximada de 45 minutos.
+Si no asistes, no se reagendará.
+Gracias por confiar en Academia Prefortia.
 
-DNI: {$dni}
-Nombre: {$nombreAlumno} {$apellidoAlumno}
-Email Alumno: {$email}
-Fecha: {$exam_date}
-Hora: {$start_time} - {$end_time}
-Tutor: {$tutor->nombre} ({$tutor->email})
 Modalidad: Online
+ID: {$dni_hash}
 EOT;
         } else {
             $description = <<<EOT
 Estimado alumno,
-Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid.
-• La entrevista se llevará a cabo en nuestras instalaciones ubicadas en: C. del Camino de los Vinateros, 51, Moratalaz, 28030 Madrid
-• Se ruega puntualidad: debes presentarte 15 minutos antes de la hora señalada para realizar la identificación y la preparación previa.
-• Acude con la misma vestimenta que utilizarías el día de la entrevista real.
-• Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
-• En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
-• La entrevista tendrá una duración aproximada de 45 minutos.
-• Gracias por confiar en Academia Prefortia.
+Tu simulacro de entrevista personal ha sido agendado. Revisa la invitación del calendario para conocer la dirección y hora asignadas.
+La sesión tendrá una duración aproximada de 45 minutos.
+Si no asistes, no se reagendará.
+Gracias por confiar en Academia Prefortia.
 
-DNI: {$dni}
-Nombre: {$nombreAlumno} {$apellidoAlumno}
-Email Alumno: {$email}
-Fecha: {$exam_date}
-Hora: {$start_time} - {$end_time}
-Tutor: {$tutor->nombre} ({$tutor->email})
 Modalidad: Presencial
+ID: {$dni_hash}
 EOT;
         }
 
@@ -475,7 +459,7 @@ EOT;
 
             // Enviar respuesta de éxito al frontend con los detalles de la reserva
             wp_send_json_success([
-                'message'            => 'Reserva ' . $modalidad . ' confirmada con éxito. Tu permiso ha sido consumido. Se ha enviado una invitación por correo electrónico.',
+                'message'            => 'Reserva ' . $modalidad . ' confirmada. Revisa tu correo para más detalles.',
                 'meet_link'          => $event->hangoutLink,
                 'event_id'           => $event->id,
                 'exam_date'          => $exam_date,
