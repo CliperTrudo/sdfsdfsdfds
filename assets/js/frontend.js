@@ -279,6 +279,10 @@ jQuery(document).ready(function($) {
           $('#tb_submit_booking').prop('disabled', true).val('Confirmar Reserva');
         } else {
           $('#tb_response_message').html('<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>').show();
+          selectedSlot.prop('checked', false);
+          selectedSlot = null;
+          $('#tb_selected_slot').text('');
+          loadSlots();
           $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
         }
       },
