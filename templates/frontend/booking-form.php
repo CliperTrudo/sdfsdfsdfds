@@ -1,14 +1,14 @@
 <div id="tb_dni_step" class="tb-container" style="<?php echo esc_attr($container_style); ?>">
-    <h3>Verificación de DNI</h3>
+    <h3>Verificación de Datos</h3>
     <form id="tb_dni_form" method="post">
         <?php wp_nonce_field('tb_booking_nonce', 'tb_booking_nonce_field'); ?>
         <p class="tb-form-group">
-            <label for="tb_dni">Introduce tu DNI:</label>
-            <input type="text" id="tb_dni" name="tb_dni" required placeholder="Ej: 12345678A">
+            <label for="tb_dni">Introduce tu identificación:</label>
+            <input type="text" id="tb_dni" name="tb_dni" required placeholder="Tu identificación">
         </p>
         <p class="tb-form-group">
-            <label for="tb_email">Introduce tu correo electrónico:</label>
-            <input type="email" id="tb_email" name="tb_email" required placeholder="ejemplo@correo.com">
+            <label for="tb_email">Introduce tu correo de contacto:</label>
+            <input type="email" id="tb_email" name="tb_email" required placeholder="correo@ejemplo.com">
         </p>
         <?php if (TB_RECAPTCHA_SITE_KEY) :
             $recaptcha_theme = getenv('TB_RECAPTCHA_THEME');
@@ -24,7 +24,7 @@
 
 <div id="tb_exam_date_step" class="tb-container tb-hidden" style="display:none;<?php echo esc_attr($container_style); ?>">
     <button type="button" id="tb_back_to_dni" class="tb-back-button">&larr;</button>
-    <h3>Fecha de la Entrevista Real</h3>
+    <h3>Fecha de la Entrevista</h3>
     <form id="tb_exam_date_form" method="post">
         <input type="hidden" id="tb_dni_verified" name="tb_dni_verified" value="<?php echo esc_attr($dni_verified); ?>">
         <input type="hidden" id="tb_email_verified" name="tb_email_verified" value="<?php echo esc_attr($email_verified); ?>">
@@ -45,7 +45,7 @@
     <button type="button" id="tb_back_to_exam_date" class="tb-back-button">&larr;</button>
     <h3>Reservar Entrevista</h3>
     <p id="tb_summary" class="tb-summary">
-        <strong>Fecha de Examen:</strong> <?php echo esc_html($exam_date_selected); ?>
+        <strong>Fecha:</strong> <?php echo esc_html($exam_date_selected); ?>
     </p>
 
     <form id="tb_booking_form">
@@ -71,7 +71,7 @@
             </div>
         </div>
         <div id="tb_calendar_container" class="tb-calendar-container">
-            <p>Selecciona un tutor para ver las franjas horarias disponibles.</p>
+            <p>Selecciona un tutor para ver horarios disponibles.</p>
         </div>
         <div id="tb_confirmation_area" class="tb-confirm-area">
             <span id="tb_selected_slot" class="tb-selected-slot"></span>

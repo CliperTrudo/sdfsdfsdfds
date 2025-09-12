@@ -11,7 +11,7 @@ jQuery(document).ready(function($) {
   var renderSlotsForDate = tbCalendarUtils.renderSlotsForDate;
   var renderCalendar = tbCalendarUtils.renderCalendar;
 
-  // Paso 1: verificación de DNI y correo
+  // Paso 1: verificación de datos y correo
   $('#tb_dni_form').submit(function(e) {
     e.preventDefault();
     var dni   = $('#tb_dni').val().trim();
@@ -93,7 +93,7 @@ jQuery(document).ready(function($) {
     $('#tb_exam_date_message').addClass('tb-hidden').removeClass('tb-message-error').text('');
 
     if (!examDate || examDate < currentDate) {
-      $('#tb_exam_date_message').removeClass('tb-hidden').addClass('tb-message-error').text('La fecha del examen no puede ser anterior a hoy.');
+    $('#tb_exam_date_message').removeClass('tb-hidden').addClass('tb-message-error').text('La fecha no puede ser anterior a hoy.');
       return;
     }
 
@@ -102,7 +102,7 @@ jQuery(document).ready(function($) {
     $('#tb_dni_final').val(dni);
     $('#tb_email_final').val(email);
     $('#tb_exam_date_final').val(examDate);
-    $('#tb_summary').html('<strong>Fecha seleccionada:</strong> ' + examDate);
+    $('#tb_summary').html('<strong>Fecha:</strong> ' + examDate);
 
     $('#tb_exam_date_step').fadeOut(function() {
       $('#tb_tutor_selection_step').removeClass('tb-hidden').hide().fadeIn();
@@ -121,7 +121,7 @@ jQuery(document).ready(function($) {
     $('#tb_response_message').hide();
 
     if (tutor_id && modalidad) {
-      calendarContainer.html('<p class="tb-message tb-message-info">Cargando franjas horarias...</p>');
+      calendarContainer.html('<p class="tb-message tb-message-info">Cargando horarios...</p>');
       var today = new Date();
       today.setHours(0,0,0,0);
 
@@ -193,21 +193,21 @@ jQuery(document).ready(function($) {
 
               renderCalendar(window.currentMonthDate);
             } else {
-              calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron franjas horarias disponibles con al menos 16 horas de antelación</p>');
+              calendarContainer.html('<p class="tb-message tb-message-info">No se encontraron horarios disponibles con al menos 16 horas de antelación</p>');
             }
           } else {
             $('#tb_response_message').html('<p class="tb-message tb-message-error">Error al obtener la disponibilidad: ' + (response.data || 'Error desconocido') + '</p>').show();
-            calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
+            calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver horarios disponibles.</p>');
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
           console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
           $('#tb_response_message').html('<p class="tb-message tb-message-error">Error en la solicitud AJAX: ' + textStatus + ' - ' + errorThrown + '</p>').show();
-          calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
+          calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver horarios disponibles.</p>');
         }
       });
     } else {
-      calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver las franjas horarias disponibles.</p>');
+      calendarContainer.html('<p class="tb-message tb-message-info">Selecciona un tutor y modalidad para ver horarios disponibles.</p>');
     }
   }
 
@@ -295,13 +295,13 @@ jQuery(document).ready(function($) {
 
     var selectedSlot = $('input[name="selected_slot"]:checked');
     if (selectedSlot.length === 0) {
-      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona una franja horaria.</p>').show();
+      $('#tb_response_message').html('<p class="tb-message tb-message-error">Por favor, selecciona un horario.</p>').show();
       return;
     }
 
     var exam_date = selectedSlot.data('date');
     var start_time = selectedSlot.data('start');
-    $('#tb_confirm_booking_message').text('¿Está seguro que desea reservar cita el día ' + exam_date + ' a la hora ' + start_time + '? La cita no podrá ser cancelada después de ser confirmada.');
+    $('#tb_confirm_booking_message').text('¿Confirmar la reserva para el día ' + exam_date + ' a las ' + start_time + '? La cita no podrá cancelarse una vez confirmada.');
     $('#tb_confirm_overlay').removeClass('tb-hidden');
 
     $('#tb_confirm_booking_yes').off('click').one('click', function() {

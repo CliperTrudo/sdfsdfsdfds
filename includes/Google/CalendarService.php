@@ -265,22 +265,21 @@ class CalendarService {
      */
     public static function has_event_by_dni_and_modality($dni, $modalidad) {
         global $wpdb;
+        $dni_hash = hash('sha256', $dni);
         $tutors = $wpdb->get_results("SELECT id, calendar_id FROM {$wpdb->prefix}tutores");
         foreach ($tutors as $tutor) {
             if (empty($tutor->calendar_id)) { continue; }
             $service = self::get_calendar_service($tutor->id);
             if (!$service) { continue; }
             $opt = [
-                'q' => $dni,
+                'q' => $dni_hash,
                 'singleEvents' => true,
             ];
             try {
                 $events = $service->events->listEvents($tutor->calendar_id, $opt);
                 foreach ($events->getItems() as $event) {
                     $description = $event->getDescription();
-                    $summary = $event->getSummary();
-                    if (($description && stripos($description, 'Modalidad: ' . ucfirst($modalidad)) !== false) ||
-                        ($summary && stripos($summary, strtoupper($modalidad)) !== false)) {
+                    if ($description && stripos($description, 'Modalidad: ' . ucfirst($modalidad)) !== false) {
                         return true;
                     }
                 }
