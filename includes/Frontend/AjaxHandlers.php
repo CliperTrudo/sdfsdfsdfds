@@ -85,8 +85,8 @@ class AjaxHandlers {
             return;
         }
         if (!empty($exam_date_str)) {
-            // Restringir el rango de búsqueda a [exam_date - 7 días, exam_date - 1 día]
-            $range_start = (clone $exam_date_obj)->sub(new \DateInterval('P7D'))->setTime(0, 0, 0);
+            // Restringir el rango de búsqueda a [exam_date - 10 días, exam_date - 1 día]
+            $range_start = (clone $exam_date_obj)->sub(new \DateInterval('P10D'))->setTime(0, 0, 0);
             $range_end   = (clone $exam_date_obj)->sub(new \DateInterval('P1D'))->setTime(23, 59, 59);
 
             if ($start_date_obj < $range_start) {

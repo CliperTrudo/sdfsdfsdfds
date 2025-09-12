@@ -128,7 +128,7 @@ jQuery(document).ready(function($) {
       var exam_date_obj = new Date(exam_date + 'T00:00:00');
 
       var start_date_obj = new Date(exam_date_obj);
-      start_date_obj.setDate(start_date_obj.getDate() - 7);
+      start_date_obj.setDate(start_date_obj.getDate() - 10);
       if (start_date_obj < today) {
         start_date_obj = today;
       }
