@@ -393,10 +393,14 @@ class AjaxHandlers {
         if ($modalidad === 'online') {
             $description = <<<EOT
 Estimado alumno,
-Tu simulacro de entrevista personal ha sido agendado. Revisa la invitación del calendario para conocer fecha, hora y enlace.
-La sesión tendrá una duración aproximada de 45 minutos.
-Si no asistes, no se reagendará.
-Gracias por confiar en Academia Prefortia.
+Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid. 
+
+* Es importante asistir a la videollamada vestido como lo harías el día de la entrevista real.
+* Deberás conectar tu cámara y micrófono, por lo que te recomendamos hacer una prueba previa con tu dispositivo para asegurarte de que todo funciona correctamente antes de la recreación.
+* Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
+* En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
+* La entrevista tendrá una duración aproximada de 45 minutos. 
+Gracias por confiar en Academia Prefortia.
 
 Modalidad: Online
 Nombre: {$full_name}
@@ -405,10 +409,16 @@ EOT;
         } else {
             $description = <<<EOT
 Estimado alumno,
-Tu simulacro de entrevista personal ha sido agendado. Revisa la invitación del calendario para conocer la dirección y hora asignadas.
-La sesión tendrá una duración aproximada de 45 minutos.
-Si no asistes, no se reagendará.
-Gracias por confiar en Academia Prefortia.
+Le informamos que su simulacro de entrevista personal para las pruebas de ingreso de la Guardia Civil ha sido agendado en la fecha y hora peninsular que recibirá en la invitación del calendario. IMPORTANTE: Debes tener configurado tu Calendar con la zona horaria de Europa Central - Madrid. 
+
+* La entrevista se llevará a cabo en nuestras instalaciones ubicadas en: C. del Camino de los Vinateros, 51, Moratalaz, 28030 Madrid
+* Se ruega puntualidad: debes presentarte 15 minutos antes de la hora señalada para realizar la identificación y la preparación previa.
+* Acude con la misma vestimenta que utilizarías el día de la entrevista real.
+* Debes remitir previamente al correo del despacho asignado tu biodata completado para que pueda ser corregido antes de la simulación.
+* En caso de no acudir, no se reagendará ni se devolverá el importe abonado.
+* La entrevista tendrá una duración aproximada de 45 minutos. 
+Gracias por confiar en Academia Prefortia.
+
 
 Modalidad: Presencial
 Nombre: {$full_name}
@@ -497,4 +507,5 @@ EOT;
             wp_send_json_error('Error al crear el evento en Google Calendar. Por favor, inténtalo de nuevo.');
         }
     }
+
 }
