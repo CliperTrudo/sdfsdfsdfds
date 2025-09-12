@@ -399,6 +399,7 @@ Si no asistes, no se reagendará.
 Gracias por confiar en Academia Prefortia.
 
 Modalidad: Online
+Nombre: {$full_name}
 DNI: {$dni}
 EOT;
         } else {
@@ -410,6 +411,7 @@ Si no asistes, no se reagendará.
 Gracias por confiar en Academia Prefortia.
 
 Modalidad: Presencial
+Nombre: {$full_name}
 DNI: {$dni}
 EOT;
         }
