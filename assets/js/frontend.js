@@ -110,7 +110,7 @@ jQuery(document).ready(function($) {
   });
 
 
-  function loadSlots() {
+  function loadSlots(clearMessage = true) {
     var tutor_id = $('#tb_tutor_select').val();
     var modalidad = $('#tb_modalidad').val();
     var exam_date = $('#tb_exam_date_final').val();
@@ -118,7 +118,9 @@ jQuery(document).ready(function($) {
 
     $('#tb_submit_booking').prop('disabled', true);
     $('#tb_selected_slot').text('');
-    $('#tb_response_message').hide();
+    if (clearMessage) {
+      $('#tb_response_message').hide();
+    }
 
     if (tutor_id && modalidad) {
       calendarContainer.html('<p class="tb-message tb-message-info">Cargando horarios...</p>');
@@ -278,11 +280,12 @@ jQuery(document).ready(function($) {
           $('#tb_booking_form')[0].reset();
           $('#tb_submit_booking').prop('disabled', true).val('Confirmar Reserva');
         } else {
-          $('#tb_response_message').html('<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>').show();
           selectedSlot.prop('checked', false);
           selectedSlot = null;
           $('#tb_selected_slot').text('');
-          loadSlots();
+          var errorHtml = '<p class="tb-message tb-message-error">Error: ' + (response.data || 'Error desconocido al procesar la reserva.') + '</p>';
+          loadSlots(false);
+          $('#tb_response_message').html(errorHtml).show();
           $('#tb_submit_booking').prop('disabled', false).val('Confirmar Reserva');
         }
       },
