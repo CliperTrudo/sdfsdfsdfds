@@ -417,6 +417,22 @@ EOT;
         $attendees = [$email, $tutor->email]; // Asistentes del evento
         self::debug_log("TutoriasBooking: ajax_process_booking() - Detalles del evento: Summary='{$summary}', Attendees=" . implode(', ', $attendees));
 
+        // Verificar que la franja seleccionada siga disponible antes de crear el evento
+        self::debug_log('TutoriasBooking: ajax_process_booking() - Checking for busy events.');
+        $busy_events = CalendarService::get_busy_calendar_events($tutor_id, $exam_date, $exam_date, '', $modalidad);
+        self::debug_log('TutoriasBooking: ajax_process_booking() - Busy events found: ' . count($busy_events));
+        foreach ($busy_events as $busy_event) {
+            $busy_start = new \DateTime($busy_event->start->dateTime);
+            $busy_start->setTimezone($madrid_timezone);
+            $busy_end = new \DateTime($busy_event->end->dateTime);
+            $busy_end->setTimezone($madrid_timezone);
+            if ($busy_start < $end_dt_obj && $busy_end > $start_dt_obj) {
+                self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: Selected slot overlaps with busy event.');
+                wp_send_json_error('La franja horaria seleccionada ya no está disponible. Por favor, elige otra.');
+                return;
+            }
+        }
+
         // Crear el evento en Google Calendar a través del CalendarService utilizando UTC
         $event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $start_datetime_utc, $end_datetime_utc, $attendees, $modalidad);
 
