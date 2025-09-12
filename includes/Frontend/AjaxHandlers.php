@@ -326,8 +326,9 @@ class AjaxHandlers {
         $email     = sanitize_email($_POST['email']);
         $modalidad = sanitize_text_field($_POST['modalidad'] ?? '');
         $alumno_data = $wpdb->get_row($wpdb->prepare("SELECT email, nombre, apellido, online, presencial FROM {$wpdb->prefix}alumnos_reserva WHERE dni = %s", $dni));
-        $nombreAlumno   = $alumno_data ? $alumno_data->nombre : '';
-        $apellidoAlumno = $alumno_data ? $alumno_data->apellido : '';
+        $nombreAlumno   = $alumno_data ? trim($alumno_data->nombre) : '';
+        $apellidoAlumno = $alumno_data ? trim($alumno_data->apellido) : '';
+        $full_name      = trim($nombreAlumno . ' ' . $apellidoAlumno);
         $email_db       = $alumno_data ? $alumno_data->email : '';
         if (!$alumno_data || strcasecmp($email_db, $email) !== 0) {
             self::debug_log('TutoriasBooking: ajax_process_booking() - ERROR: El correo proporcionado no coincide con el registrado.');
@@ -387,7 +388,7 @@ class AjaxHandlers {
         self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
         // Preparar los detalles del evento para Google Calendar con un título legible
-        $summary   = 'Tutoría de Examen';
+        $summary   = 'Tutoría de Examen - ' . $full_name . ' - ' . $dni;
 
         if ($modalidad === 'online') {
             $description = <<<EOT
