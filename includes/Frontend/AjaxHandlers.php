@@ -386,9 +386,8 @@ class AjaxHandlers {
         }
         self::debug_log("TutoriasBooking: ajax_process_booking() - Tutor encontrado: Nombre={$tutor->nombre}, Email={$tutor->email}");
 
-        // Preparar los detalles del evento para Google Calendar utilizando un identificador
-        $dni_hash = hash('sha256', $dni);
-        $summary   = 'Tutoría de Examen - ' . $dni_hash;
+        // Preparar los detalles del evento para Google Calendar con un título legible
+        $summary   = 'Tutoría de Examen';
 
         if ($modalidad === 'online') {
             $description = <<<EOT
@@ -399,7 +398,7 @@ Si no asistes, no se reagendará.
 Gracias por confiar en Academia Prefortia.
 
 Modalidad: Online
-ID: {$dni_hash}
+DNI: {$dni}
 EOT;
         } else {
             $description = <<<EOT
@@ -410,7 +409,7 @@ Si no asistes, no se reagendará.
 Gracias por confiar en Academia Prefortia.
 
 Modalidad: Presencial
-ID: {$dni_hash}
+DNI: {$dni}
 EOT;
         }
 
