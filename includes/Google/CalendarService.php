@@ -265,14 +265,13 @@ class CalendarService {
      */
     public static function has_event_by_dni_and_modality($dni, $modalidad) {
         global $wpdb;
-        $dni_hash = hash('sha256', $dni);
         $tutors = $wpdb->get_results("SELECT id, calendar_id FROM {$wpdb->prefix}tutores");
         foreach ($tutors as $tutor) {
             if (empty($tutor->calendar_id)) { continue; }
             $service = self::get_calendar_service($tutor->id);
             if (!$service) { continue; }
             $opt = [
-                'q' => $dni_hash,
+                'q' => $dni,
                 'singleEvents' => true,
             ];
             try {
