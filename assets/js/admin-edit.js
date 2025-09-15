@@ -6,7 +6,7 @@ jQuery(function($){
     var originalTutorId = row.data('tutor-id');
     var eventId = row.data('event-id');
     var selectedTutorId = originalTutorId;
-    var modalidad = row.find('td').eq(3).text().trim().toLowerCase();
+    var modalidad = row.find('td').eq(5).text().trim().toLowerCase();
 
     function populateTutorSelect(){
       if(!$('#tb_edit_modal').length){
@@ -104,10 +104,10 @@ jQuery(function($){
         if(resp.success){
           row.data('tutor-id', selectedTutorId);
           row.data('event-id', resp.data.event_id);
-          row.find('td').eq(1).text($('#tb_edit_tutor option:selected').text());
-          row.find('td').eq(2).text(start + ' - ' + end);
+          row.find('td').eq(3).text($('#tb_edit_tutor option:selected').text());
+          row.find('td').eq(4).text(start + ' - ' + end);
           var linkHtml = resp.data.url ? '<a href="'+resp.data.url+'" target="_blank">'+resp.data.url+'</a>' : '';
-          row.find('td').eq(4).html(linkHtml);
+          row.find('td').eq(6).html(linkHtml);
           $('#tb_edit_modal').hide();
           $('#tb_slots_overlay').hide();
 
