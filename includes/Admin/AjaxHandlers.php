@@ -287,6 +287,17 @@ class AjaxHandlers {
                     }
                 }
             }
+            $old_email = $wpdb->get_var($wpdb->prepare("SELECT email FROM {$wpdb->prefix}tutores WHERE id=%d", $original_tutor_id));
+            $new_email = $wpdb->get_var($wpdb->prepare("SELECT email FROM {$wpdb->prefix}tutores WHERE id=%d", $tutor_id));
+            if ($old_email) {
+                $attendees = array_values(array_filter($attendees, function($e) use ($old_email) {
+                    return strtolower($e) !== strtolower($old_email);
+                }));
+            }
+            if ($new_email) {
+                $attendees[] = $new_email;
+                $attendees = array_values(array_unique($attendees));
+            }
             $new_event = CalendarService::create_calendar_event($tutor_id, $summary, $description, $startUtc, $endUtc, $attendees);
             if (is_wp_error($new_event)) {
                 wp_send_json_error($new_event->get_error_message());
