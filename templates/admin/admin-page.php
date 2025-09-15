@@ -176,7 +176,7 @@
             <input type="date" id="tb_events_start" placeholder="Fecha inicio (opcional)">
             <input type="date" id="tb_events_end" placeholder="Fecha fin (opcional)">
             <button type="submit" class="tb-button">Ver Citas</button>
-            <button type="button" id="tb_export_events" class="tb-button">Exportar CSV</button>
+            <button type="button" id="tb_export_events" class="tb-button">Exportar XLSX</button>
         </form>
 
         <table id="tb-events-table" class="tb-table">
