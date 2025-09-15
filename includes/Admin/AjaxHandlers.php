@@ -218,12 +218,48 @@ class AjaxHandlers {
         $madrid = new \DateTimeZone('Europe/Madrid');
         $utc    = new \DateTimeZone('UTC');
         try {
+            // Convertir las fechas recibidas a objetos DateTime en horario de Madrid
             $startObj = new \DateTime($start, $madrid);
             $endObj   = new \DateTime($end, $madrid);
-            $startUtc = $startObj->setTimezone($utc)->format('c');
-            $endUtc   = $endObj->setTimezone($utc)->format('c');
         } catch (\Exception $e) {
             wp_send_json_error('Formato de fecha inválido.');
+        }
+
+        // Validar que el inicio sea anterior al fin
+        if ($startObj >= $endObj) {
+            wp_send_json_error('Horario inválido');
+        }
+
+        // Convertir a UTC para interactuar con la API de Google Calendar
+        $startUtc = (clone $startObj)->setTimezone($utc)->format('c');
+        $endUtc   = (clone $endObj)->setTimezone($utc)->format('c');
+
+        // Verificar que la nueva franja no se solape con eventos ocupados del tutor
+        $busy_events = CalendarService::get_busy_calendar_events(
+            $tutor_id,
+            $startObj->format('Y-m-d'),
+            $endObj->format('Y-m-d')
+        );
+        foreach ($busy_events as $ev) {
+            // Ignorar el evento actual cuando se está editando
+            if (isset($ev->id) && $ev->id === $event_id) {
+                continue;
+            }
+            if (isset($ev->start->dateTime) && isset($ev->end->dateTime)) {
+                $evStart = new \DateTime($ev->start->dateTime);
+                $evStart->setTimezone($madrid);
+                $evEnd   = new \DateTime($ev->end->dateTime);
+                $evEnd->setTimezone($madrid);
+                if ($evStart < $endObj && $evEnd > $startObj) {
+                    wp_send_json_error('La franja seleccionada no está disponible');
+                }
+            } elseif (isset($ev->start->date) && isset($ev->end->date)) {
+                $evStart = new \DateTime($ev->start->date, $madrid);
+                $evEnd   = new \DateTime($ev->end->date, $madrid);
+                if ($evStart < $endObj && $evEnd > $startObj) {
+                    wp_send_json_error('La franja seleccionada no está disponible');
+                }
+            }
         }
 
         if ($tutor_id !== $original_tutor_id) {
