@@ -28,6 +28,8 @@ jQuery(function($){
                 res.data.forEach(function(ev){
                     var row = '<tr data-event-id="'+ev.id+'" data-tutor-id="'+ev.tutor_id+'">';
                     row += '<td>'+(ev.user||'')+'</td>';
+                    row += '<td>'+(ev.dni||'')+'</td>';
+                    row += '<td>'+(ev.email||'')+'</td>';
                     row += '<td>'+(ev.tutor||'')+'</td>';
                     row += '<td>'+ev.start+' - '+ev.end+'</td>';
                     row += '<td>'+(ev.modalidad||'')+'</td>';
@@ -42,6 +44,33 @@ jQuery(function($){
                 alert(res.data || 'Error al obtener eventos');
             }
         });
+    });
+
+    $('#tb_export_events').on('click', function(e){
+        e.preventDefault();
+        var tutor     = $('#tb_events_tutor').val();
+        var dni       = $('#tb_events_dni').val();
+        var modalidad = $('#tb_events_modalidad').val();
+        var start     = $('#tb_events_start').val();
+        var end       = $('#tb_events_end').val();
+
+        if(!tutor && !dni && !start && !end && !modalidad){
+            alert('Debe indicar al menos un filtro');
+            return;
+        }
+
+        var data = {
+            action: 'tb_export_events',
+            nonce: tbEventsData.nonce
+        };
+        if(tutor)     data.tutor_id  = tutor;
+        if(dni)       data.dni       = dni;
+        if(modalidad) data.modalidad = modalidad;
+        if(start)     data.start_date = start;
+        if(end)       data.end_date   = end;
+
+        var query = $.param(data);
+        window.open(ajaxurl + '?' + query, '_blank');
     });
 
     $('#tb-events-table').on('click', '.tb-delete-event', function(){

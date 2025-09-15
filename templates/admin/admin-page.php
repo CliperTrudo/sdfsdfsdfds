@@ -176,11 +176,12 @@
             <input type="date" id="tb_events_start" placeholder="Fecha inicio (opcional)">
             <input type="date" id="tb_events_end" placeholder="Fecha fin (opcional)">
             <button type="submit" class="tb-button">Ver Citas</button>
+            <button type="button" id="tb_export_events" class="tb-button">Exportar CSV</button>
         </form>
 
         <table id="tb-events-table" class="tb-table">
             <thead>
-                <tr><th>Usuario</th><th>Tutor</th><th>Tramo</th><th>Modalidad</th><th>Cita</th><th>Acciones</th></tr>
+                <tr><th>Usuario</th><th>DNI</th><th>Email</th><th>Tutor</th><th>Tramo</th><th>Modalidad</th><th>Cita</th><th>Acciones</th></tr>
             </thead>
             <tbody></tbody>
         </table>
