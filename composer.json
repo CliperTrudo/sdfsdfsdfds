@@ -4,6 +4,7 @@
     "type": "wordpress-plugins",
     "license": "GPL-2.0-or-later",
     "require": {
-        "google/apiclient": "2.14"
+        "google/apiclient": "2.14",
+        "phpoffice/phpspreadsheet": "^1.29"
     }
 }

@@ -104,6 +104,7 @@ jQuery(function($){
         if(end)       data.end_date   = end;
 
         var query = $.param(data);
+        // Server will respond with an XLSX file download
         window.open(ajaxurl + '?' + query, '_blank');
     });
 

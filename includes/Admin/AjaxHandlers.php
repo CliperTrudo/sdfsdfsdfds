@@ -2,6 +2,8 @@
 namespace TutoriasBooking\Admin;
 
 use TutoriasBooking\Google\CalendarService;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class AjaxHandlers {
     public static function init() {
@@ -180,13 +182,22 @@ class AjaxHandlers {
         if (is_wp_error($data)) {
             wp_die($data->get_error_message());
         }
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray([
+            'Usuario',
+            'DNI',
+            'Email',
+            'Tutor',
+            'Inicio',
+            'Fin',
+            'Modalidad',
+            'Enlace'
+        ], null, 'A1');
 
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="tb-citas.csv"');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, ['Usuario', 'DNI', 'Email', 'Tutor', 'Inicio', 'Fin', 'Modalidad', 'Enlace']);
+        $rowNum = 2;
         foreach ($data as $row) {
-            fputcsv($out, [
+            $sheet->fromArray([
                 $row['user'],
                 $row['dni'],
                 $row['email'],
@@ -195,9 +206,14 @@ class AjaxHandlers {
                 $row['end'],
                 $row['modalidad'],
                 $row['url'],
-            ]);
+            ], null, 'A' . $rowNum);
+            $rowNum++;
         }
-        fclose($out);
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="tb-citas.xlsx"');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
         wp_die();
     }
 
