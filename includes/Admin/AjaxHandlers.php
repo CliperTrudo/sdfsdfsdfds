@@ -182,38 +182,49 @@ class AjaxHandlers {
         if (is_wp_error($data)) {
             wp_die($data->get_error_message());
         }
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->fromArray([
-            'Usuario',
-            'DNI',
-            'Email',
-            'Tutor',
-            'Inicio',
-            'Fin',
-            'Modalidad',
-            'Enlace'
-        ], null, 'A1');
 
-        $rowNum = 2;
-        foreach ($data as $row) {
-            $sheet->fromArray([
-                $row['user'],
-                $row['dni'],
-                $row['email'],
-                $row['tutor'],
-                $row['start'],
-                $row['end'],
-                $row['modalidad'],
-                $row['url'],
-            ], null, 'A' . $rowNum);
-            $rowNum++;
+        if (!extension_loaded('zip')) {
+            wp_die('La extensión ZIP de PHP no está habilitada.');
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="tb-citas.xlsx"');
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->fromArray([
+                'Usuario',
+                'DNI',
+                'Email',
+                'Tutor',
+                'Inicio',
+                'Fin',
+                'Modalidad',
+                'Enlace'
+            ], null, 'A1');
+
+            $rowNum = 2;
+            foreach ($data as $row) {
+                $sheet->fromArray([
+                    $row['user'],
+                    $row['dni'],
+                    $row['email'],
+                    $row['tutor'],
+                    $row['start'],
+                    $row['end'],
+                    $row['modalidad'],
+                    $row['url'],
+                ], null, 'A' . $rowNum);
+                $rowNum++;
+            }
+
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="tb-citas.xlsx"');
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+            wp_die('Error al generar el XLSX');
+        }
+
         wp_die();
     }
 

@@ -29,6 +29,7 @@ Este proyecto es un plugin de WordPress para gestionar la reserva de tutorías d
 ## Requisitos
 - WordPress compatible con **PHP 7.4** o superior.
 - [Composer](https://getcomposer.org/) para instalar la biblioteca `google/apiclient`.
+- Extensiones de PHP necesarias para PhpSpreadsheet, como `zip`, `xml` y `xmlwriter`.
 - Una aplicación de Google Cloud Platform con la API de Calendar habilitada.
 - Archivo `credentials.json` de dicha aplicación (no incluido en el repositorio).
 
