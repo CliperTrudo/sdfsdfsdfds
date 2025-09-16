@@ -164,7 +164,29 @@ class AdminController {
             }
         }
 
-        $tutores = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}tutores");
+        $tutores_raw = $wpdb->get_results(
+            "SELECT id, nombre, email, calendar_id FROM {$wpdb->prefix}tutores",
+            ARRAY_A
+        );
+        $tutores = [];
+        if (is_array($tutores_raw)) {
+            $tutores = array_map([self::class, 'sanitize_tutor_row'], $tutores_raw);
+        }
+
+        $tokens_raw = $wpdb->get_results(
+            "SELECT tutor_id FROM {$wpdb->prefix}tutores_tokens",
+            ARRAY_A
+        );
+        $tutores_tokens = [];
+        if (is_array($tokens_raw)) {
+            foreach ($tokens_raw as $token_row) {
+                $tutor_id = isset($token_row['tutor_id']) ? absint($token_row['tutor_id']) : 0;
+                if ($tutor_id > 0) {
+                    $tutores_tokens[$tutor_id] = true;
+                }
+            }
+        }
+
         $alumnos_reserva = [];
         $current_page    = 1;
         $total_pages     = 1;
@@ -174,24 +196,30 @@ class AdminController {
         if ($table_exists) {
             if ($search_student !== '') {
                 $like_term = '%' . $wpdb->esc_like($search_student) . '%';
-                $alumnos_reserva = $wpdb->get_results(
+                $alumnos_reserva_raw = $wpdb->get_results(
                     $wpdb->prepare(
                         "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s OR nombre LIKE %s OR apellido LIKE %s",
                         $search_student,
                         $like_term,
                         $like_term
                     )
-                );
+                , ARRAY_A);
+                if (is_array($alumnos_reserva_raw)) {
+                    $alumnos_reserva = array_map([self::class, 'sanitize_alumno_row'], $alumnos_reserva_raw);
+                }
             } else {
                 $current_page = isset($_GET['tb_page']) ? max(1, intval($_GET['tb_page'])) : 1;
                 $offset       = ($current_page - 1) * $per_page;
-                $alumnos_reserva = $wpdb->get_results(
+                $alumnos_reserva_raw = $wpdb->get_results(
                     $wpdb->prepare(
                         "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} ORDER BY id LIMIT %d OFFSET %d",
                         $per_page,
                         $offset
                     )
-                );
+                , ARRAY_A);
+                if (is_array($alumnos_reserva_raw)) {
+                    $alumnos_reserva = array_map([self::class, 'sanitize_alumno_row'], $alumnos_reserva_raw);
+                }
                 $total_alumnos = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$alumnos_reserva_table}");
                 $total_pages   = (int) ceil($total_alumnos / $per_page);
             }
@@ -676,6 +704,27 @@ class AdminController {
             $count++;
         }
         return $count;
+    }
+
+    private static function sanitize_tutor_row(array $row) {
+        return [
+            'id'          => isset($row['id']) ? absint($row['id']) : 0,
+            'nombre'      => isset($row['nombre']) ? sanitize_text_field($row['nombre']) : '',
+            'email'       => isset($row['email']) ? sanitize_email($row['email']) : '',
+            'calendar_id' => isset($row['calendar_id']) ? sanitize_text_field($row['calendar_id']) : '',
+        ];
+    }
+
+    private static function sanitize_alumno_row(array $row) {
+        return [
+            'id'         => isset($row['id']) ? absint($row['id']) : 0,
+            'dni'        => isset($row['dni']) ? sanitize_text_field($row['dni']) : '',
+            'nombre'     => isset($row['nombre']) ? sanitize_text_field($row['nombre']) : '',
+            'apellido'   => isset($row['apellido']) ? sanitize_text_field($row['apellido']) : '',
+            'email'      => isset($row['email']) ? sanitize_email($row['email']) : '',
+            'online'     => !empty($row['online']) ? 1 : 0,
+            'presencial' => !empty($row['presencial']) ? 1 : 0,
+        ];
     }
 
     private static function parse_xlsx($file_path) {
