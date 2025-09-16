@@ -14,14 +14,23 @@
 
         <form method="POST" class="tb-form">
             <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-            <input name="tb_nombre" placeholder="Nombre" required>
-            <input name="tb_email" type="email" placeholder="Email (Calendar ID)" required>
+            <div class="tb-form-field">
+                <label for="tb_tutor_nombre">Nombre del tutor</label>
+                <input id="tb_tutor_nombre" name="tb_nombre" placeholder="Nombre" required>
+            </div>
+            <div class="tb-form-field">
+                <label for="tb_tutor_email">Email del tutor (Calendar ID)</label>
+                <input id="tb_tutor_email" name="tb_email" type="email" placeholder="Email (Calendar ID)" required>
+            </div>
             <button type="submit" class="tb-button">Agregar Tutor</button>
         </form>
 
         <form method="POST" enctype="multipart/form-data" class="tb-form">
             <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-            <input type="file" name="tb_tutores_file" accept=".xlsx" required>
+            <div class="tb-form-field">
+                <label for="tb_tutores_file">Archivo de tutores (.xlsx)</label>
+                <input type="file" id="tb_tutores_file" name="tb_tutores_file" accept=".xlsx" required>
+            </div>
             <button type="submit" name="tb_import_tutores" class="tb-button">Importar Tutores</button>
         </form>
 
@@ -87,18 +96,39 @@
         <?php if ($table_exists): ?>
             <form method="POST" class="tb-form">
                 <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                <input type="text" name="tb_alumno_dni" placeholder="DNI del Alumno" required>
-                <input type="text" name="tb_alumno_nombre" placeholder="Nombre" required>
-                <input type="text" name="tb_alumno_apellido" placeholder="Apellido" required>
-                <input type="email" name="tb_alumno_email" placeholder="Email del Alumno" required>
-                <label><input type="checkbox" name="tb_alumno_online" value="1"> Online</label>
-                <label><input type="checkbox" name="tb_alumno_presencial" value="1"> Presencial</label>
+                <div class="tb-form-field">
+                    <label for="tb_alumno_dni">DNI del alumno</label>
+                    <input type="text" id="tb_alumno_dni" name="tb_alumno_dni" placeholder="DNI del Alumno" required>
+                </div>
+                <div class="tb-form-field">
+                    <label for="tb_alumno_nombre">Nombre</label>
+                    <input type="text" id="tb_alumno_nombre" name="tb_alumno_nombre" placeholder="Nombre" required>
+                </div>
+                <div class="tb-form-field">
+                    <label for="tb_alumno_apellido">Apellido</label>
+                    <input type="text" id="tb_alumno_apellido" name="tb_alumno_apellido" placeholder="Apellido" required>
+                </div>
+                <div class="tb-form-field">
+                    <label for="tb_alumno_email">Email del alumno</label>
+                    <input type="email" id="tb_alumno_email" name="tb_alumno_email" placeholder="Email del Alumno" required>
+                </div>
+                <div class="tb-form-field tb-form-field--checkbox">
+                    <input type="checkbox" id="tb_alumno_online" name="tb_alumno_online" value="1">
+                    <label for="tb_alumno_online">Online</label>
+                </div>
+                <div class="tb-form-field tb-form-field--checkbox">
+                    <input type="checkbox" id="tb_alumno_presencial" name="tb_alumno_presencial" value="1">
+                    <label for="tb_alumno_presencial">Presencial</label>
+                </div>
                 <button type="submit" name="tb_add_alumno_reserva" class="tb-button">Añadir Alumno</button>
             </form>
 
             <form method="POST" enctype="multipart/form-data" class="tb-form">
                 <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                <input type="file" name="tb_alumnos_file" accept=".xlsx" required>
+                <div class="tb-form-field">
+                    <label for="tb_alumnos_file">Archivo de alumnos (.xlsx)</label>
+                    <input type="file" id="tb_alumnos_file" name="tb_alumnos_file" accept=".xlsx" required>
+                </div>
                 <button type="submit" name="tb_import_alumnos" class="tb-button">Importar Alumnos</button>
             </form>
         <?php else: ?>
@@ -112,7 +142,10 @@
         <?php if ($table_exists): ?>
             <form method="GET" class="tb-form">
                 <input type="hidden" name="page" value="tb-tutores">
-                <input type="text" name="tb_search_student" placeholder="Buscar por DNI o Nombre" value="<?php echo esc_attr($search_student); ?>">
+                <div class="tb-form-field">
+                    <label for="tb_search_student">Buscar alumno (DNI o nombre)</label>
+                    <input type="text" id="tb_search_student" name="tb_search_student" placeholder="Buscar por DNI o Nombre" value="<?php echo esc_attr($search_student); ?>">
+                </div>
                 <button type="submit" class="tb-button">Buscar</button>
                 <?php if (!empty($search_student)): ?>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=tb-tutores')); ?>" class="tb-button">Limpiar</a>
@@ -133,8 +166,18 @@
                                 <td><?php echo esc_html($alumno['nombre']); ?></td>
                                 <td><?php echo esc_html($alumno['apellido']); ?></td>
                                 <td><?php echo esc_html($alumno['email']); ?></td>
-                                <td><input type="checkbox" name="tb_online" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['online']); ?>></td>
-                                <td><input type="checkbox" name="tb_presencial" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['presencial']); ?>></td>
+                                <td>
+                                    <label class="screen-reader-text" for="tb_online_<?php echo esc_attr($alumno_id); ?>">
+                                        <?php echo esc_html(sprintf('Estado online para %s %s', $alumno['nombre'], $alumno['apellido'])); ?>
+                                    </label>
+                                    <input type="checkbox" id="tb_online_<?php echo esc_attr($alumno_id); ?>" name="tb_online" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['online']); ?>>
+                                </td>
+                                <td>
+                                    <label class="screen-reader-text" for="tb_presencial_<?php echo esc_attr($alumno_id); ?>">
+                                        <?php echo esc_html(sprintf('Estado presencial para %s %s', $alumno['nombre'], $alumno['apellido'])); ?>
+                                    </label>
+                                    <input type="checkbox" id="tb_presencial_<?php echo esc_attr($alumno_id); ?>" name="tb_presencial" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['presencial']); ?>>
+                                </td>
                                 <td>
                                     <form method="POST" id="tb_update_<?php echo esc_attr($alumno_id); ?>" class="tb-inline-form">
                                         <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
