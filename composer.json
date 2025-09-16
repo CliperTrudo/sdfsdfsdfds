@@ -8,13 +8,8 @@
         "phpoffice/phpspreadsheet": "1.30"
     },
     "config": {
-        "platform": {
-            "php": "8.2.27"
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "TutoriasBooking\\": "src/"
-        }
+    "platform": {
+        "php": "8.2.27"
     }
+}
 }
