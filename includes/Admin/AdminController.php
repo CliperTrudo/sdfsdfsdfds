@@ -168,15 +168,18 @@ class AdminController {
         $alumnos_reserva = [];
         $current_page    = 1;
         $total_pages     = 1;
-        $search_dni      = isset($_GET['tb_search_dni']) ? sanitize_text_field($_GET['tb_search_dni']) : '';
+        $search_student  = isset($_GET['tb_search_student']) ? sanitize_text_field($_GET['tb_search_student']) : '';
         $per_page        = 20;
 
         if ($table_exists) {
-            if ($search_dni !== '') {
+            if ($search_student !== '') {
+                $like_term = '%' . $wpdb->esc_like($search_student) . '%';
                 $alumnos_reserva = $wpdb->get_results(
                     $wpdb->prepare(
-                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s",
-                        $search_dni
+                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s OR nombre LIKE %s OR apellido LIKE %s",
+                        $search_student,
+                        $like_term,
+                        $like_term
                     )
                 );
             } else {

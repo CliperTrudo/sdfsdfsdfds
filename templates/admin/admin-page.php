@@ -96,9 +96,9 @@
         <?php if ($table_exists): ?>
             <form method="GET" class="tb-form">
                 <input type="hidden" name="page" value="tb-tutores">
-                <input type="text" name="tb_search_dni" placeholder="Buscar por DNI" value="<?php echo esc_attr($search_dni); ?>">
+                <input type="text" name="tb_search_student" placeholder="Buscar por DNI o Nombre" value="<?php echo esc_attr($search_student); ?>">
                 <button type="submit" class="tb-button">Buscar</button>
-                <?php if (!empty($search_dni)): ?>
+                <?php if (!empty($search_student)): ?>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=tb-tutores')); ?>" class="tb-button">Limpiar</a>
                 <?php endif; ?>
             </form>
@@ -135,7 +135,7 @@
                     </tbody>
                 </table>
 
-                <?php if (empty($search_dni) && $total_pages > 1): ?>
+                <?php if (empty($search_student) && $total_pages > 1): ?>
                     <div class="tb-pagination">
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                             <a class="tb-button <?php echo ($i === $current_page) ? 'active' : ''; ?>" href="<?php echo esc_url('admin.php?page=tb-tutores&tb_page=' . $i); ?>"><?php echo esc_html($i); ?></a>
