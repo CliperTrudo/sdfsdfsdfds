@@ -1,5 +1,5 @@
 <?php
-namespace TutoriasBooking\Google;
+namespace TutoriasBooking\Infrastructure\Google;
 
 class CalendarService {
     public static function get_calendar_service($tutor_id) {

@@ -1,7 +1,7 @@
 <?php
 namespace TutoriasBooking\Admin;
 
-use TutoriasBooking\Google\CalendarService;
+use TutoriasBooking\Infrastructure\Google\CalendarService;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
