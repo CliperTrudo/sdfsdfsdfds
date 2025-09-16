@@ -71,16 +71,4 @@ if (file_exists($composerAutoload)) {
     return;
 }
 
-// Incluye la clase de instalación para registrar el hook de activación.
-// Asumiendo que 'install.php' está dentro de la carpeta 'includes'.
-require_once TB_PLUGIN_DIR . 'includes/Core/Activator.php';
-require_once TB_PLUGIN_DIR . 'includes/Core/Loader.php';
-
-// Registra la función de activación del plugin.
-register_activation_hook(__FILE__, ['TutoriasBooking\\Core\\Activator', 'activate']);
-
-// Ejecuta rutinas de actualización si es necesario.
-TutoriasBooking\Core\Activator::maybe_upgrade();
-
-// Inicia la carga de todos los componentes del plugin.
-TutoriasBooking\Core\Loader::init();
+require_once TB_PLUGIN_DIR . 'src/bootstrap.php';

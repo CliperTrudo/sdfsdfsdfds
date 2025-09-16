@@ -1,7 +1,7 @@
 <?php
 namespace TutoriasBooking\Frontend;
 
-use TutoriasBooking\Google\CalendarService;
+use TutoriasBooking\Infrastructure\Google\CalendarService;
 
 /**
  * Handles AJAX requests from the booking form.

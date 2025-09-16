@@ -1,5 +1,5 @@
 <?php
-namespace TutoriasBooking\Google;
+namespace TutoriasBooking\Infrastructure\Google;
 
 class GoogleClient {
     public static function get_credentials() {
@@ -145,6 +145,3 @@ class GoogleClient {
         }
     }
 }
-
-add_action('admin_init', [GoogleClient::class, 'handle_oauth']);
-add_action('init', [GoogleClient::class, 'handle_oauth']);

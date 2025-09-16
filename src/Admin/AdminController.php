@@ -1,7 +1,7 @@
 <?php
 namespace TutoriasBooking\Admin;
 
-use TutoriasBooking\Google\CalendarService;
+use TutoriasBooking\Infrastructure\Google\CalendarService;
 
 /**
  * Handles logic for the admin page and prepares data for the view.

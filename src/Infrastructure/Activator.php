@@ -1,5 +1,5 @@
 <?php
-namespace TutoriasBooking\Core;
+namespace TutoriasBooking\Infrastructure;
 
 class Activator {
     public static function activate() {
