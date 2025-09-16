@@ -50,7 +50,7 @@ class AjaxHandlers {
         wp_send_json_success($slots);
     }
 
-    private static function fetch_events($tutor_id, $startRaw, $endRaw, $dni, $modalidad) {
+    private static function fetch_events($tutor_id, $startRaw, $endRaw, $student, $modalidad) {
         global $wpdb;
 
         $madridTz = new \DateTimeZone('Europe/Madrid');
@@ -83,7 +83,7 @@ class AjaxHandlers {
         $data = [];
 
         foreach ($tutor_ids as $tid) {
-            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $dni, $modalidad);
+            $events = CalendarService::get_busy_calendar_events($tid, $start, $end, $student, $modalidad);
             $tutor_row  = $wpdb->get_row($wpdb->prepare("SELECT nombre, email FROM {$wpdb->prefix}tutores WHERE id=%d", $tid));
             $tutor_name  = $tutor_row->nombre ?? '';
             $tutor_email = $tutor_row->email ?? '';
@@ -130,6 +130,19 @@ class AjaxHandlers {
                         }
                     }
 
+                    if (!empty($student)) {
+                        $matches_student = false;
+                        if (!empty($user_name) && stripos($user_name, $student) !== false) {
+                            $matches_student = true;
+                        }
+                        if (!empty($dni_event) && stripos($dni_event, $student) !== false) {
+                            $matches_student = true;
+                        }
+                        if (!$matches_student) {
+                            continue;
+                        }
+                    }
+
                     $data[] = [
                         'id'        => $ev->id,
                         'user'      => $user_name,
@@ -157,10 +170,10 @@ class AjaxHandlers {
         $tutor_id  = isset($_POST['tutor_id']) ? intval($_POST['tutor_id']) : 0;
         $startRaw  = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $endRaw    = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
-        $dni       = isset($_POST['dni']) ? sanitize_text_field($_POST['dni']) : '';
+        $student   = isset($_POST['student']) ? sanitize_text_field($_POST['student']) : '';
         $modalidad = isset($_POST['modalidad']) ? sanitize_text_field($_POST['modalidad']) : '';
 
-        $data = self::fetch_events($tutor_id, $startRaw, $endRaw, $dni, $modalidad);
+        $data = self::fetch_events($tutor_id, $startRaw, $endRaw, $student, $modalidad);
         if (is_wp_error($data)) {
             wp_send_json_error($data->get_error_message());
         }
@@ -175,10 +188,10 @@ class AjaxHandlers {
         $tutor_id  = isset($_GET['tutor_id']) ? intval($_GET['tutor_id']) : 0;
         $startRaw  = isset($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : '';
         $endRaw    = isset($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : '';
-        $dni       = isset($_GET['dni']) ? sanitize_text_field($_GET['dni']) : '';
+        $student   = isset($_GET['student']) ? sanitize_text_field($_GET['student']) : '';
         $modalidad = isset($_GET['modalidad']) ? sanitize_text_field($_GET['modalidad']) : '';
 
-        $data = self::fetch_events($tutor_id, $startRaw, $endRaw, $dni, $modalidad);
+        $data = self::fetch_events($tutor_id, $startRaw, $endRaw, $student, $modalidad);
         if (is_wp_error($data)) {
             wp_die($data->get_error_message());
         }

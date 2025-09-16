@@ -3,12 +3,13 @@ jQuery(function($){
     $('#tb-events-form').on('submit', function(e){
         e.preventDefault();
         var tutor     = $('#tb_events_tutor').val();
-        var dni       = $('#tb_events_dni').val();
+        var student   = $('#tb_events_student').val();
+        student       = student ? student.trim() : '';
         var modalidad = $('#tb_events_modalidad').val();
         var start     = $('#tb_events_start').val();
         var end       = $('#tb_events_end').val();
 
-        if(!tutor && !dni && !start && !end && !modalidad){
+        if(!tutor && !student && !start && !end && !modalidad){
             alert('Debe indicar al menos un filtro');
             return;
         }
@@ -18,7 +19,7 @@ jQuery(function($){
             nonce: tbEventsData.nonce
         };
         if(tutor)     data.tutor_id  = tutor;
-        if(dni)       data.dni       = dni;
+        if(student)   data.student   = student;
         if(modalidad) data.modalidad = modalidad;
         if(start)     data.start_date = start;
         if(end)       data.end_date   = end;
@@ -83,12 +84,13 @@ jQuery(function($){
     $('#tb_export_events').on('click', function(e){
         e.preventDefault();
         var tutor     = $('#tb_events_tutor').val();
-        var dni       = $('#tb_events_dni').val();
+        var student   = $('#tb_events_student').val();
+        student       = student ? student.trim() : '';
         var modalidad = $('#tb_events_modalidad').val();
         var start     = $('#tb_events_start').val();
         var end       = $('#tb_events_end').val();
 
-        if(!tutor && !dni && !start && !end && !modalidad){
+        if(!tutor && !student && !start && !end && !modalidad){
             alert('Debe indicar al menos un filtro');
             return;
         }
@@ -98,7 +100,7 @@ jQuery(function($){
             nonce: tbEventsData.nonce
         };
         if(tutor)     data.tutor_id  = tutor;
-        if(dni)       data.dni       = dni;
+        if(student)   data.student   = student;
         if(modalidad) data.modalidad = modalidad;
         if(start)     data.start_date = start;
         if(end)       data.end_date   = end;

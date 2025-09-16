@@ -167,7 +167,7 @@
                     <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="text" id="tb_events_dni" placeholder="DNI del alumno (opcional)">
+            <input type="text" id="tb_events_student" placeholder="DNI o nombre del alumno (opcional)">
             <select id="tb_events_modalidad">
                 <option value="">Todos</option>
                 <option value="online">online</option>
