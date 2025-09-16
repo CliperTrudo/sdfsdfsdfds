@@ -194,14 +194,17 @@ jQuery(function($){
         }
         var date = $(this).parent().data('date');
         $.post(ajaxurl, {action: 'tb_get_day_availability', tutor_id: window.tbTutorId, date: date, nonce: tbAdminData.ajax_nonce}, function(res){
+            if (!window.tbAdminNotices) {
+                return;
+            }
             if (res.success) {
                 if (res.data && res.data.length) {
-                    alert(res.data.join('\n'));
+                    window.tbAdminNotices.showSuccess(res.data);
                 } else {
-                    alert('No hay disponibilidad para este día');
+                    window.tbAdminNotices.showError('No hay disponibilidad para este día');
                 }
             } else {
-                alert(res.data || 'Error al obtener la disponibilidad');
+                window.tbAdminNotices.showError(res.data || 'Error al obtener la disponibilidad');
             }
         });
     });
@@ -267,7 +270,9 @@ jQuery(function($){
         }
         if (!valid) {
             e.preventDefault();
-            alert('Los rangos de tiempo son inválidos o se solapan.');
+            if (window.tbAdminNotices) {
+                window.tbAdminNotices.showError('Los rangos de tiempo son inválidos o se solapan.');
+            }
         } else if (window.tbEditingDate && ranges.length === 0) {
             if (!confirm('Se eliminará la disponibilidad existente para este día. ¿Desea continuar?')) {
                 e.preventDefault();
