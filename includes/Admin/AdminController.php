@@ -11,6 +11,10 @@ class AdminController {
      * Render the admin page.
      */
     public static function handle_page() {
+        self::handle_tutores_page();
+    }
+
+    public static function handle_tutores_page() {
         global $wpdb;
 
         if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
@@ -21,21 +25,88 @@ class AdminController {
 
         $messages = [];
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            check_admin_referer('tb_admin_action', 'tb_admin_nonce');
+
+            if (isset($_POST['tb_import_tutores']) && !empty($_FILES['tb_tutores_file']['tmp_name'])) {
+                $imported   = self::import_tutores_from_xlsx($_FILES['tb_tutores_file']['tmp_name']);
+                $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' tutores.'];
+            }
+
+            if (!empty($_POST['tb_nombre']) && !empty($_POST['tb_email'])) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'tutores',
+                    [
+                        'nombre'      => sanitize_text_field($_POST['tb_nombre']),
+                        'email'       => sanitize_email($_POST['tb_email']),
+                        'calendar_id' => sanitize_text_field($_POST['tb_email'])
+                    ]
+                );
+                $messages[] = ['type' => 'success', 'text' => 'Tutor añadido.'];
+            }
+
+            if (isset($_POST['tb_delete_tutor_id'])) {
+                $tutor_id = intval($_POST['tb_delete_tutor_id']);
+                $deleted  = $wpdb->delete(
+                    $wpdb->prefix . 'tutores',
+                    ['id' => $tutor_id],
+                    ['%d']
+                );
+                $wpdb->delete(
+                    $wpdb->prefix . 'tutores_tokens',
+                    ['tutor_id' => $tutor_id],
+                    ['%d']
+                );
+                if ($deleted !== false) {
+                    $messages[] = ['type' => 'success', 'text' => 'Tutor eliminado.'];
+                } else {
+                    $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el tutor.'];
+                }
+            }
+
+            if (isset($_POST['tb_delete_all_tutores'])) {
+                $wpdb->query("DELETE FROM {$wpdb->prefix}tutores");
+                $wpdb->query("DELETE FROM {$wpdb->prefix}tutores_tokens");
+                $messages[] = ['type' => 'success', 'text' => 'Todos los tutores han sido eliminados.'];
+            }
+        }
+
+        $tutores_raw = $wpdb->get_results(
+            "SELECT id, nombre, email, calendar_id FROM {$wpdb->prefix}tutores",
+            ARRAY_A
+        );
+        $tutores = [];
+        if (is_array($tutores_raw)) {
+            $tutores = array_map([self::class, 'sanitize_tutor_row'], $tutores_raw);
+        }
+
+        $tokens_raw = $wpdb->get_results(
+            "SELECT tutor_id FROM {$wpdb->prefix}tutores_tokens",
+            ARRAY_A
+        );
+        $tutores_tokens = [];
+        if (is_array($tokens_raw)) {
+            foreach ($tokens_raw as $token_row) {
+                $tutor_id = isset($token_row['tutor_id']) ? absint($token_row['tutor_id']) : 0;
+                if ($tutor_id > 0) {
+                    $tutores_tokens[$tutor_id] = true;
+                }
+            }
+        }
+
+        include TB_PLUGIN_DIR . 'templates/admin/tutores.php';
+    }
+
+    public static function handle_alumnos_page() {
+        global $wpdb;
+
+        $messages = [];
+
         $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
         $table_exists          = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $alumnos_reserva_table)) === $alumnos_reserva_table;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             check_admin_referer('tb_admin_action', 'tb_admin_nonce');
-        }
-
-        if (isset($_POST['tb_import_tutores']) && !empty($_FILES['tb_tutores_file']['tmp_name'])) {
-            $imported  = self::import_tutores_from_xlsx($_FILES['tb_tutores_file']['tmp_name']);
-            $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' tutores.'];
-        }
-
-        if ($table_exists && isset($_POST['tb_import_alumnos']) && !empty($_FILES['tb_alumnos_file']['tmp_name'])) {
-            $imported  = self::import_alumnos_from_xlsx($_FILES['tb_alumnos_file']['tmp_name'], $alumnos_reserva_table);
-            $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' alumnos de reserva.'];
         }
 
         if (!$table_exists) {
@@ -45,16 +116,9 @@ class AdminController {
             ];
         }
 
-        if (!empty($_POST['tb_nombre']) && !empty($_POST['tb_email']) && !isset($_POST['tb_add_alumno_reserva'])) {
-            $wpdb->insert(
-                $wpdb->prefix . 'tutores',
-                [
-                    'nombre'      => sanitize_text_field($_POST['tb_nombre']),
-                    'email'       => sanitize_email($_POST['tb_email']),
-                    'calendar_id' => sanitize_text_field($_POST['tb_email'])
-                ]
-            );
-            $messages[] = ['type' => 'success', 'text' => 'Tutor añadido.'];
+        if ($table_exists && isset($_POST['tb_import_alumnos']) && !empty($_FILES['tb_alumnos_file']['tmp_name'])) {
+            $imported   = self::import_alumnos_from_xlsx($_FILES['tb_alumnos_file']['tmp_name'], $alumnos_reserva_table);
+            $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' alumnos de reserva.'];
         }
 
         if ($table_exists && isset($_POST['tb_add_alumno_reserva'])) {
@@ -71,7 +135,6 @@ class AdminController {
                     $dni_alumno
                 ));
 
-                
                 if ($existing_alumno > 0) {
                     $messages[] = ['type' => 'error', 'text' => 'El DNI ' . esc_html($dni_alumno) . ' ya existe en la tabla de alumnos de reserva.'];
                 } else {
@@ -95,31 +158,6 @@ class AdminController {
             } else {
                 $messages[] = ['type' => 'error', 'text' => 'Todos los campos son obligatorios para añadir un alumno de reserva.'];
             }
-        }
-
-        if (isset($_POST['tb_delete_tutor_id'])) {
-            $tutor_id = intval($_POST['tb_delete_tutor_id']);
-            $deleted  = $wpdb->delete(
-                $wpdb->prefix . 'tutores',
-                ['id' => $tutor_id],
-                ['%d']
-            );
-            $wpdb->delete(
-                $wpdb->prefix . 'tutores_tokens',
-                ['tutor_id' => $tutor_id],
-                ['%d']
-            );
-            if ($deleted !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'Tutor eliminado.'];
-            } else {
-                $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el tutor.'];
-            }
-        }
-
-        if (isset($_POST['tb_delete_all_tutores'])) {
-            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores");
-            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores_tokens");
-            $messages[] = ['type' => 'success', 'text' => 'Todos los tutores han sido eliminados.'];
         }
 
         if ($table_exists && isset($_POST['tb_delete_alumno_id'])) {
@@ -164,29 +202,6 @@ class AdminController {
             }
         }
 
-        $tutores_raw = $wpdb->get_results(
-            "SELECT id, nombre, email, calendar_id FROM {$wpdb->prefix}tutores",
-            ARRAY_A
-        );
-        $tutores = [];
-        if (is_array($tutores_raw)) {
-            $tutores = array_map([self::class, 'sanitize_tutor_row'], $tutores_raw);
-        }
-
-        $tokens_raw = $wpdb->get_results(
-            "SELECT tutor_id FROM {$wpdb->prefix}tutores_tokens",
-            ARRAY_A
-        );
-        $tutores_tokens = [];
-        if (is_array($tokens_raw)) {
-            foreach ($tokens_raw as $token_row) {
-                $tutor_id = isset($token_row['tutor_id']) ? absint($token_row['tutor_id']) : 0;
-                if ($tutor_id > 0) {
-                    $tutores_tokens[$tutor_id] = true;
-                }
-            }
-        }
-
         $alumnos_reserva = [];
         $current_page    = 1;
         $total_pages     = 1;
@@ -225,7 +240,24 @@ class AdminController {
             }
         }
 
-        include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
+        include TB_PLUGIN_DIR . 'templates/admin/alumnos.php';
+    }
+
+    public static function handle_citas_page() {
+        global $wpdb;
+
+        $messages = [];
+
+        $tutores_raw = $wpdb->get_results(
+            "SELECT id, nombre, email, calendar_id FROM {$wpdb->prefix}tutores",
+            ARRAY_A
+        );
+        $tutores = [];
+        if (is_array($tutores_raw)) {
+            $tutores = array_map([self::class, 'sanitize_tutor_row'], $tutores_raw);
+        }
+
+        include TB_PLUGIN_DIR . 'templates/admin/citas.php';
     }
 
     private static function handle_assign_availability($tutor_id) {
