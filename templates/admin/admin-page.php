@@ -1,4 +1,3 @@
-<?php global $wpdb; ?>
 <div class="tb-admin-wrapper">
 
     <?php foreach ($messages as $msg): ?>
@@ -32,21 +31,38 @@
             </thead>
             <tbody>
                 <?php foreach ($tutores as $t): ?>
-                    <?php $tok = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tutores_tokens WHERE tutor_id=%d", $t->id)); ?>
-                    <?php $est = $tok ? '✅ Conectado' : '❌ No conectado'; ?>
-                    <?php $url = admin_url("admin.php?page=tb-tutores&action=tb_auth_google&tutor_id={$t->id}"); ?>
-                    <?php $avail_url = admin_url("admin.php?page=tb-tutores&action=tb_assign_availability&tutor_id={$t->id}"); ?>
+                    <?php
+                        $tutor_id    = isset($t['id']) ? absint($t['id']) : 0;
+                        $has_token   = $tutor_id > 0 && !empty($tutores_tokens[$tutor_id]);
+                        $status_text = $has_token ? '✅ Conectado' : '❌ No conectado';
+                        $url = add_query_arg(
+                            [
+                                'page'     => 'tb-tutores',
+                                'action'   => 'tb_auth_google',
+                                'tutor_id' => $tutor_id,
+                            ],
+                            admin_url('admin.php')
+                        );
+                        $avail_url = add_query_arg(
+                            [
+                                'page'     => 'tb-tutores',
+                                'action'   => 'tb_assign_availability',
+                                'tutor_id' => $tutor_id,
+                            ],
+                            admin_url('admin.php')
+                        );
+                    ?>
                     <tr>
-                        <td><?php echo esc_html($t->nombre); ?></td>
-                        <td><?php echo esc_html($t->email); ?></td>
-                        <td><?php echo $est; ?></td>
+                        <td><?php echo esc_html($t['nombre']); ?></td>
+                        <td><?php echo esc_html($t['email']); ?></td>
+                        <td><?php echo esc_html($status_text); ?></td>
                         <td>
                             <a href="<?php echo esc_url($url); ?>" class="tb-link">Conectar Calendar</a>
                             <span> | </span>
                             <a href="<?php echo esc_url($avail_url); ?>" class="tb-link">Asignar Disponibilidad</a>
                             <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este tutor?');">
                                 <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                <input type="hidden" name="tb_delete_tutor_id" value="<?php echo esc_attr($t->id); ?>">
+                                <input type="hidden" name="tb_delete_tutor_id" value="<?php echo esc_attr($tutor_id); ?>">
                                 <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
                             </form>
                         </td>
@@ -110,23 +126,24 @@
                     </thead>
                     <tbody>
                         <?php foreach ($alumnos_reserva as $alumno): ?>
+                            <?php $alumno_id = isset($alumno['id']) ? absint($alumno['id']) : 0; ?>
                             <tr>
-                                <td><?php echo esc_html($alumno->id); ?></td>
-                                <td><?php echo esc_html($alumno->dni); ?></td>
-                                <td><?php echo esc_html($alumno->nombre); ?></td>
-                                <td><?php echo esc_html($alumno->apellido); ?></td>
-                                <td><?php echo esc_html($alumno->email); ?></td>
-                                <td><input type="checkbox" name="tb_online" value="1" form="tb_update_<?php echo esc_attr($alumno->id); ?>" <?php checked($alumno->online); ?>></td>
-                                <td><input type="checkbox" name="tb_presencial" value="1" form="tb_update_<?php echo esc_attr($alumno->id); ?>" <?php checked($alumno->presencial); ?>></td>
+                                <td><?php echo esc_html($alumno_id); ?></td>
+                                <td><?php echo esc_html($alumno['dni']); ?></td>
+                                <td><?php echo esc_html($alumno['nombre']); ?></td>
+                                <td><?php echo esc_html($alumno['apellido']); ?></td>
+                                <td><?php echo esc_html($alumno['email']); ?></td>
+                                <td><input type="checkbox" name="tb_online" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['online']); ?>></td>
+                                <td><input type="checkbox" name="tb_presencial" value="1" form="tb_update_<?php echo esc_attr($alumno_id); ?>" <?php checked($alumno['presencial']); ?>></td>
                                 <td>
-                                    <form method="POST" id="tb_update_<?php echo esc_attr($alumno->id); ?>" class="tb-inline-form">
+                                    <form method="POST" id="tb_update_<?php echo esc_attr($alumno_id); ?>" class="tb-inline-form">
                                         <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                        <input type="hidden" name="tb_update_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                        <input type="hidden" name="tb_update_alumno_id" value="<?php echo esc_attr($alumno_id); ?>">
                                         <button type="submit" class="tb-button">Actualizar</button>
                                     </form>
                                     <form method="POST" class="tb-inline-form" onsubmit="return confirm('¿Eliminar este alumno?');">
                                         <?php wp_nonce_field('tb_admin_action', 'tb_admin_nonce'); ?>
-                                        <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno->id); ?>">
+                                        <input type="hidden" name="tb_delete_alumno_id" value="<?php echo esc_attr($alumno_id); ?>">
                                         <button type="submit" class="tb-button tb-button-danger">Eliminar</button>
                                     </form>
                                 </td>
@@ -164,7 +181,8 @@
             <select id="tb_events_tutor">
                 <option value="">Todos los tutores</option>
                 <?php foreach ($tutores as $t): ?>
-                    <option value="<?php echo esc_attr($t->id); ?>"><?php echo esc_html($t->nombre); ?></option>
+                    <?php $tutor_option_id = isset($t['id']) ? absint($t['id']) : 0; ?>
+                    <option value="<?php echo esc_attr($tutor_option_id); ?>"><?php echo esc_html($t['nombre']); ?></option>
                 <?php endforeach; ?>
             </select>
             <input type="text" id="tb_events_student" placeholder="DNI o nombre del alumno (opcional)">
