@@ -1,5 +1,6 @@
 .tb-admin-wrapper {
     max-width: 900px;
+    margin: 0 auto;
     padding: 20px;
     background: #fff;
 }
@@ -116,12 +117,6 @@
 .tb-alert {
     color: red;
     font-weight: bold;
-}
-.tb-admin-wrapper {
-    max-width: 900px;
-    margin: 0 auto; /* Esto centra el contenedor horizontalmente */
-    padding: 20px;
-    background: #fff;
 }
 
 .tb-card {
