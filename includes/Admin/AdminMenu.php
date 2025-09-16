@@ -50,6 +50,7 @@ class AdminMenu {
         }
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
         $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
+        $notices_js   = TB_PLUGIN_DIR . 'assets/js/admin-notices.js';
         $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
         $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
         $utils_js     = TB_PLUGIN_DIR . 'assets/js/calendar-utils.js';
@@ -70,9 +71,17 @@ class AdminMenu {
         );
 
         wp_enqueue_script(
+            'tb-admin-notices',
+            TB_PLUGIN_URL . 'assets/js/admin-notices.js',
+            ['jquery'],
+            file_exists($notices_js) ? filemtime($notices_js) : false,
+            true
+        );
+
+        wp_enqueue_script(
             'tb-admin',
             TB_PLUGIN_URL . 'assets/js/admin.js',
-            ['jquery'],
+            ['jquery', 'tb-admin-notices'],
             file_exists($admin_js) ? filemtime($admin_js) : false,
             true
         );
@@ -97,7 +106,7 @@ class AdminMenu {
         wp_enqueue_script(
             'tb-events',
             TB_PLUGIN_URL . 'assets/js/events.js',
-            ['jquery','tb-calendar-utils'],
+            ['jquery','tb-calendar-utils','tb-admin-notices'],
             file_exists($events_js) ? filemtime($events_js) : false,
             true
         );
@@ -113,7 +122,7 @@ class AdminMenu {
         wp_enqueue_script(
             'tb-admin-edit',
             TB_PLUGIN_URL . 'assets/js/admin-edit.js',
-            ['jquery','tb-calendar-utils'],
+            ['jquery','tb-calendar-utils','tb-admin-notices'],
             file_exists($edit_js) ? filemtime($edit_js) : false,
             true
         );

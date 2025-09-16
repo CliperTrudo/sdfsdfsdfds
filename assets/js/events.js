@@ -10,7 +10,9 @@ jQuery(function($){
         var end       = $('#tb_events_end').val();
 
         if(!tutor && !student && !start && !end && !modalidad){
-            alert('Debe indicar al menos un filtro');
+            if (window.tbAdminNotices) {
+                window.tbAdminNotices.showError('Debe indicar al menos un filtro');
+            }
             return;
         }
 
@@ -75,8 +77,8 @@ jQuery(function($){
 
                     $('#tb-events-table tbody').append($row);
                 });
-            } else {
-                alert(res.data || 'Error al obtener eventos');
+            } else if (window.tbAdminNotices) {
+                window.tbAdminNotices.showError(res.data || 'Error al obtener eventos');
             }
         });
     });
@@ -91,7 +93,9 @@ jQuery(function($){
         var end       = $('#tb_events_end').val();
 
         if(!tutor && !student && !start && !end && !modalidad){
-            alert('Debe indicar al menos un filtro');
+            if (window.tbAdminNotices) {
+                window.tbAdminNotices.showError('Debe indicar al menos un filtro');
+            }
             return;
         }
 
@@ -121,8 +125,11 @@ jQuery(function($){
         }, function(res){
             if(res.success){
                 row.remove();
-            } else {
-                alert(res.data || 'Error al eliminar');
+                if (window.tbAdminNotices) {
+                    window.tbAdminNotices.showSuccess('La cita se eliminó correctamente.');
+                }
+            } else if (window.tbAdminNotices) {
+                window.tbAdminNotices.showError(res.data || 'Error al eliminar');
             }
         });
     });
