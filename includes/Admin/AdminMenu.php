@@ -12,13 +12,48 @@ class AdminMenu {
             'Tutorías',
             'Tutorías',
             'manage_options',
+            'tb-tutorias',
+            '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
+        );
+
+        add_submenu_page(
+            'tb-tutorias',
+            'Tutores',
+            'Tutores',
+            'manage_options',
             'tb-tutores',
             '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
+        );
+
+        add_submenu_page(
+            'tb-tutorias',
+            'Alumnos',
+            'Alumnos',
+            'manage_options',
+            'tb-alumnos',
+            '\\TutoriasBooking\\Admin\\tb_pagina_alumnos'
+        );
+
+        add_submenu_page(
+            'tb-tutorias',
+            'Citas',
+            'Citas',
+            'manage_options',
+            'tb-citas',
+            '\\TutoriasBooking\\Admin\\tb_pagina_citas'
         );
     }
 
     public static function enqueue_assets($hook) {
-        if ($hook !== 'toplevel_page_tb-tutores') {
+        $allowed_hooks = [
+            'toplevel_page_tb-tutorias',
+            'tutorias-booking_page_tb-tutorias',
+            'tutorias-booking_page_tb-tutores',
+            'tutorias-booking_page_tb-alumnos',
+            'tutorias-booking_page_tb-citas',
+        ];
+
+        if (!in_array($hook, $allowed_hooks, true)) {
             return;
         }
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
