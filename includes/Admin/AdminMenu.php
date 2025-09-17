@@ -27,6 +27,7 @@ class AdminMenu {
         $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
         $utils_js     = TB_PLUGIN_DIR . 'assets/js/calendar-utils.js';
         $edit_js      = TB_PLUGIN_DIR . 'assets/js/admin-edit.js';
+        $tabs_js      = TB_PLUGIN_DIR . 'assets/js/admin-tabs.js';
 
         wp_enqueue_style(
             'tb-frontend',
@@ -47,6 +48,14 @@ class AdminMenu {
             TB_PLUGIN_URL . 'assets/js/admin.js',
             ['jquery'],
             file_exists($admin_js) ? filemtime($admin_js) : false,
+            true
+        );
+
+        wp_enqueue_script(
+            'tb-admin-tabs',
+            TB_PLUGIN_URL . 'assets/js/admin-tabs.js',
+            [],
+            file_exists($tabs_js) ? filemtime($tabs_js) : false,
             true
         );
 
