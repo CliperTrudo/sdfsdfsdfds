@@ -15,42 +15,14 @@ class AdminMenu {
             'tb-tutores',
             '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
         );
-
-        add_submenu_page(
-            'tb-tutores',
-            'Tutores',
-            'Tutores',
-            'manage_options',
-            'tb-tutores',
-            '\\TutoriasBooking\\Admin\\tb_pagina_tutores'
-        );
-
-        add_submenu_page(
-            'tb-tutores',
-            'Alumnos de reserva',
-            'Alumnos de reserva',
-            'manage_options',
-            'tb-alumnos',
-            '\\TutoriasBooking\\Admin\\tb_pagina_alumnos'
-        );
-
-        add_submenu_page(
-            'tb-tutores',
-            'Citas',
-            'Citas',
-            'manage_options',
-            'tb-citas',
-            '\\TutoriasBooking\\Admin\\tb_pagina_citas'
-        );
     }
 
     public static function enqueue_assets($hook) {
-        if (strpos($hook, 'tb-tutores') === false) {
+        if ($hook !== 'toplevel_page_tb-tutores') {
             return;
         }
         $admin_css    = TB_PLUGIN_DIR . 'assets/css/admin.css';
         $frontend_css = TB_PLUGIN_DIR . 'assets/css/frontend.css';
-        $notices_js   = TB_PLUGIN_DIR . 'assets/js/admin-notices.js';
         $admin_js     = TB_PLUGIN_DIR . 'assets/js/admin.js';
         $events_js    = TB_PLUGIN_DIR . 'assets/js/events.js';
         $utils_js     = TB_PLUGIN_DIR . 'assets/js/calendar-utils.js';
@@ -71,17 +43,9 @@ class AdminMenu {
         );
 
         wp_enqueue_script(
-            'tb-admin-notices',
-            TB_PLUGIN_URL . 'assets/js/admin-notices.js',
-            ['jquery'],
-            file_exists($notices_js) ? filemtime($notices_js) : false,
-            true
-        );
-
-        wp_enqueue_script(
             'tb-admin',
             TB_PLUGIN_URL . 'assets/js/admin.js',
-            ['jquery', 'tb-admin-notices'],
+            ['jquery'],
             file_exists($admin_js) ? filemtime($admin_js) : false,
             true
         );
@@ -106,7 +70,7 @@ class AdminMenu {
         wp_enqueue_script(
             'tb-events',
             TB_PLUGIN_URL . 'assets/js/events.js',
-            ['jquery','tb-calendar-utils','tb-admin-notices'],
+            ['jquery','tb-calendar-utils'],
             file_exists($events_js) ? filemtime($events_js) : false,
             true
         );
@@ -122,7 +86,7 @@ class AdminMenu {
         wp_enqueue_script(
             'tb-admin-edit',
             TB_PLUGIN_URL . 'assets/js/admin-edit.js',
-            ['jquery','tb-calendar-utils','tb-admin-notices'],
+            ['jquery','tb-calendar-utils'],
             file_exists($edit_js) ? filemtime($edit_js) : false,
             true
         );

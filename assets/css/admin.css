@@ -1,6 +1,5 @@
 .tb-admin-wrapper {
     max-width: 900px;
-    margin: 0 auto;
     padding: 20px;
     background: #fff;
 }
@@ -32,34 +31,6 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     flex: 1 1 200px;
-}
-
-.tb-form-field {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 200px;
-    gap: 4px;
-}
-
-.tb-form-field label {
-    font-weight: 600;
-}
-
-.tb-form-field input[type="text"],
-.tb-form-field input[type="email"],
-.tb-form-field input[type="file"] {
-    width: 100%;
-}
-
-.tb-form-field--checkbox {
-    flex-direction: row;
-    align-items: center;
-    flex: 0 0 auto;
-    gap: 8px;
-}
-
-.tb-form-field--checkbox label {
-    font-weight: 400;
 }
 
 .tb-button {
@@ -117,6 +88,12 @@
 .tb-alert {
     color: red;
     font-weight: bold;
+}
+.tb-admin-wrapper {
+    max-width: 900px;
+    margin: 0 auto; /* Esto centra el contenedor horizontalmente */
+    padding: 20px;
+    background: #fff;
 }
 
 .tb-card {

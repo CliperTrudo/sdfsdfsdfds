@@ -72,8 +72,8 @@ jQuery(function($){
           };
 
           tbCalendarUtils.renderCalendar(window.currentMonthDate);
-        } else if (window.tbAdminNotices) {
-          window.tbAdminNotices.showError(res.data || 'Error al obtener disponibilidad');
+        } else {
+          alert(res.data || 'Error al obtener disponibilidad');
         }
       });
     }
@@ -110,12 +110,9 @@ jQuery(function($){
           row.find('td').eq(6).html(linkHtml);
           $('#tb_edit_modal').hide();
           $('#tb_slots_overlay').hide();
-          if (window.tbAdminNotices) {
-            window.tbAdminNotices.showSuccess('La cita se actualizó correctamente.');
-          }
 
-        } else if (window.tbAdminNotices) {
-          window.tbAdminNotices.showError(resp.data || 'Error al actualizar');
+        } else {
+          alert(resp.data || 'Error al actualizar');
         }
       });
     });
