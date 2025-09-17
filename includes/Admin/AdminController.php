@@ -8,9 +8,9 @@ use TutoriasBooking\Google\CalendarService;
  */
 class AdminController {
     /**
-     * Render the admin page.
+     * Render the tutors admin page.
      */
-    public static function handle_page() {
+    public static function render_tutores_page() {
         global $wpdb;
 
         if (isset($_GET['action']) && $_GET['action'] === 'tb_assign_availability') {
@@ -19,73 +19,117 @@ class AdminController {
             return;
         }
 
-        $messages = [];
+        $messages       = [];
+        $request_method = $_SERVER['REQUEST_METHOD'] ?? '';
+        $nonce_verified = false;
 
-        $alumnos_reserva_table = $wpdb->prefix . 'alumnos_reserva';
-        $table_exists          = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $alumnos_reserva_table)) === $alumnos_reserva_table;
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($request_method === 'POST' && isset($_POST['tb_admin_nonce'])) {
             check_admin_referer('tb_admin_action', 'tb_admin_nonce');
+            $nonce_verified = true;
         }
 
-        if (isset($_POST['tb_import_tutores']) && !empty($_FILES['tb_tutores_file']['tmp_name'])) {
-            $imported  = self::import_tutores_from_xlsx($_FILES['tb_tutores_file']['tmp_name']);
+        if ($nonce_verified && isset($_POST['tb_import_tutores']) && !empty($_FILES['tb_tutores_file']['tmp_name'])) {
+            $imported   = self::import_tutores_from_xlsx($_FILES['tb_tutores_file']['tmp_name']);
             $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' tutores.'];
         }
 
-        if ($table_exists && isset($_POST['tb_import_alumnos']) && !empty($_FILES['tb_alumnos_file']['tmp_name'])) {
-            $imported  = self::import_alumnos_from_xlsx($_FILES['tb_alumnos_file']['tmp_name'], $alumnos_reserva_table);
-            $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' alumnos de reserva.'];
-        }
-
-        if (!$table_exists) {
-            $messages[] = [
-                'type' => 'error',
-                'text' => 'La tabla de alumnos de reserva (' . esc_html($alumnos_reserva_table) . ') no se encuentra en la base de datos. Desactiva y vuelve a activar el plugin.'
-            ];
-        }
-
-        if (!empty($_POST['tb_nombre']) && !empty($_POST['tb_email']) && !isset($_POST['tb_add_alumno_reserva'])) {
+        if ($nonce_verified && !empty($_POST['tb_nombre']) && !empty($_POST['tb_email'])) {
             $wpdb->insert(
                 $wpdb->prefix . 'tutores',
                 [
                     'nombre'      => sanitize_text_field($_POST['tb_nombre']),
                     'email'       => sanitize_email($_POST['tb_email']),
-                    'calendar_id' => sanitize_text_field($_POST['tb_email'])
+                    'calendar_id' => sanitize_text_field($_POST['tb_email']),
                 ]
             );
             $messages[] = ['type' => 'success', 'text' => 'Tutor añadido.'];
         }
 
-        if ($table_exists && isset($_POST['tb_add_alumno_reserva'])) {
-            $dni_alumno      = sanitize_text_field($_POST['tb_alumno_dni']);
-            $email_alumno    = sanitize_email($_POST['tb_alumno_email']);
-            $nombre_alumno   = sanitize_text_field($_POST['tb_alumno_nombre']);
-            $apellido_alumno = sanitize_text_field($_POST['tb_alumno_apellido']);
-            $online_alumno   = isset($_POST['tb_alumno_online']) ? 1 : 0;
+        if ($nonce_verified && isset($_POST['tb_delete_tutor_id'])) {
+            $tutor_id = intval($_POST['tb_delete_tutor_id']);
+            if ($tutor_id > 0) {
+                $deleted = $wpdb->delete(
+                    $wpdb->prefix . 'tutores',
+                    ['id' => $tutor_id],
+                    ['%d']
+                );
+                $wpdb->delete(
+                    $wpdb->prefix . 'tutores_tokens',
+                    ['tutor_id' => $tutor_id],
+                    ['%d']
+                );
+                if ($deleted !== false) {
+                    $messages[] = ['type' => 'success', 'text' => 'Tutor eliminado.'];
+                } else {
+                    $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el tutor.'];
+                }
+            }
+        }
+
+        if ($nonce_verified && isset($_POST['tb_delete_all_tutores'])) {
+            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores");
+            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores_tokens");
+            $messages[] = ['type' => 'success', 'text' => 'Todos los tutores han sido eliminados.'];
+        }
+
+        $tutors_table = new TutorsListTable();
+        $tutors_table->prepare_items();
+        $messages = array_merge($messages, $tutors_table->get_messages());
+
+        include TB_PLUGIN_DIR . 'templates/admin/tutores.php';
+    }
+
+    /**
+     * Render the reserve students admin page.
+     */
+    public static function render_alumnos_page() {
+        global $wpdb;
+
+        $messages             = [];
+        $alumnos_reserva_name = $wpdb->prefix . 'alumnos_reserva';
+        $table_exists         = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $alumnos_reserva_name)) === $alumnos_reserva_name;
+        $request_method       = $_SERVER['REQUEST_METHOD'] ?? '';
+        $nonce_verified       = false;
+
+        if ($request_method === 'POST' && isset($_POST['tb_admin_nonce'])) {
+            check_admin_referer('tb_admin_action', 'tb_admin_nonce');
+            $nonce_verified = true;
+        }
+
+        if ($table_exists && $nonce_verified && isset($_POST['tb_import_alumnos']) && !empty($_FILES['tb_alumnos_file']['tmp_name'])) {
+            $imported   = self::import_alumnos_from_xlsx($_FILES['tb_alumnos_file']['tmp_name'], $alumnos_reserva_name);
+            $messages[] = ['type' => 'success', 'text' => 'Se importaron ' . $imported . ' alumnos de reserva.'];
+        }
+
+        if ($table_exists && $nonce_verified && isset($_POST['tb_add_alumno_reserva'])) {
+            $dni_alumno        = sanitize_text_field($_POST['tb_alumno_dni']);
+            $email_alumno      = sanitize_email($_POST['tb_alumno_email']);
+            $nombre_alumno     = sanitize_text_field($_POST['tb_alumno_nombre']);
+            $apellido_alumno   = sanitize_text_field($_POST['tb_alumno_apellido']);
+            $online_alumno     = isset($_POST['tb_alumno_online']) ? 1 : 0;
             $presencial_alumno = isset($_POST['tb_alumno_presencial']) ? 1 : 0;
 
             if (!empty($dni_alumno) && !empty($email_alumno) && !empty($nombre_alumno) && !empty($apellido_alumno)) {
                 $existing_alumno = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$alumnos_reserva_table} WHERE dni = %s",
+                    "SELECT COUNT(*) FROM {$alumnos_reserva_name} WHERE dni = %s",
                     $dni_alumno
                 ));
 
-                
                 if ($existing_alumno > 0) {
                     $messages[] = ['type' => 'error', 'text' => 'El DNI ' . esc_html($dni_alumno) . ' ya existe en la tabla de alumnos de reserva.'];
                 } else {
                     $inserted = $wpdb->insert(
-                        $alumnos_reserva_table,
+                        $alumnos_reserva_name,
                         [
                             'dni'        => $dni_alumno,
                             'email'      => $email_alumno,
                             'nombre'     => $nombre_alumno,
                             'apellido'   => $apellido_alumno,
                             'online'     => $online_alumno,
-                            'presencial' => $presencial_alumno
+                            'presencial' => $presencial_alumno,
                         ]
                     );
+
                     if ($inserted) {
                         $messages[] = ['type' => 'success', 'text' => 'Alumno de reserva añadido correctamente.'];
                     } else {
@@ -97,57 +141,34 @@ class AdminController {
             }
         }
 
-        if (isset($_POST['tb_delete_tutor_id'])) {
-            $tutor_id = intval($_POST['tb_delete_tutor_id']);
-            $deleted  = $wpdb->delete(
-                $wpdb->prefix . 'tutores',
-                ['id' => $tutor_id],
-                ['%d']
-            );
-            $wpdb->delete(
-                $wpdb->prefix . 'tutores_tokens',
-                ['tutor_id' => $tutor_id],
-                ['%d']
-            );
-            if ($deleted !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'Tutor eliminado.'];
-            } else {
-                $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el tutor.'];
-            }
-        }
-
-        if (isset($_POST['tb_delete_all_tutores'])) {
-            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores");
-            $wpdb->query("DELETE FROM {$wpdb->prefix}tutores_tokens");
-            $messages[] = ['type' => 'success', 'text' => 'Todos los tutores han sido eliminados.'];
-        }
-
-        if ($table_exists && isset($_POST['tb_delete_alumno_id'])) {
+        if ($table_exists && $nonce_verified && isset($_POST['tb_delete_alumno_id'])) {
             $alumno_id = intval($_POST['tb_delete_alumno_id']);
-            $deleted   = $wpdb->delete(
-                $alumnos_reserva_table,
-                ['id' => $alumno_id],
-                ['%d']
-            );
-            if ($deleted !== false) {
-                $messages[] = ['type' => 'success', 'text' => 'Alumno eliminado de la reserva.'];
-            } else {
-                $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el alumno de la reserva.'];
+            if ($alumno_id > 0) {
+                $deleted = $wpdb->delete(
+                    $alumnos_reserva_name,
+                    ['id' => $alumno_id],
+                    ['%d']
+                );
+                if ($deleted !== false) {
+                    $messages[] = ['type' => 'success', 'text' => 'Alumno eliminado de la reserva.'];
+                } else {
+                    $messages[] = ['type' => 'error', 'text' => 'Error al eliminar el alumno de la reserva.'];
+                }
             }
         }
 
-        if ($table_exists && isset($_POST['tb_delete_all_alumnos'])) {
-            $wpdb->query("DELETE FROM {$alumnos_reserva_table}");
+        if ($table_exists && $nonce_verified && isset($_POST['tb_delete_all_alumnos'])) {
+            $wpdb->query("DELETE FROM {$alumnos_reserva_name}");
             $messages[] = ['type' => 'success', 'text' => 'Todos los alumnos de reserva han sido eliminados.'];
         }
 
-        if ($table_exists && isset($_POST['tb_update_alumno_id'])) {
+        if ($table_exists && $nonce_verified && isset($_POST['tb_update_alumno_id'])) {
             $alumno_id  = intval($_POST['tb_update_alumno_id']);
             $online     = isset($_POST['tb_online']) ? 1 : 0;
             $presencial = isset($_POST['tb_presencial']) ? 1 : 0;
 
             $updated = $wpdb->update(
-                $alumnos_reserva_table,
+                $alumnos_reserva_name,
                 [
                     'online'     => $online,
                     'presencial' => $presencial,
@@ -164,40 +185,42 @@ class AdminController {
             }
         }
 
-        $tutores = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}tutores");
-        $alumnos_reserva = [];
-        $current_page    = 1;
-        $total_pages     = 1;
-        $search_student  = isset($_GET['tb_search_student']) ? sanitize_text_field($_GET['tb_search_student']) : '';
-        $per_page        = 20;
-
-        if ($table_exists) {
-            if ($search_student !== '') {
-                $like_term = '%' . $wpdb->esc_like($search_student) . '%';
-                $alumnos_reserva = $wpdb->get_results(
-                    $wpdb->prepare(
-                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} WHERE dni = %s OR nombre LIKE %s OR apellido LIKE %s",
-                        $search_student,
-                        $like_term,
-                        $like_term
-                    )
-                );
-            } else {
-                $current_page = isset($_GET['tb_page']) ? max(1, intval($_GET['tb_page'])) : 1;
-                $offset       = ($current_page - 1) * $per_page;
-                $alumnos_reserva = $wpdb->get_results(
-                    $wpdb->prepare(
-                        "SELECT id, dni, nombre, apellido, email, online, presencial FROM {$alumnos_reserva_table} ORDER BY id LIMIT %d OFFSET %d",
-                        $per_page,
-                        $offset
-                    )
-                );
-                $total_alumnos = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$alumnos_reserva_table}");
-                $total_pages   = (int) ceil($total_alumnos / $per_page);
-            }
+        if (!$table_exists) {
+            $messages[] = [
+                'type' => 'error',
+                'text' => 'La tabla de alumnos de reserva (' . esc_html($alumnos_reserva_name) . ') no se encuentra en la base de datos. Desactiva y vuelve a activar el plugin.',
+            ];
         }
 
-        include TB_PLUGIN_DIR . 'templates/admin/admin-page.php';
+        $alumnos_table = null;
+        if ($table_exists) {
+            $alumnos_table = new AlumnosListTable($alumnos_reserva_name);
+            $alumnos_table->prepare_items();
+            $messages = array_merge($messages, $alumnos_table->get_messages());
+        }
+
+        $current_search = '';
+        if (isset($_REQUEST['s'])) {
+            $current_search = sanitize_text_field(wp_unslash($_REQUEST['s']));
+        }
+
+        include TB_PLUGIN_DIR . 'templates/admin/alumnos.php';
+    }
+
+    /**
+     * Render the appointments admin page.
+     */
+    public static function render_citas_page() {
+        global $wpdb;
+
+        $messages = [];
+        $tutores  = $wpdb->get_results("SELECT id, nombre FROM {$wpdb->prefix}tutores ORDER BY nombre ASC");
+
+        if (!is_array($tutores)) {
+            $tutores = [];
+        }
+
+        include TB_PLUGIN_DIR . 'templates/admin/citas.php';
     }
 
     private static function handle_assign_availability($tutor_id) {
